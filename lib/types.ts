@@ -12,16 +12,16 @@ export interface StatsResponse {
 export interface LtcResponse {
   eur: number;
   usd: number;
-  changePct: number;
+  changePct?: number;
 }
 
-export type FeedItemType = "order" | "escrow" | "mm" | "slot" | "exchange";
+export type FeedItemType = "order" | "escrow" | "mm" | "slot" | "exchange" | "casino";
 
 export interface FeedItem {
   type: FeedItemType;
   label: string;
   method?: string;
-  amount?: number;
+  amount?: string;
   ts: number;
 }
 

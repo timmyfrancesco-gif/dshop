@@ -76,6 +76,13 @@ export const SLOT_DURATIONS: { id: SlotDuration; name: string }[] = [
   { id: "lifetime", name: "Lifetime" },
 ];
 
+// The bot's API expects capitalized tier names ("First"/"Second"/"Third") for slot orders.
+export const SLOT_TIER_API_VALUES: Record<SlotTier, string> = {
+  first: "First",
+  second: "Second",
+  third: "Third",
+};
+
 export const SLOT_PRICES: Record<SlotTier, Record<SlotDuration, number>> = {
   first: { weekly: 5, monthly: 15, lifetime: 40 },
   second: { weekly: 3, monthly: 9, lifetime: 27 },

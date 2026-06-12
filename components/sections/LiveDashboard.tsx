@@ -45,7 +45,7 @@ export default function LiveDashboard() {
             value={ltc ? formatEur(ltc.eur) : "—"}
             accent
             suffix={
-              ltc
+              ltc && ltc.changePct !== undefined
                 ? `${ltc.changePct >= 0 ? "▲" : "▼"} ${Math.abs(ltc.changePct).toFixed(2)}%`
                 : undefined
             }

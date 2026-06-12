@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import FeedIcon from "@/components/ui/FeedIcon";
-import { formatNumber, formatRelativeTime } from "@/lib/format";
+import { formatFeedAmount, formatRelativeTime } from "@/lib/format";
 import type { FeedItem } from "@/lib/types";
 
 const TYPE_LABELS: Record<FeedItem["type"], string> = {
@@ -12,6 +12,7 @@ const TYPE_LABELS: Record<FeedItem["type"], string> = {
   mm: "Middleman",
   slot: "Ad Slot",
   exchange: "Exchange",
+  casino: "Casino",
 };
 
 export default function ActivityFeed({ items }: { items: FeedItem[] }) {
@@ -64,7 +65,7 @@ export default function ActivityFeed({ items }: { items: FeedItem[] }) {
             <div className="flex shrink-0 flex-col items-end gap-0.5">
               {item.amount !== undefined ? (
                 <span className="text-sm font-semibold text-foreground">
-                  €{formatNumber(item.amount)}
+                  {formatFeedAmount(item.amount)}
                 </span>
               ) : null}
               <span className="text-xs text-muted">{formatRelativeTime(item.ts)}</span>

@@ -36,6 +36,16 @@ const ICONS: Record<FeedItemType, React.ReactNode> = {
       d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"
     />
   ),
+  casino: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="9" cy="9" r="1" fill="currentColor" />
+      <circle cx="15" cy="9" r="1" fill="currentColor" />
+      <circle cx="9" cy="15" r="1" fill="currentColor" />
+      <circle cx="15" cy="15" r="1" fill="currentColor" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+    </>
+  ),
 };
 
 const COLORS: Record<FeedItemType, string> = {
@@ -44,6 +54,7 @@ const COLORS: Record<FeedItemType, string> = {
   mm: "text-amber-400 bg-amber-500/10 border-amber-500/30",
   slot: "text-pink-400 bg-pink-500/10 border-pink-500/30",
   exchange: "text-purple-400 bg-purple-500/10 border-purple-500/30",
+  casino: "text-rose-400 bg-rose-500/10 border-rose-500/30",
 };
 
 export default function FeedIcon({ type }: { type: FeedItemType }) {

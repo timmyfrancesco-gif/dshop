@@ -56,7 +56,7 @@ export function useTickerPrices() {
             symbol: coin.symbol,
             name: coin.name,
             eur: ltc.eur,
-            changePct: ltc.changePct,
+            changePct: ltc.changePct ?? null,
           };
         }
 

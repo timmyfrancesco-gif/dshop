@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { createSlotOrder, getLtcPrice, getSlotOrder, isApiConfigured } from "@/lib/api";
 import { formatEur } from "@/lib/format";
 import { useQrCode } from "@/lib/hooks/useQrCode";
-import { SLOT_DURATIONS, SLOT_TIERS } from "@/lib/config";
+import { SLOT_DURATIONS, SLOT_TIER_API_VALUES, SLOT_TIERS, type SlotTier } from "@/lib/config";
 import type { SlotOrderResponse } from "@/lib/types";
 
 const POLL_INTERVAL_MS = 10_000;
@@ -87,7 +87,7 @@ export default function SlotPurchaseModal({
 
     setLoading(true);
     const res = await createSlotOrder({
-      tier: tierId,
+      tier: SLOT_TIER_API_VALUES[tierId as SlotTier] ?? tierId,
       duration: durationId,
       discord: discord.trim(),
     });

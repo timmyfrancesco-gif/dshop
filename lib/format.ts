@@ -41,3 +41,9 @@ export function formatNumber(value: number): string {
 export function formatCrypto(value: number, decimals = 6): string {
   return value.toFixed(decimals);
 }
+
+export function formatFeedAmount(amount: string): string {
+  const num = Number(amount);
+  if (Number.isNaN(num)) return amount;
+  return formatEur(num);
+}
