@@ -90,7 +90,7 @@ export default function Shop() {
           </div>
         ) : (
           <div className="mt-14 glass-panel flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-2xl p-6 text-center text-muted">
-            <p className="text-sm">{loading ? "Loading products…" : "Coming soon."}</p>
+            <p className="text-sm">{loading ? "Loading products…" : "No products available right now."}</p>
             <p className="text-xs">
               New products will appear here automatically as soon as they&apos;re listed in the shop.
             </p>
