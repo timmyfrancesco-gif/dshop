@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { getProducts } from "@/lib/api";
 import type { Product } from "@/lib/types";
 
-const POLL_INTERVAL_MS = 30_000;
+const POLL_INTERVAL_MS = 5_000;
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
