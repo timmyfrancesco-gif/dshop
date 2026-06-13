@@ -90,3 +90,22 @@ export interface ProductsResponse {
   products: Product[];
   updatedAt?: number;
 }
+
+export interface ProductOrderRequest {
+  productId: string;
+  discord: string;
+}
+
+export interface ProductOrderResponse {
+  orderId: string;
+  address: string;
+  amountEur: number;
+}
+
+export interface ProductOrderStatusResponse {
+  status: "pending" | "paid";
+  orderId?: string;
+  productId?: string;
+  amountEur?: number;
+  address?: string;
+}
