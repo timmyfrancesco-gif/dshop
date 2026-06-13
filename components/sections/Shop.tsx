@@ -27,10 +27,12 @@ export default function Shop() {
         {products.length > 0 ? (
           <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product, i) => {
-              // SellAuth reports -1 (or omits the field) for unlimited-stock
-              // products, so only a value of exactly 0 means "out of stock".
-              const hasStockInfo = product.stock !== undefined && product.stock >= 0;
-              const outOfStock = hasStockInfo && product.stock === 0;
+              // SellAuth reports -1, null, or omits the field for unlimited /
+              // unknown-stock products, so only a value of exactly 0 means
+              // "out of stock". Anything else is treated as "we don't know"
+              // and shows no badge, with the Buy button left enabled.
+              const hasStockInfo = typeof product.stock === "number" && product.stock >= 0;
+              const outOfStock = typeof product.stock === "number" && product.stock === 0;
               return (
                 <motion.div
                   key={product.id}
