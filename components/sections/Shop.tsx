@@ -27,7 +27,10 @@ export default function Shop() {
         {products.length > 0 ? (
           <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product, i) => {
-              const outOfStock = product.stock !== undefined && product.stock <= 0;
+              // SellAuth reports -1 (or omits the field) for unlimited-stock
+              // products, so only a value of exactly 0 means "out of stock".
+              const hasStockInfo = product.stock !== undefined && product.stock >= 0;
+              const outOfStock = hasStockInfo && product.stock === 0;
               return (
                 <motion.div
                   key={product.id}
@@ -61,9 +64,9 @@ export default function Shop() {
                     <span className="text-lg font-bold text-accent">
                       {formatPrice(product.price, product.currency)}
                     </span>
-                    {product.stock !== undefined ? (
+                    {hasStockInfo ? (
                       <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted">
-                        {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+                        {outOfStock ? "Out of stock" : `${product.stock} in stock`}
                       </span>
                     ) : null}
                   </div>

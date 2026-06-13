@@ -5,6 +5,7 @@ import { getFeed, getLtcPrice, getStats, isApiConfigured } from "@/lib/api";
 import type { FeedItem, LtcResponse, StatsResponse } from "@/lib/types";
 
 const POLL_INTERVAL_MS = 30_000;
+const OFFLINE_AFTER_FAILURES = 2;
 
 export interface DashboardData {
   stats: StatsResponse | null;
@@ -24,6 +25,7 @@ export function useDashboardData(): DashboardData {
     if (!isApiConfigured()) return;
 
     let cancelled = false;
+    let consecutiveFailures = 0;
 
     async function load() {
       const [statsRes, ltcRes, feedRes] = await Promise.all([
@@ -34,10 +36,19 @@ export function useDashboardData(): DashboardData {
 
       if (cancelled) return;
 
-      setStats(statsRes);
-      setLtc(ltcRes);
+      // Keep showing the last good values on a transient failure instead of
+      // flashing back to "—" / Offline for a single missed poll.
+      if (statsRes) setStats(statsRes);
+      if (ltcRes) setLtc(ltcRes);
       if (feedRes?.items) setFeed(feedRes.items);
-      setIsLive(Boolean(statsRes || ltcRes || feedRes));
+
+      if (statsRes || ltcRes || feedRes) {
+        consecutiveFailures = 0;
+        setIsLive(true);
+      } else {
+        consecutiveFailures += 1;
+        if (consecutiveFailures >= OFFLINE_AFTER_FAILURES) setIsLive(false);
+      }
     }
 
     load();
