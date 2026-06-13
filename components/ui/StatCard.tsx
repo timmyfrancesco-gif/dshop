@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { handleSpotlight } from "@/lib/spotlight";
 
 export default function StatCard({
   label,
@@ -20,7 +21,8 @@ export default function StatCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="glass-panel rounded-2xl p-6"
+      onMouseMove={handleSpotlight}
+      className="spotlight glass-panel rounded-2xl p-6"
     >
       <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
         {label}

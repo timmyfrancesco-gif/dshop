@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import SectionHeading from "@/components/ui/SectionHeading";
 import ServiceIcon from "@/components/ui/ServiceIcon";
 import { SERVICES } from "@/lib/config";
+import { handleSpotlight } from "@/lib/spotlight";
 
 export default function ServicesGrid() {
   return (
@@ -24,7 +25,8 @@ export default function ServicesGrid() {
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: (i % 3) * 0.08 }}
               whileHover={{ y: -6 }}
-              className="group glass-panel relative overflow-hidden rounded-2xl p-6 transition-colors hover:border-accent/50"
+              onMouseMove={handleSpotlight}
+              className="group spotlight glass-panel relative rounded-2xl p-6 hover:border-accent/50"
             >
               <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-accent/10 blur-2xl transition-opacity group-hover:opacity-100 opacity-0" />
 

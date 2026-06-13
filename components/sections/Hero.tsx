@@ -25,9 +25,7 @@ export default function Hero() {
         className="max-w-4xl text-balance text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl"
       >
         Trade crypto with{" "}
-        <span className="bg-gradient-to-r from-accent via-accent to-casino-from bg-clip-text text-transparent">
-          confidence
-        </span>
+        <span className="text-gradient-brand">confidence</span>
       </motion.h1>
 
       <motion.p

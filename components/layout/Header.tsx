@@ -6,6 +6,7 @@ import { SITE } from "@/lib/config";
 const NAV_LINKS = [
   { href: "#services", label: "Services" },
   { href: "#dashboard", label: "Live Dashboard" },
+  { href: "#shop", label: "Shop" },
   { href: "#pricing", label: "Advertising" },
   { href: "#fees", label: "Fees" },
   { href: "#vouches", label: "Vouches" },
@@ -41,7 +42,7 @@ export default function Header() {
             href={SITE.discordInvite}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
+            className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition-all duration-300 hover:scale-105 hover:border-accent hover:text-accent"
           >
             Join Discord
           </a>
@@ -49,7 +50,7 @@ export default function Header() {
             href={SITE.shopUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-background shadow-[0_0_0px_0px_var(--accent)] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_24px_-4px_var(--accent)]"
           >
             Visit Shop
           </a>

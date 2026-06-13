@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #05070d;
-  --background-elevated: #0b0f1a;
+  --background: #06050d;
+  --background-elevated: #0c0a1a;
   --foreground: #e8edf5;
   --muted: #8b95a7;
   --border: #1c2333;
 
-  --accent: #5fb3c4;
-  --accent-soft: #5fb3c41a;
+  --accent: #3ee6d8;
+  --accent-soft: #3ee6d81a;
+  --accent-secondary: #a855f7;
 
   --casino-from: #a855f7;
   --casino-to: #ec4899;
@@ -22,11 +23,13 @@
   --color-border: var(--border);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-secondary: var(--accent-secondary);
   --color-casino-from: var(--casino-from);
   --color-casino-to: var(--casino-to);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
 
   --animate-marquee: marquee 40s linear infinite;
   --animate-glow-pulse: glow-pulse 4s ease-in-out infinite;
@@ -65,6 +68,13 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  letter-spacing: -0.02em;
+}
+
 ::selection {
   background: var(--accent);
   color: #05070d;
@@ -77,10 +87,51 @@ body {
   color: transparent;
 }
 
+.text-gradient-brand {
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 .glass-panel {
   background: color-mix(in srgb, var(--background-elevated) 80%, transparent);
   border: 1px solid var(--border);
   backdrop-filter: blur(12px);
+  transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Cursor-tracking glow used on interactive cards. The mouse position is
+   written to --spot-x/--spot-y inline by the spotlight handler. */
+.spotlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    320px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in srgb, var(--accent) 28%, transparent),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.spotlight:hover::before {
+  opacity: 1;
+}
+
+/* Custom cursor: hides the native cursor once CustomCursor mounts on
+   fine-pointer devices that don't prefer reduced motion. */
+.cursor-none,
+.cursor-none * {
+  cursor: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

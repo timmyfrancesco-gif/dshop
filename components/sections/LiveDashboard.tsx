@@ -23,7 +23,7 @@ export default function LiveDashboard() {
           <ConnectionBadge isLive={isLive} isConfigured={isConfigured} />
         </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Active Ad Slots"
             value={stats ? formatNumber(stats.activeSlots) : "—"}
@@ -39,6 +39,18 @@ export default function LiveDashboard() {
           <StatCard
             label="Total Transactions"
             value={stats ? formatNumber(stats.totalUserTrades) : "—"}
+          />
+          <StatCard
+            label="Tickets Opened"
+            value={stats?.ticketsOpened !== undefined ? formatNumber(stats.ticketsOpened) : "—"}
+          />
+          <StatCard
+            label="Total Customers"
+            value={stats?.totalCustomers !== undefined ? formatNumber(stats.totalCustomers) : "—"}
+          />
+          <StatCard
+            label="Total Volume"
+            value={stats?.totalVolumeEur !== undefined ? formatEur(stats.totalVolumeEur, 0) : "—"}
           />
           <StatCard
             label="LTC Price"

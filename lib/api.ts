@@ -2,6 +2,7 @@ import type {
   FeedResponse,
   HealthResponse,
   LtcResponse,
+  ProductsResponse,
   SlotOrderRequest,
   SlotOrderResponse,
   SlotOrderStatusResponse,
@@ -65,6 +66,10 @@ export function getFeed(limit = 15): Promise<FeedResponse | null> {
 
 export function getSlots(): Promise<SlotsResponse | null> {
   return apiFetch<SlotsResponse>("/api/slots");
+}
+
+export function getProducts(): Promise<ProductsResponse | null> {
+  return apiFetch<ProductsResponse>("/api/products");
 }
 
 export function createSlotOrder(

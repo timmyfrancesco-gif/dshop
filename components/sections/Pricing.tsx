@@ -6,6 +6,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import SlotPurchaseModal from "@/components/modals/SlotPurchaseModal";
 import { SLOT_DURATIONS, SLOT_PRICES, SLOT_TIERS } from "@/lib/config";
 import { formatEur } from "@/lib/format";
+import { handleSpotlight } from "@/lib/spotlight";
 
 export default function Pricing() {
   const [selection, setSelection] = useState<{
@@ -32,7 +33,8 @@ export default function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: i * 0.1 }}
-              className={`glass-panel flex flex-col rounded-2xl p-6 ${
+              onMouseMove={handleSpotlight}
+              className={`spotlight glass-panel flex flex-col rounded-2xl p-6 ${
                 tier.id === "first" ? "ring-1 ring-accent/40" : ""
               }`}
             >
@@ -67,7 +69,7 @@ export default function Pricing() {
                           setSelection({ tierId: tier.id, durationId: duration.id, priceEur: price });
                           setModalKey((k) => k + 1);
                         }}
-                        className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
+                        className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition-all duration-300 hover:scale-105 hover:border-accent hover:text-accent"
                       >
                         Buy
                       </button>
