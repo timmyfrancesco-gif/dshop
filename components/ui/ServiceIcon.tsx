@@ -44,9 +44,25 @@ const ICONS: Record<string, React.ReactNode> = {
       d="M4 8l1-4h14l1 4M4 8h16M4 8v11a1 1 0 001 1h14a1 1 0 001-1V8M9 12a3 3 0 006 0"
     />
   ),
+  sparkle: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="currentColor"
+      d="M12 2l1.8 4.6L18.4 8.4 13.8 10.2 12 14.8 10.2 10.2 5.6 8.4 10.2 6.6 12 2zM19 14l1 2.5L22.5 17.5 20 18.5 19 21 18 18.5 15.5 17.5 18 16.5 19 14zM5 13l0.9 2.3L8.2 16.2 5.9 17.1 5 19.4 4.1 17.1 1.8 16.2 4.1 15.3 5 13z"
+    />
+  ),
 };
 
-export default function ServiceIcon({ name, className }: { name: string; className?: string }) {
+export default function ServiceIcon({
+  name,
+  className,
+  style,
+}: {
+  name: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -54,6 +70,7 @@ export default function ServiceIcon({ name, className }: { name: string; classNa
       stroke="currentColor"
       strokeWidth={1.5}
       className={className}
+      style={style}
       aria-hidden
     >
       {ICONS[name] ?? ICONS.shield}

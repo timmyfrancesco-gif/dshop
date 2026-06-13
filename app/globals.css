@@ -33,6 +33,7 @@
 
   --animate-marquee: marquee 40s linear infinite;
   --animate-glow-pulse: glow-pulse 4s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
 }
 
 @keyframes marquee {
@@ -51,6 +52,16 @@
   }
   50% {
     opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(6deg);
   }
 }
 
@@ -92,6 +103,31 @@ h3 {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+.btn-gradient {
+  background: linear-gradient(135deg, var(--casino-from), var(--casino-to));
+  color: #fff;
+  box-shadow: 0 0 40px -10px var(--casino-to);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-gradient:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 50px -6px var(--casino-to);
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--casino-from) 14%, var(--background-elevated) 86%);
+  padding: 0.4rem 1.1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--foreground);
 }
 
 .glass-panel {

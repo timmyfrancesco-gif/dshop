@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import ServiceIcon from "@/components/ui/ServiceIcon";
 import { SITE } from "@/lib/config";
 
 export default function Hero() {
@@ -9,12 +10,28 @@ export default function Hero() {
       id="top"
       className="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden px-4 pt-24 pb-16 text-center sm:px-6 lg:px-8"
     >
+      <ServiceIcon
+        name="sparkle"
+        className="pointer-events-none absolute left-[8%] top-28 h-6 w-6 text-casino-to/70 animate-float sm:left-[14%]"
+      />
+      <ServiceIcon
+        name="sparkle"
+        className="pointer-events-none absolute right-[10%] top-1/3 h-4 w-4 text-accent/70 animate-float sm:right-[16%]"
+        style={{ animationDelay: "1.5s" }}
+      />
+      <ServiceIcon
+        name="sparkle"
+        className="pointer-events-none absolute bottom-24 left-[18%] h-5 w-5 text-casino-from/70 animate-float"
+        style={{ animationDelay: "3s" }}
+      />
+
       <motion.span
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-background-elevated/60 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.3em] text-accent"
+        className="badge-pill mb-6"
       >
+        <ServiceIcon name="sparkle" className="h-3.5 w-3.5 text-casino-to" />
         Live on Discord
       </motion.span>
 
@@ -22,10 +39,10 @@ export default function Hero() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.1 }}
-        className="max-w-4xl text-balance text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl"
+        className="max-w-4xl text-balance text-5xl font-extrabold tracking-tight sm:text-7xl lg:text-8xl"
       >
         Trade crypto with{" "}
-        <span className="text-gradient-brand">confidence</span>
+        <span className="text-gradient-casino">confidence</span>
       </motion.h1>
 
       <motion.p
@@ -45,20 +62,20 @@ export default function Hero() {
         className="mt-10 flex flex-col gap-4 sm:flex-row"
       >
         <a
-          href={SITE.discordInvite}
+          href={SITE.shopUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-full bg-accent px-8 py-3 text-base font-semibold text-background shadow-[0_0_30px_-5px_var(--accent)] transition-transform hover:scale-105"
+          className="btn-gradient rounded-full px-8 py-3 text-base font-semibold"
         >
-          Join Discord
+          Shop Now →
         </a>
         <a
-          href={SITE.shopUrl}
+          href={SITE.discordInvite}
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-full border border-border bg-background-elevated/60 px-8 py-3 text-base font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
         >
-          Visit Shop
+          Join Discord
         </a>
       </motion.div>
 
