@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import SectionHeading from "@/components/ui/SectionHeading";
 import ServiceIcon from "@/components/ui/ServiceIcon";
 import { SITE } from "@/lib/config";
-import { formatEur } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { handleSpotlight } from "@/lib/spotlight";
 import { useProducts } from "@/lib/hooks/useProducts";
 
@@ -36,9 +36,18 @@ export default function Shop() {
                 onMouseMove={handleSpotlight}
                 className="spotlight group glass-panel flex flex-col rounded-2xl p-6 hover:border-accent/50"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-background/60 text-accent">
-                  <ServiceIcon name="shop" className="h-6 w-6" />
-                </div>
+                {product.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="h-32 w-full rounded-xl border border-border object-cover"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-background/60 text-accent">
+                    <ServiceIcon name="shop" className="h-6 w-6" />
+                  </div>
+                )}
 
                 <h3 className="mt-5 text-lg font-semibold text-foreground">{product.name}</h3>
                 {product.description ? (
@@ -46,7 +55,9 @@ export default function Shop() {
                 ) : null}
 
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="text-lg font-bold text-accent">{formatEur(product.price, 2)}</span>
+                  <span className="text-lg font-bold text-accent">
+                    {formatPrice(product.price, product.currency)}
+                  </span>
                   {product.stock !== undefined ? (
                     <span className="rounded-full border border-border px-3 py-1 text-xs font-semibold text-muted">
                       {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}

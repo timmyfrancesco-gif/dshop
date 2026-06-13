@@ -42,6 +42,11 @@ export function formatCrypto(value: number, decimals = 6): string {
   return value.toFixed(decimals);
 }
 
+export function formatPrice(value: number, currency?: string): string {
+  if (currency && currency.toUpperCase() === "USD") return formatUsd(value);
+  return formatEur(value);
+}
+
 export function formatFeedAmount(amount: string): string {
   const num = Number(amount);
   if (Number.isNaN(num)) return amount;

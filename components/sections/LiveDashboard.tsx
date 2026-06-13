@@ -25,16 +25,13 @@ export default function LiveDashboard() {
 
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            label="Active Ad Slots"
-            value={stats ? formatNumber(stats.activeSlots) : "—"}
+            label="Total Volume"
+            value={stats?.totalVolume !== undefined ? formatEur(stats.totalVolume, 0) : "—"}
+            accent
           />
           <StatCard
-            label="Escrow Trades"
-            value={stats ? formatNumber(stats.totalEscrow) : "—"}
-          />
-          <StatCard
-            label="Middleman Completed"
-            value={stats ? formatNumber(stats.completedMM) : "—"}
+            label="Total Customers"
+            value={stats?.totalCustomers !== undefined ? formatNumber(stats.totalCustomers) : "—"}
           />
           <StatCard
             label="Total Transactions"
@@ -45,12 +42,16 @@ export default function LiveDashboard() {
             value={stats?.ticketsOpened !== undefined ? formatNumber(stats.ticketsOpened) : "—"}
           />
           <StatCard
-            label="Total Customers"
-            value={stats?.totalCustomers !== undefined ? formatNumber(stats.totalCustomers) : "—"}
+            label="Escrow Trades"
+            value={stats ? formatNumber(stats.totalEscrow) : "—"}
           />
           <StatCard
-            label="Total Volume"
-            value={stats?.totalVolumeEur !== undefined ? formatEur(stats.totalVolumeEur, 0) : "—"}
+            label="Middleman Completed"
+            value={stats ? formatNumber(stats.completedMM) : "—"}
+          />
+          <StatCard
+            label="Active Ad Slots"
+            value={stats ? formatNumber(stats.activeSlots) : "—"}
           />
           <StatCard
             label="LTC Price"

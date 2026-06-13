@@ -9,7 +9,7 @@ export interface StatsResponse {
   totalUserTrades: number;
   ticketsOpened?: number;
   totalCustomers?: number;
-  totalVolumeEur?: number;
+  totalVolume?: number;
 }
 
 export interface LtcResponse {
@@ -77,8 +77,10 @@ export interface CoinPrice {
 export interface Product {
   id: string;
   name: string;
+  slug?: string;
   description?: string;
   price: number;
+  currency?: string;
   image?: string;
   stock?: number;
   url?: string;
@@ -86,4 +88,5 @@ export interface Product {
 
 export interface ProductsResponse {
   products: Product[];
+  updatedAt?: number;
 }
