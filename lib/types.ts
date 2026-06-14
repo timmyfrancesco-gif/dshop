@@ -111,6 +111,7 @@ export interface ProductOrderResponse {
   orderId: string;
   address: string;
   amountEur: number;
+  productName?: string;
 }
 
 export interface ProductOrderStatusResponse {
