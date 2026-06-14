@@ -5,6 +5,7 @@ import Hero from "@/components/sections/Hero";
 import LiveTicker from "@/components/sections/LiveTicker";
 import ServicesGrid from "@/components/sections/ServicesGrid";
 import LiveDashboard from "@/components/sections/LiveDashboard";
+import Shop from "@/components/sections/Shop";
 import Pricing from "@/components/sections/Pricing";
 import Fees from "@/components/sections/Fees";
 import Testimonials from "@/components/sections/Testimonials";
@@ -20,6 +21,7 @@ export default function Home() {
         <LiveTicker />
         <ServicesGrid />
         <LiveDashboard />
+        <Shop />
         <Pricing />
         <Fees />
         <Testimonials />

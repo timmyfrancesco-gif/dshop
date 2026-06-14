@@ -44,6 +44,27 @@ const ICONS: Record<string, React.ReactNode> = {
       d="M4 8l1-4h14l1 4M4 8h16M4 8v11a1 1 0 001 1h14a1 1 0 001-1V8M9 12a3 3 0 006 0"
     />
   ),
+  wallet: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M3 7a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm0 3h18M15 13h2"
+    />
+  ),
+  nitro: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 2l3 5h5l-3.5 4 1.5 6-6-3.5L6 17l1.5-6L4 7h5l3-5z"
+    />
+  ),
+  vps: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 4h16v6H4V4zm0 10h16v6H4v-6zM7 7h.01M7 17h.01"
+    />
+  ),
 };
 
 export default function ServiceIcon({ name, className }: { name: string; className?: string }) {

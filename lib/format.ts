@@ -34,6 +34,19 @@ export function formatUsd(value: number, fractionDigits = 2): string {
   }).format(value);
 }
 
+export function formatCurrency(value: number, currency: string, fractionDigits = 2): string {
+  try {
+    return new Intl.NumberFormat("en-IE", {
+      style: "currency",
+      currency: currency.toUpperCase(),
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(value);
+  } catch {
+    return `${value.toFixed(fractionDigits)} ${currency.toUpperCase()}`;
+  }
+}
+
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }

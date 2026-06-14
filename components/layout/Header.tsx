@@ -6,6 +6,7 @@ import { SITE } from "@/lib/config";
 const NAV_LINKS = [
   { href: "#services", label: "Services" },
   { href: "#dashboard", label: "Live Dashboard" },
+  { href: "#shop", label: "Shop" },
   { href: "#pricing", label: "Advertising" },
   { href: "#fees", label: "Fees" },
   { href: "#vouches", label: "Vouches" },

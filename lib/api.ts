@@ -2,6 +2,10 @@ import type {
   FeedResponse,
   HealthResponse,
   LtcResponse,
+  ProductOrderRequest,
+  ProductOrderResponse,
+  ProductOrderStatusResponse,
+  ProductsResponse,
   SlotOrderRequest,
   SlotOrderResponse,
   SlotOrderStatusResponse,
@@ -80,4 +84,23 @@ export function getSlotOrder(
   id: string
 ): Promise<SlotOrderStatusResponse | null> {
   return apiFetch<SlotOrderStatusResponse>(`/api/slot-order/${encodeURIComponent(id)}`);
+}
+
+export function getProducts(): Promise<ProductsResponse | null> {
+  return apiFetch<ProductsResponse>("/api/products");
+}
+
+export function createProductOrder(
+  payload: ProductOrderRequest
+): Promise<ProductOrderResponse | null> {
+  return apiFetch<ProductOrderResponse>("/api/product-order", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getProductOrder(
+  id: string
+): Promise<ProductOrderStatusResponse | null> {
+  return apiFetch<ProductOrderStatusResponse>(`/api/product-order/${encodeURIComponent(id)}`);
 }
