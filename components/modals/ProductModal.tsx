@@ -1,21 +1,21 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ServiceIcon from "@/components/ui/ServiceIcon";
-import { createProductOrder, getLtcPrice, getProductOrder, isApiConfigured } from "@/lib/api";
-import { formatCurrency, formatEur } from "@/lib/format";
-import { useQrCode } from "@/lib/hooks/useQrCode";
+import DeliveredNotice from "@/components/shop/DeliveredNotice";
+import LtcPayment from "@/components/shop/LtcPayment";
+import { createProductOrder, isApiConfigured } from "@/lib/api";
+import { formatCurrency } from "@/lib/format";
 import type { ProductOrderResponse, ShopItem } from "@/lib/types";
-
-const POLL_INTERVAL_MS = 5000;
 
 interface ProductModalProps {
   product: ShopItem | null;
   onClose: () => void;
+  onAddToCart: (item: ShopItem, quantity: number) => void;
 }
 
-export default function ProductModal({ product, onClose }: ProductModalProps) {
+export default function ProductModal({ product, onClose, onAddToCart }: ProductModalProps) {
   return (
     <AnimatePresence>
       {product ? (
@@ -26,47 +26,31 @@ export default function ProductModal({ product, onClose }: ProductModalProps) {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
           onClick={onClose}
         >
-          <ProductCheckout key={product.id} product={product} onClose={onClose} />
+          <ProductCheckout key={product.id} product={product} onClose={onClose} onAddToCart={onAddToCart} />
         </motion.div>
       ) : null}
     </AnimatePresence>
   );
 }
 
-function ProductCheckout({ product, onClose }: { product: ShopItem; onClose: () => void }) {
+function ProductCheckout({
+  product,
+  onClose,
+  onAddToCart,
+}: {
+  product: ShopItem;
+  onClose: () => void;
+  onAddToCart: (item: ShopItem, quantity: number) => void;
+}) {
+  const [quantity, setQuantity] = useState(1);
   const [discord, setDiscord] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<ProductOrderResponse | null>(null);
   const [paid, setPaid] = useState(false);
-  const [ltcEur, setLtcEur] = useState<number | null>(null);
+  const [added, setAdded] = useState(false);
 
-  const qrValue = order ? `litecoin:${order.address}?amount=${order.amountEur}` : null;
-  const qrCode = useQrCode(qrValue);
-
-  useEffect(() => {
-    if (!order) return;
-    getLtcPrice().then((res) => {
-      if (res) setLtcEur(res.eur);
-    });
-  }, [order]);
-
-  // Poll order status until it's marked as paid.
-  useEffect(() => {
-    if (!order || paid) return;
-
-    let cancelled = false;
-    const interval = setInterval(async () => {
-      const statusRes = await getProductOrder(order.orderId);
-      if (cancelled || !statusRes) return;
-      if (statusRes.status === "paid") setPaid(true);
-    }, POLL_INTERVAL_MS);
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [order, paid]);
+  const maxQuantity = product.stock > 0 ? product.stock : 1;
 
   async function handleBuyNow(e: React.FormEvent) {
     e.preventDefault();
@@ -97,7 +81,10 @@ function ProductCheckout({ product, onClose }: { product: ShopItem; onClose: () 
     setOrder(res);
   }
 
-  const approxLtc = order && ltcEur ? (order.amountEur / ltcEur).toFixed(6) : null;
+  function handleAddToCart() {
+    onAddToCart(product, quantity);
+    setAdded(true);
+  }
 
   return (
     <motion.div
@@ -160,6 +147,31 @@ function ProductCheckout({ product, onClose }: { product: ShopItem; onClose: () 
 
         {!order ? (
           <form onSubmit={handleBuyNow} className="mt-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm font-medium text-foreground">Quantity</span>
+              <div className="flex items-center gap-3 rounded-full border border-border bg-background/60 px-3 py-1.5">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={product.stock === 0}
+                  className="text-lg font-bold text-muted transition-colors hover:text-foreground disabled:opacity-50"
+                  aria-label="Decrease quantity"
+                >
+                  −
+                </button>
+                <span className="w-6 text-center text-sm font-semibold text-foreground">{quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                  disabled={product.stock === 0}
+                  className="text-lg font-bold text-muted transition-colors hover:text-foreground disabled:opacity-50"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
             <label className="flex flex-col gap-2 text-sm">
               <span className="font-medium text-foreground">Discord username</span>
               <input
@@ -174,63 +186,31 @@ function ProductCheckout({ product, onClose }: { product: ShopItem; onClose: () 
 
             {error ? <p className="text-sm text-rose-400">{error}</p> : null}
 
-            <button
-              type="submit"
-              disabled={loading || product.stock === 0}
-              className="mt-2 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
-            >
-              {product.stock === 0 ? "Out of stock" : loading ? "Creating order…" : "Buy Now"}
-            </button>
+            <div className="mt-2 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={product.stock === 0}
+                className="flex-1 rounded-full border border-accent/30 bg-accent-soft px-4 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background disabled:opacity-50"
+              >
+                {added ? "Added to cart ✓" : "Add to Cart"}
+              </button>
+              <button
+                type="submit"
+                disabled={loading || product.stock === 0}
+                className="flex-1 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {product.stock === 0 ? "Out of stock" : loading ? "Creating order…" : "Buy Now"}
+              </button>
+            </div>
           </form>
         ) : paid ? (
-          <div className="mt-6 flex flex-col items-center gap-4 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
-              <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h4 className="text-lg font-semibold text-foreground">Delivered!</h4>
-            <p className="text-sm text-muted">
-              Check your Discord DMs — the bot has automatically delivered your item.
-            </p>
+          <div className="mt-6">
+            <DeliveredNotice />
           </div>
         ) : (
-          <div className="mt-6 flex flex-col items-center gap-4 text-center">
-            {qrCode ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={qrCode}
-                alt="LTC payment address QR code"
-                className="h-48 w-48 rounded-xl border border-border"
-              />
-            ) : (
-              <div className="flex h-48 w-48 items-center justify-center rounded-xl border border-border text-xs text-muted">
-                Generating QR code…
-              </div>
-            )}
-
-            <div className="w-full break-all rounded-lg border border-border bg-background/60 px-3 py-2 font-mono text-xs text-foreground">
-              {order.address}
-            </div>
-
-            <div className="flex w-full items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2 text-sm">
-              <span className="text-muted">Amount due</span>
-              <span className="font-semibold text-foreground">
-                {formatEur(order.amountEur)}
-                {approxLtc ? ` ≈ ${approxLtc} LTC` : ""}
-              </span>
-            </div>
-
-            <p className="text-xs text-muted">
-              Send the exact amount above to the LTC address. This page will update
-              automatically once payment is received. Order ID:{" "}
-              <span className="font-mono text-foreground">{order.orderId}</span>
-            </p>
-
-            <div className="flex items-center gap-2 text-xs text-muted">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
-              Waiting for payment…
-            </div>
+          <div className="mt-6">
+            <LtcPayment order={order} onPaid={() => setPaid(true)} />
           </div>
         )}
       </div>
