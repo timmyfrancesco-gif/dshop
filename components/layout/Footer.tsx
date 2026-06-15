@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 import { SITE } from "@/lib/config";
 
@@ -7,10 +8,10 @@ export default function Footer() {
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="max-w-sm">
-            <a href="#top" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+            <Link href="/#top" className="flex items-center gap-2 text-lg font-bold tracking-tight">
               <Logo className="h-8 w-8" />
               <span>{SITE.name}</span>
-            </a>
+            </Link>
             <p className="mt-4 text-sm text-muted">
               Premium Discord trading marketplace — escrow, middleman, exchange and
               an automated digital shop with instant LTC checkout.
@@ -33,12 +34,12 @@ export default function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-foreground">Quick Links</h3>
             <ul className="mt-4 flex flex-col gap-2 text-sm text-muted">
-              <li><a href="#top" className="hover:text-accent">Home</a></li>
-              <li><a href="#shop" className="hover:text-accent">Products</a></li>
-              <li><a href="#services" className="hover:text-accent">Features</a></li>
-              <li><a href="#faq" className="hover:text-accent">FAQ</a></li>
-              <li><a href="#vouches" className="hover:text-accent">Reviews</a></li>
-              <li><a href="/track" className="hover:text-accent">Track Order</a></li>
+              <li><Link href="/#top" className="hover:text-accent">Home</Link></li>
+              <li><Link href="/#shop" className="hover:text-accent">Products</Link></li>
+              <li><Link href="/#services" className="hover:text-accent">Features</Link></li>
+              <li><Link href="/#faq" className="hover:text-accent">FAQ</Link></li>
+              <li><Link href="/#vouches" className="hover:text-accent">Reviews</Link></li>
+              <li><Link href="/track" className="hover:text-accent">Track Order</Link></li>
             </ul>
           </div>
 
@@ -50,20 +51,20 @@ export default function Footer() {
                   Discord Server ↗
                 </a>
               </li>
-              <li><a href="/terms" className="hover:text-accent">Terms of Service</a></li>
-              <li><a href="#vouches" className="hover:text-accent">Reviews</a></li>
-              <li><a href="#dashboard" className="hover:text-accent">Live Dashboard</a></li>
-              <li><a href="#fees" className="hover:text-accent">Fees</a></li>
+              <li><Link href="/terms" className="hover:text-accent">Terms of Service</Link></li>
+              <li><Link href="/#vouches" className="hover:text-accent">Reviews</Link></li>
+              <li><Link href="/#dashboard" className="hover:text-accent">Live Dashboard</Link></li>
+              <li><Link href="/#fees" className="hover:text-accent">Fees</Link></li>
             </ul>
           </div>
 
           <div>
             <h3 className="text-sm font-semibold text-foreground">Products</h3>
             <ul className="mt-4 flex flex-col gap-2 text-sm text-muted">
-              <li><a href="#shop" className="hover:text-accent">Escrow Services</a></li>
-              <li><a href="#shop" className="hover:text-accent">Middleman Passes</a></li>
-              <li><a href="#shop" className="hover:text-accent">Advertising Slots</a></li>
-              <li><a href="#shop" className="hover:text-accent">Digital Goods</a></li>
+              <li><Link href="/#shop" className="hover:text-accent">Escrow Services</Link></li>
+              <li><Link href="/#shop" className="hover:text-accent">Middleman Passes</Link></li>
+              <li><Link href="/#shop" className="hover:text-accent">Advertising Slots</Link></li>
+              <li><Link href="/#shop" className="hover:text-accent">Digital Goods</Link></li>
             </ul>
           </div>
         </div>
