@@ -7,6 +7,9 @@ export interface StatsResponse {
   totalEscrow: number;
   completedMM: number;
   totalUserTrades: number;
+  openTickets?: number;
+  totalCustomers?: number;
+  totalVolumeEur?: number;
 }
 
 export interface LtcResponse {
