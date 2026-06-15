@@ -100,11 +100,22 @@ function Dashboard() {
           </div>
         </div>
 
-        <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Total Customers" value={stats?.totalUserTrades} />
-          <StatCard label="Total Escrow Volume" value={stats ? formatCurrency(stats.totalEscrow, "EUR") : undefined} />
+        <section className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+          <StatCard label="Open Tickets" value={stats?.openTickets} />
+          <StatCard label="Total Customers" value={stats?.totalCustomers ?? stats?.totalUserTrades} />
+          <StatCard
+            label="Total Volume"
+            value={
+              stats?.totalVolumeEur !== undefined
+                ? formatCurrency(stats.totalVolumeEur, "EUR")
+                : stats
+                  ? formatCurrency(stats.totalEscrow, "EUR")
+                  : undefined
+            }
+          />
           <StatCard label="Active Slots" value={stats?.activeSlots} />
           <StatCard label="Completed MM" value={stats?.completedMM} />
+          <StatCard label="Total Trades" value={stats?.totalUserTrades} />
         </section>
 
         <section className="mt-8 rounded-2xl border border-border bg-background-elevated/40 p-4">
