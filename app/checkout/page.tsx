@@ -45,7 +45,7 @@ function CheckoutContent() {
   const { items, loaded } = useProducts();
   const cart = useCart();
 
-  const buyNowProduct = productId ? items.find((item) => item.id === productId) : null;
+  const buyNowProduct = productId ? items.find((item) => String(item.id) === productId) : null;
 
   const queue = useMemo(() => {
     if (buyNowProduct) {

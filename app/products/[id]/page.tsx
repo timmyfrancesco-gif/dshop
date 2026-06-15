@@ -17,7 +17,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
-  const product = items.find((item) => item.id === params.id);
+  const product = items.find((item) => String(item.id) === params.id);
 
   if (!loaded) {
     return (

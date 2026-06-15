@@ -18,7 +18,7 @@ export function useProducts() {
           res.products
             .filter((p) => p.stock > 0)
             .map((p) => ({
-              id: p.id,
+              id: String(p.id),
               name: p.name,
               category: "Shop",
               price: p.price,
