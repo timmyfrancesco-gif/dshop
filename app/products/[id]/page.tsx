@@ -12,7 +12,7 @@ import { useProducts } from "@/lib/hooks/useProducts";
 export default function ProductPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { items, loaded } = useProducts();
+  const { items, loaded, error } = useProducts();
   const cart = useCart();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -24,6 +24,23 @@ export default function ProductPage() {
       <PageShell>
         <section className="px-4 py-24 sm:px-6 lg:px-8">
           <p className="text-center text-sm text-muted">Loading product…</p>
+        </section>
+      </PageShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageShell>
+        <section className="px-4 py-24 text-center sm:px-6 lg:px-8">
+          <h1 className="text-2xl font-bold text-foreground">Unable to load product</h1>
+          <p className="mt-2 text-sm text-muted">Please try again later.</p>
+          <Link
+            href="/#shop"
+            className="mt-6 inline-block rounded-full border border-accent/30 bg-accent-soft px-5 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
+          >
+            Back to Shop
+          </Link>
         </section>
       </PageShell>
     );

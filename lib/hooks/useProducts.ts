@@ -2,17 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { getProducts } from "@/lib/api";
-import { PRODUCTS } from "@/lib/config";
 import type { ShopItem } from "@/lib/types";
 
-const FALLBACK_ITEMS: ShopItem[] = PRODUCTS.map((p) => ({
-  ...p,
-  currency: "EUR",
-}));
-
 export function useProducts() {
-  const [items, setItems] = useState<ShopItem[]>(FALLBACK_ITEMS);
+  const [items, setItems] = useState<ShopItem[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,6 +30,8 @@ export function useProducts() {
               url: p.url,
             }))
         );
+      } else {
+        setError(true);
       }
       setLoaded(true);
     });
@@ -43,5 +40,5 @@ export function useProducts() {
     };
   }, []);
 
-  return { items, loaded };
+  return { items, loaded, error };
 }

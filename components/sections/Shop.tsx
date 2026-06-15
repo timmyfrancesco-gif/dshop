@@ -20,7 +20,7 @@ const SORT_OPTIONS: { id: SortOption; label: string }[] = [
 ];
 
 export default function Shop() {
-  const { items, loaded } = useProducts();
+  const { items, loaded, error } = useProducts();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState<SortOption>("default");
@@ -151,6 +151,10 @@ export default function Shop() {
 
         {!loaded ? (
           <p className="mt-14 text-center text-sm text-muted">Loading products…</p>
+        ) : error ? (
+          <p className="mt-14 text-center text-sm text-muted">
+            Unable to load products right now — please try again later.
+          </p>
         ) : visibleItems.length === 0 ? (
           <p className="mt-14 text-center text-sm text-muted">
             No products available right now — check back soon.
