@@ -1,9 +1,47 @@
 export const SITE = {
-  name: "Astro Exchange",
+  name: "Heaven Market",
   tagline: "Trade crypto with confidence — escrow, middleman & exchange services built for Discord.",
   discordInvite: process.env.NEXT_PUBLIC_DISCORD_INVITE ?? "https://discord.gg/your-invite",
   shopUrl: process.env.NEXT_PUBLIC_SHOP_URL ?? "https://discord.gg/your-invite",
 };
+
+export const NAV_LINKS = [
+  { href: "#top", label: "Home" },
+  { href: "#shop", label: "Products" },
+  { href: "#services", label: "Features" },
+  { href: "#faq", label: "FAQ" },
+  { href: "#vouches", label: "Reviews" },
+  { href: "/track", label: "Track Order" },
+  { href: "/terms", label: "Terms of Service" },
+];
+
+export const FAQS = [
+  {
+    question: "How do I buy a product?",
+    answer:
+      "Browse the shop, open a product to choose a quantity, then pay with Litecoin (LTC) directly on the site. Once your payment is confirmed, the item is delivered straight to this site and to your Discord DMs.",
+  },
+  {
+    question: "What payment methods are accepted?",
+    answer:
+      "Right now all purchases are paid in Litecoin (LTC). More payment methods are coming soon — they'll appear in the payment method selector once available.",
+  },
+  {
+    question: "How long does delivery take?",
+    answer:
+      "Delivery is automatic. As soon as your LTC payment is confirmed on-chain, the bot marks your order as paid, delivers the item on this site and sends you a DM on Discord.",
+  },
+  {
+    question: "What if I send the wrong amount?",
+    answer:
+      "Each order has an exact amount in EUR and LTC. If the payment received doesn't match exactly, the order stays pending and isn't delivered automatically — contact staff on Discord with your order ID and we'll sort it out.",
+  },
+  {
+    question: "Can I track my order?",
+    answer:
+      "Yes — use the Track Order page and enter your order ID to see its current status (pending or paid).",
+  },
+] as const;
 
 export const TICKER_COINS = [
   { id: "litecoin", symbol: "LTC", name: "Litecoin" },

@@ -1,6 +1,4 @@
-import AnimatedBackground from "@/components/ui/AnimatedBackground";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
+import PageShell from "@/components/layout/PageShell";
 import Hero from "@/components/sections/Hero";
 import LiveTicker from "@/components/sections/LiveTicker";
 import ServicesGrid from "@/components/sections/ServicesGrid";
@@ -9,25 +7,22 @@ import Shop from "@/components/sections/Shop";
 import Pricing from "@/components/sections/Pricing";
 import Fees from "@/components/sections/Fees";
 import Testimonials from "@/components/sections/Testimonials";
+import Faq from "@/components/sections/Faq";
 import CtaSection from "@/components/sections/CtaSection";
 
 export default function Home() {
   return (
-    <>
-      <AnimatedBackground />
-      <Header />
-      <main className="flex-1">
-        <Hero />
-        <LiveTicker />
-        <ServicesGrid />
-        <LiveDashboard />
-        <Shop />
-        <Pricing />
-        <Fees />
-        <Testimonials />
-        <CtaSection />
-      </main>
-      <Footer />
-    </>
+    <PageShell>
+      <Hero />
+      <LiveTicker />
+      <ServicesGrid />
+      <LiveDashboard />
+      <Shop />
+      <Pricing />
+      <Fees />
+      <Testimonials />
+      <Faq />
+      <CtaSection />
+    </PageShell>
   );
 }

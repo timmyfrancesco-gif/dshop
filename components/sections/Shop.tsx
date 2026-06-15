@@ -1,21 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import SectionHeading from "@/components/ui/SectionHeading";
 import ServiceIcon from "@/components/ui/ServiceIcon";
-import ProductModal from "@/components/modals/ProductModal";
 import CartDrawer from "@/components/shop/CartDrawer";
-import { getProducts } from "@/lib/api";
-import { PRODUCTS } from "@/lib/config";
 import { formatCurrency } from "@/lib/format";
 import { useCart } from "@/lib/hooks/useCart";
-import type { ShopItem } from "@/lib/types";
-
-const FALLBACK_ITEMS: ShopItem[] = PRODUCTS.map((p) => ({
-  ...p,
-  currency: "EUR",
-}));
+import { useProducts } from "@/lib/hooks/useProducts";
 
 type SortOption = "default" | "price-asc" | "price-desc" | "name";
 
@@ -27,38 +20,13 @@ const SORT_OPTIONS: { id: SortOption; label: string }[] = [
 ];
 
 export default function Shop() {
-  const [items, setItems] = useState<ShopItem[]>(FALLBACK_ITEMS);
-  const [selected, setSelected] = useState<ShopItem | null>(null);
+  const { items, loaded } = useProducts();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState<SortOption>("default");
   const [cartOpen, setCartOpen] = useState(false);
 
   const cart = useCart();
-
-  useEffect(() => {
-    let cancelled = false;
-    getProducts().then((res) => {
-      if (cancelled || !res?.products?.length) return;
-      setItems(
-        res.products.map((p) => ({
-          id: p.id,
-          name: p.name,
-          category: "Shop",
-          price: p.price,
-          currency: p.currency,
-          stock: p.stock,
-          description: p.description,
-          icon: "shop",
-          image: p.image,
-          url: p.url,
-        }))
-      );
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const categories = useMemo(() => {
     const unique = Array.from(new Set(items.map((item) => item.category)));
@@ -104,7 +72,7 @@ export default function Shop() {
             align="left"
             eyebrow="Digital Shop"
             title="Browse what's in stock"
-            description="Secure digital goods delivered straight through the bot. Add items to your cart and pay with LTC, all on this site."
+            description="Products are added and restocked live by our Discord bot. Add items to your cart and pay with LTC, all on this site."
           />
 
           <button
@@ -181,8 +149,12 @@ export default function Shop() {
           </div>
         </div>
 
-        {visibleItems.length === 0 ? (
-          <p className="mt-14 text-center text-sm text-muted">No products match your search.</p>
+        {!loaded ? (
+          <p className="mt-14 text-center text-sm text-muted">Loading products…</p>
+        ) : visibleItems.length === 0 ? (
+          <p className="mt-14 text-center text-sm text-muted">
+            No products available right now — check back soon.
+          </p>
         ) : (
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {visibleItems.map((item, i) => (
@@ -197,9 +169,8 @@ export default function Shop() {
               >
                 <div className="absolute -right-8 -top-8 z-10 h-24 w-24 rounded-full bg-accent/10 blur-2xl opacity-0 transition-opacity group-hover:opacity-100" />
 
-                <button
-                  type="button"
-                  onClick={() => setSelected(item)}
+                <Link
+                  href={`/products/${item.id}`}
                   className="relative h-40 w-full overflow-hidden border-b border-border bg-background-elevated text-left"
                 >
                   {item.image ? (
@@ -219,16 +190,10 @@ export default function Shop() {
                     {formatCurrency(item.price, item.currency)}
                   </span>
 
-                  <span
-                    className={`absolute bottom-3 left-3 rounded-full border px-3 py-1 text-xs font-semibold ${
-                      item.stock > 0
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                        : "border-rose-500/30 bg-rose-500/10 text-rose-400"
-                    }`}
-                  >
-                    {item.stock > 0 ? "In Stock" : "Out of Stock"}
+                  <span className="absolute bottom-3 left-3 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+                    In Stock
                   </span>
-                </button>
+                </Link>
 
                 <div className="flex flex-1 flex-col p-6">
                   <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
@@ -238,19 +203,17 @@ export default function Shop() {
                   <p className="mt-2 flex-1 text-sm text-muted">{item.description}</p>
 
                   <div className="mt-6 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setSelected(item)}
-                      className="flex-1 rounded-full border border-accent/30 bg-accent-soft px-4 py-2 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
+                    <Link
+                      href={`/products/${item.id}`}
+                      className="flex-1 rounded-full border border-accent/30 bg-accent-soft px-4 py-2 text-center text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
                     >
                       View Details
-                    </button>
+                    </Link>
                     <button
                       type="button"
                       onClick={() => cart.addItem(item, 1)}
-                      disabled={item.stock === 0}
                       aria-label={`Add ${item.name} to cart`}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-accent hover:text-accent"
                     >
                       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
@@ -263,8 +226,6 @@ export default function Shop() {
           </div>
         )}
       </div>
-
-      <ProductModal product={selected} onClose={() => setSelected(null)} onAddToCart={cart.addItem} />
 
       <CartDrawer
         open={cartOpen}

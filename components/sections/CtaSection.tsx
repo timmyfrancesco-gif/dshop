@@ -18,10 +18,10 @@ export default function CtaSection() {
           <div className="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-casino-from/20 blur-[100px]" />
 
           <h2 className="text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Ready to trade safely?
+            Ready to start trading on {SITE.name}?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-balance text-muted">
-            Join the Astro Exchange Discord to start an escrow, request a
+            Join the {SITE.name} Discord to start an escrow, request a
             middleman, exchange your crypto, or browse the shop.
           </p>
 
@@ -35,9 +35,7 @@ export default function CtaSection() {
               Join Discord
             </a>
             <a
-              href={SITE.shopUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#shop"
               className="rounded-full border border-border bg-background-elevated/60 px-8 py-3 text-base font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
             >
               Visit Shop

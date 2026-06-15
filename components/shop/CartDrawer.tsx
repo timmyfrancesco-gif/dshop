@@ -1,9 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import Link from "next/link";
 import ServiceIcon from "@/components/ui/ServiceIcon";
-import CartCheckoutModal from "@/components/shop/CartCheckoutModal";
 import { formatCurrency } from "@/lib/format";
 import type { CartLine } from "@/lib/hooks/useCart";
 
@@ -28,21 +27,18 @@ export default function CartDrawer({
   onRemove,
   onClear,
 }: CartDrawerProps) {
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-
   return (
-    <>
-      <AnimatePresence>
-        {open ? (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"
-              onClick={onClose}
-            />
-            <motion.div
+    <AnimatePresence>
+      {open ? (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -142,13 +138,13 @@ export default function CartDrawer({
                         {formatCurrency(total, currency)}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setCheckoutOpen(true)}
-                      className="mt-4 w-full rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+                    <Link
+                      href="/checkout"
+                      onClick={onClose}
+                      className="mt-4 block w-full rounded-full bg-accent px-4 py-2.5 text-center text-sm font-semibold text-background transition-opacity hover:opacity-90"
                     >
                       Checkout with LTC
-                    </button>
+                    </Link>
                     <button
                       type="button"
                       onClick={onClear}
@@ -162,18 +158,6 @@ export default function CartDrawer({
             </motion.div>
           </>
         ) : null}
-      </AnimatePresence>
-
-      <CartCheckoutModal
-        open={checkoutOpen}
-        lines={lines}
-        onClose={() => setCheckoutOpen(false)}
-        onDone={() => {
-          onClear();
-          setCheckoutOpen(false);
-          onClose();
-        }}
-      />
-    </>
+    </AnimatePresence>
   );
 }

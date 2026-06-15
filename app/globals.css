@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #05070d;
-  --background-elevated: #0b0f1a;
-  --foreground: #e8edf5;
-  --muted: #8b95a7;
-  --border: #1c2333;
+  --background: #07050d;
+  --background-elevated: #110c1e;
+  --foreground: #f3f0fb;
+  --muted: #9c93b5;
+  --border: #241c38;
 
-  --accent: #5fb3c4;
-  --accent-soft: #5fb3c41a;
+  --accent: #a855f7;
+  --accent-soft: #a855f71a;
 
-  --casino-from: #a855f7;
+  --casino-from: #c084fc;
   --casino-to: #ec4899;
 }
 
@@ -81,6 +81,13 @@ body {
   background: color-mix(in srgb, var(--background-elevated) 80%, transparent);
   border: 1px solid var(--border);
   backdrop-filter: blur(12px);
+}
+
+.text-gradient-accent {
+  background: linear-gradient(135deg, var(--accent), var(--casino-from));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
