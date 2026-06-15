@@ -120,6 +120,7 @@ export interface ProductOrderStatusResponse {
   productId?: string;
   amountEur?: number;
   address?: string;
+  deliveredItem?: string | null;
 }
 
 export interface CoinPrice {

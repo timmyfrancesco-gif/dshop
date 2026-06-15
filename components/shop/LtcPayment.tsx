@@ -10,7 +10,7 @@ const POLL_INTERVAL_MS = 5000;
 
 interface LtcPaymentProps {
   order: ProductOrderResponse;
-  onPaid: () => void;
+  onPaid: (deliveredItem?: string | null) => void;
 }
 
 export default function LtcPayment({ order, onPaid }: LtcPaymentProps) {
@@ -28,7 +28,7 @@ export default function LtcPayment({ order, onPaid }: LtcPaymentProps) {
     const interval = setInterval(async () => {
       const statusRes = await getProductOrder(order.orderId);
       if (cancelled || !statusRes) return;
-      if (statusRes.status === "paid") onPaid();
+      if (statusRes.status === "paid") onPaid(statusRes.deliveredItem);
     }, POLL_INTERVAL_MS);
 
     return () => {

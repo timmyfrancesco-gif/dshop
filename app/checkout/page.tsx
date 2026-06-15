@@ -65,6 +65,7 @@ function CheckoutContent() {
   const [index, setIndex] = useState(0);
   const [order, setOrder] = useState<ProductOrderResponse | null>(null);
   const [finished, setFinished] = useState(false);
+  const [deliveredItems, setDeliveredItems] = useState<(string | null | undefined)[]>([]);
 
   if (!loaded) {
     return <p className="mt-10 text-sm text-muted">Loading…</p>;
@@ -116,7 +117,8 @@ function CheckoutContent() {
     setOrder(res);
   }
 
-  function handlePaid() {
+  function handlePaid(deliveredItem?: string | null) {
+    setDeliveredItems((prev) => [...prev, deliveredItem]);
     if (isLast) {
       setFinished(true);
       if (!buyNowProduct) cart.clear();
@@ -171,7 +173,15 @@ function CheckoutContent() {
 
       <div className="rounded-2xl border border-border bg-background/60 p-6">
         {finished ? (
-          <DeliveredNotice message="All items paid! Check your Discord DMs — the bot will deliver everything automatically." />
+          deliveredItems.some((item) => item) ? (
+            <div className="flex flex-col gap-4">
+              {deliveredItems.map((item, i) =>
+                item ? <DeliveredNotice key={i} deliveredItem={item} /> : null
+              )}
+            </div>
+          ) : (
+            <DeliveredNotice message="All items paid! Check your Discord DMs — the bot will deliver everything automatically." />
+          )
         ) : !order ? (
           <form onSubmit={startPayment} className="flex flex-col gap-4">
             <label className="flex flex-col gap-2 text-sm">
