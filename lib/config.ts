@@ -6,11 +6,11 @@ export const SITE = {
 };
 
 export const NAV_LINKS = [
-  { href: "#top", label: "Home" },
-  { href: "#shop", label: "Products" },
-  { href: "#services", label: "Features" },
-  { href: "#faq", label: "FAQ" },
-  { href: "#vouches", label: "Reviews" },
+  { href: "/#top", label: "Home" },
+  { href: "/#shop", label: "Products" },
+  { href: "/#services", label: "Features" },
+  { href: "/#faq", label: "FAQ" },
+  { href: "/#vouches", label: "Reviews" },
   { href: "/track", label: "Track Order" },
   { href: "/terms", label: "Terms of Service" },
 ];

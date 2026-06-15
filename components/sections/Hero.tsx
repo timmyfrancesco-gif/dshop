@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
+import Link from "next/link";
 import { useRef } from "react";
 import { SITE } from "@/lib/config";
 
@@ -83,12 +84,12 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.3 }}
           className="mt-10 flex flex-col items-center gap-4 sm:flex-row"
         >
-          <a
-            href="#shop"
+          <Link
+            href="/#shop"
             className="rounded-full bg-accent px-8 py-3 text-base font-semibold text-background shadow-[0_0_30px_-5px_var(--accent)] transition-transform hover:scale-105"
           >
             Explore Shop
-          </a>
+          </Link>
           <div className="flex items-center gap-2 rounded-full border border-border bg-background-elevated/60 px-5 py-3 text-sm font-medium text-foreground">
             <span className="flex gap-0.5 text-accent" aria-hidden>
               {Array.from({ length: 5 }).map((_, i) => (

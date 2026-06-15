@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 import { NAV_LINKS, SITE } from "@/lib/config";
 
@@ -10,20 +11,20 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <a href="#top" className="flex items-center gap-2 text-lg font-bold tracking-tight">
+        <Link href="/#top" className="flex items-center gap-2 text-lg font-bold tracking-tight">
           <Logo className="h-8 w-8" />
           <span>{SITE.name}</span>
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
           {NAV_LINKS.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               className="text-sm font-medium text-muted transition-colors hover:text-foreground"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -39,12 +40,12 @@ export default function Header() {
             </svg>
             Discord
           </a>
-          <a
-            href="#shop"
+          <Link
+            href="/#shop"
             className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-background shadow-[0_0_24px_-6px_var(--accent)] transition-transform hover:scale-105"
           >
             Shop Now
-          </a>
+          </Link>
         </div>
 
         <button
@@ -67,14 +68,14 @@ export default function Header() {
         <div className="border-t border-border/60 bg-background/95 px-4 pb-6 pt-2 lg:hidden">
           <nav className="flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-background-elevated hover:text-foreground"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
           <div className="mt-4 flex flex-col gap-2">
@@ -86,13 +87,13 @@ export default function Header() {
             >
               Discord
             </a>
-            <a
-              href="#shop"
+            <Link
+              href="/#shop"
               onClick={() => setOpen(false)}
               className="rounded-full bg-accent px-4 py-2 text-center text-sm font-semibold text-background"
             >
               Shop Now
-            </a>
+            </Link>
           </div>
         </div>
       ) : null}

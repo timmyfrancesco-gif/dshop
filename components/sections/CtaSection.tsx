@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { SITE } from "@/lib/config";
 
 export default function CtaSection() {
@@ -34,12 +35,12 @@ export default function CtaSection() {
             >
               Join Discord
             </a>
-            <a
-              href="#shop"
+            <Link
+              href="/#shop"
               className="rounded-full border border-border bg-background-elevated/60 px-8 py-3 text-base font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
             >
               Visit Shop
-            </a>
+            </Link>
           </div>
         </motion.div>
       </div>
