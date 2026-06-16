@@ -65,6 +65,7 @@ function CheckoutContent() {
   const [index, setIndex] = useState(0);
   const [order, setOrder] = useState<ProductOrderResponse | null>(null);
   const [finished, setFinished] = useState(false);
+  const [cancelled, setCancelled] = useState(false);
   const [deliveredItems, setDeliveredItems] = useState<(string | null | undefined)[]>([]);
 
   if (!loaded) {
@@ -80,6 +81,28 @@ function CheckoutContent() {
           className="mt-4 inline-block rounded-full border border-accent/30 bg-accent-soft px-5 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
         >
           Back to Shop
+        </Link>
+      </div>
+    );
+  }
+
+  if (cancelled) {
+    return (
+      <div className="mt-10 flex flex-col items-center gap-6 rounded-2xl border border-rose-500/30 bg-rose-500/5 p-10 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-rose-500/40 bg-rose-500/10">
+          <svg viewBox="0 0 24 24" className="h-10 w-10 text-rose-500" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </div>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-2xl font-bold text-rose-500">Ordine Cancellato</h2>
+          <p className="text-sm text-muted">Il tuo ordine è stato cancellato dallo staff.</p>
+        </div>
+        <Link
+          href="/#shop"
+          className="rounded-full border border-rose-500/30 bg-rose-500/10 px-6 py-2.5 text-sm font-semibold text-rose-400 transition-colors hover:bg-rose-500 hover:text-white"
+        >
+          Torna allo Shop
         </Link>
       </div>
     );
@@ -115,6 +138,10 @@ function CheckoutContent() {
     }
 
     setOrder(res);
+  }
+
+  function handleCancelled() {
+    setCancelled(true);
   }
 
   function handlePaid(deliveredItem?: string | null) {
@@ -206,7 +233,7 @@ function CheckoutContent() {
             </button>
           </form>
         ) : (
-          <LtcPayment order={order} onPaid={handlePaid} />
+          <LtcPayment order={order} onPaid={handlePaid} onCancelled={handleCancelled} />
         )}
       </div>
 

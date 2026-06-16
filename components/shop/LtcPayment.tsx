@@ -11,9 +11,10 @@ const POLL_INTERVAL_MS = 5000;
 interface LtcPaymentProps {
   order: ProductOrderResponse;
   onPaid: (deliveredItem?: string | null) => void;
+  onCancelled: () => void;
 }
 
-export default function LtcPayment({ order, onPaid }: LtcPaymentProps) {
+export default function LtcPayment({ order, onPaid, onCancelled }: LtcPaymentProps) {
   const [ltcEur, setLtcEur] = useState<number | null>(null);
   const qrCode = useQrCode(`litecoin:${order.address}?amount=${order.amountEur}`);
 
@@ -29,13 +30,14 @@ export default function LtcPayment({ order, onPaid }: LtcPaymentProps) {
       const statusRes = await getProductOrder(order.orderId);
       if (cancelled || !statusRes) return;
       if (statusRes.status === "paid") onPaid(statusRes.deliveredItem);
+      else if (statusRes.status === "cancelled") { clearInterval(interval); onCancelled(); }
     }, POLL_INTERVAL_MS);
 
     return () => {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [order, onPaid]);
+  }, [order, onPaid, onCancelled]);
 
   const approxLtc = ltcEur ? (order.amountEur / ltcEur).toFixed(6) : null;
 
