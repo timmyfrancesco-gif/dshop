@@ -16,34 +16,44 @@ export function formatRelativeTime(timestamp: number): string {
   return `${diffDay}d ago`;
 }
 
-export function formatEur(value: number, fractionDigits = 2): string {
+function smartDecimals(value: number): number {
+  if (!value || !isFinite(value)) return 2;
+  const abs = Math.abs(value);
+  if (abs >= 0.01) return 2;
+  return Math.min(8, Math.ceil(-Math.log10(abs)));
+}
+
+export function formatEur(value: number, fractionDigits?: number): string {
+  const digits = fractionDigits ?? smartDecimals(value);
   return new Intl.NumberFormat("en-IE", {
     style: "currency",
     currency: "EUR",
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
   }).format(value);
 }
 
-export function formatUsd(value: number, fractionDigits = 2): string {
+export function formatUsd(value: number): string {
+  const digits = smartDecimals(value);
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
   }).format(value);
 }
 
-export function formatCurrency(value: number, currency: string, fractionDigits = 2): string {
+export function formatCurrency(value: number, currency: string): string {
+  const digits = smartDecimals(value);
   try {
     return new Intl.NumberFormat("en-IE", {
       style: "currency",
       currency: currency.toUpperCase(),
-      minimumFractionDigits: fractionDigits,
-      maximumFractionDigits: fractionDigits,
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
     }).format(value);
   } catch {
-    return `${value.toFixed(fractionDigits)} ${currency.toUpperCase()}`;
+    return `${value.toFixed(digits)} ${currency.toUpperCase()}`;
   }
 }
 

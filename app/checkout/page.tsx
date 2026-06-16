@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
@@ -13,6 +13,7 @@ import { useProducts } from "@/lib/hooks/useProducts";
 import type { ProductOrderResponse, ShopItem } from "@/lib/types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ORDER_STORAGE_KEY = "checkout_order_v1";
 
 const PAYMENT_METHODS = [
   {
@@ -107,6 +108,25 @@ function CheckoutContent() {
   const [cancelled, setCancelled] = useState(false);
   const [deliveredItems, setDeliveredItems] = useState<(string | null | undefined)[]>([]);
 
+  // Restore order from sessionStorage on mount (survives page reload)
+  useEffect(() => {
+    if (!loaded || !productId) return;
+    try {
+      const raw = sessionStorage.getItem(ORDER_STORAGE_KEY);
+      if (!raw) return;
+      const stored = JSON.parse(raw) as { order: ProductOrderResponse; productId: string; email: string; ts: number };
+      if (stored.productId === productId && Date.now() - stored.ts < 3_600_000) {
+        setEmail(stored.email);
+        setOrder(stored.order);
+      } else {
+        sessionStorage.removeItem(ORDER_STORAGE_KEY);
+      }
+    } catch {
+      sessionStorage.removeItem(ORDER_STORAGE_KEY);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+
   if (!loaded) {
     return <p className="mt-10 text-sm text-muted">Loading…</p>;
   }
@@ -178,9 +198,18 @@ function CheckoutContent() {
     }
 
     setOrder(res);
+    try {
+      sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify({
+        order: res,
+        productId: currentItem.id,
+        email: email.trim(),
+        ts: Date.now(),
+      }));
+    } catch {}
   }
 
   function handlePaid(deliveredItem?: string | null) {
+    sessionStorage.removeItem(ORDER_STORAGE_KEY);
     setDeliveredItems((prev) => [...prev, deliveredItem]);
     if (isLast) {
       setFinished(true);
@@ -192,6 +221,7 @@ function CheckoutContent() {
   }
 
   function handleCancelled() {
+    sessionStorage.removeItem(ORDER_STORAGE_KEY);
     setCancelled(true);
   }
 
