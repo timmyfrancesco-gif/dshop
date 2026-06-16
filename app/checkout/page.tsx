@@ -193,7 +193,6 @@ function CheckoutContent() {
             {order ? "Step 2 of 2 · Payment" : "Step 1 of 2 · Order Details"}
           </p>
         )}
-        {/* Progress bar */}
         {!finished && (
           <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-border">
             <div
