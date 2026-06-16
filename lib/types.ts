@@ -107,7 +107,7 @@ export interface ProductsResponse {
 
 export interface ProductOrderRequest {
   productId: string;
-  email: string;
+  discord: string;
 }
 
 export interface ProductOrderResponse {

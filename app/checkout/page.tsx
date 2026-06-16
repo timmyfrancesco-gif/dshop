@@ -21,8 +21,12 @@ const PAYMENT_METHODS = [
     sub: "via Litecoin Network",
     available: true,
     icon: (
-      <svg viewBox="0 0 32 32" className="h-5 w-5" fill="currentColor" aria-hidden>
-        <path d="M16 0C7.163 0 0 7.163 0 16s7.163 16 16 16 16-7.163 16-16S24.837 0 16 0zm2.47 19.112l-.636 2.388H8.5l.828-3.103 3.96-1.056.52-1.942-3.96 1.056.636-2.388 3.96-1.056 1.68-6.293h3.398l-1.68 6.293 3.96-1.056-.636 2.388-3.96 1.056-.52 1.942 3.984-1.229z" />
+      <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
+        <circle cx="16" cy="16" r="16" fill="currentColor" />
+        <path
+          d="M12.5 7.5H15v9l-2.5.82.6 1.82 1.9-.62V24.5h9v-2h-7v-3.18l2.5-.82-.6-1.82-1.9.62V7.5z"
+          fill="white"
+        />
       </svg>
     ),
   },
@@ -32,8 +36,12 @@ const PAYMENT_METHODS = [
     sub: "Coming soon",
     available: false,
     icon: (
-      <svg viewBox="0 0 32 32" className="h-5 w-5" fill="currentColor" aria-hidden>
-        <path d="M16 0C7.163 0 0 7.163 0 16s7.163 16 16 16 16-7.163 16-16S24.837 0 16 0zm3.064 17.454c.188 1.26-.748 1.94-2.02 2.39l.413 1.655-1.008.252-.402-1.608c-.265.066-.537.128-.807.19l.404 1.618-1.008.252-.413-1.655a53.46 53.46 0 01-.644.153l.001.005-1.391.347-.268-1.077s.748-.171.732-.182c.408-.102.482-.372.47-.586l-.47-1.884v-.001l-.633-2.535c-.048-.12-.17-.299-.444-.231.01-.014-.732.183-.732.183l-.404-1.007 1.312-.327.628-.157-.418-1.674 1.006-.251.412 1.651c.27-.073.543-.143.81-.212l-.41-1.641 1.009-.252.418 1.671c1.724-.326 3.02-.195 3.564 1.367.44 1.257-.022 1.982-.93 2.47.661.152 1.16.586 1.292 1.48zm-2.53-1.166c-.314-1.257-2.44-.578-3.13-.407l.559 2.24c.69-.172 2.898-.513 2.571-1.833zm.315 3.33c-.285-1.143-2.224-.562-2.845-.42l.619 2.48c.62-.155 2.517-.444 2.226-2.06z" />
+      <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
+        <circle cx="16" cy="16" r="16" fill="currentColor" />
+        <path
+          d="M22 15.6c.4-.9.3-2-.8-2.7.4-.6.5-1.3.3-2-.4-1.4-1.9-2-3.7-2H10v14h8.2c2 0 4-.9 4.3-3.2.2-1.4-.4-2.5-1.3-3.1l.8-.3-.8-1-.2 1.3zM12.5 11h4c.8 0 1.5.4 1.5 1.3s-.7 1.3-1.5 1.3h-4V11zm4.5 8.5h-4.5v-3h4.5c1 0 1.7.5 1.7 1.5s-.8 1.5-1.7 1.5z"
+          fill="white"
+        />
       </svg>
     ),
   },
@@ -43,8 +51,12 @@ const PAYMENT_METHODS = [
     sub: "Coming soon",
     available: false,
     icon: (
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
-        <path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
+      <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
+        <circle cx="16" cy="16" r="16" fill="currentColor" />
+        <path
+          d="M22 10H10c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8c0-1.1-.9-2-2-2zm0 10H10v-4h12v4zm0-7H10v-1h12v1z"
+          fill="white"
+        />
       </svg>
     ),
   },
@@ -156,7 +168,7 @@ function CheckoutContent() {
     setLoading(true);
     const res = await createProductOrder({
       productId: currentItem.id,
-      email: email.trim(),
+      discord: email.trim(),
     });
     setLoading(false);
 
@@ -282,13 +294,7 @@ function CheckoutContent() {
                       : "border-border bg-background/60 text-foreground"
                   } ${!method.available ? "cursor-not-allowed opacity-40" : "hover:border-accent/40"}`}
                 >
-                  <span
-                    className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-                      paymentMethod === method.id && method.available
-                        ? "bg-accent text-background"
-                        : "bg-background-elevated text-muted"
-                    }`}
-                  >
+                  <span className={`h-9 w-9 shrink-0 overflow-hidden rounded-full ${method.available ? "text-accent" : "text-muted/40"}`}>
                     {method.icon}
                   </span>
                   <span className="text-left">
