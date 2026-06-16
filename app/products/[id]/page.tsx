@@ -69,6 +69,7 @@ export default function ProductPage() {
   function handleAddToCart() {
     cart.addItem(product!, quantity);
     setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   }
 
   function handlePurchaseNow() {
@@ -78,91 +79,106 @@ export default function ProductPage() {
   return (
     <PageShell>
       <section className="px-4 py-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
-          <Link href="/#shop" className="text-sm font-medium text-muted transition-colors hover:text-foreground">
+        <div className="mx-auto max-w-4xl">
+          <Link href="/#shop" className="inline-flex items-center gap-1 text-sm font-medium text-muted transition-colors hover:text-foreground">
             ← Back to Shop
           </Link>
 
-          <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div className="relative h-72 w-full overflow-hidden rounded-2xl border border-border bg-background-elevated sm:h-96">
+          <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-2">
+            {/* Image */}
+            <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-background-elevated/60">
               {product.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-accent">
-                  <ServiceIcon name={product.icon} className="h-20 w-20" />
+                <div className="flex h-full w-full items-center justify-center text-accent/60">
+                  <ServiceIcon name={product.icon} className="h-28 w-28" />
                 </div>
               )}
-
-              <span
-                className={`absolute bottom-4 left-4 rounded-full border px-3 py-1 text-xs font-semibold ${
-                  product.stock > 0
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                    : "border-rose-500/30 bg-rose-500/10 text-rose-400"
-                }`}
-              >
-                {product.stock > 0 ? "In Stock" : "Out of Stock"}
-              </span>
             </div>
 
+            {/* Details */}
             <div className="flex flex-col">
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-                {product.category}
-              </span>
+              {product.category ? (
+                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+                  {product.category}
+                </span>
+              ) : null}
               <h1 className="mt-2 text-3xl font-bold text-foreground sm:text-4xl">{product.name}</h1>
-              <p className="mt-2 text-2xl font-bold text-gradient-accent">
-                {formatCurrency(product.price, product.currency)}
-              </p>
-              <p className="mt-4 text-sm leading-relaxed text-muted">{product.description}</p>
 
-              <div className="mt-8 flex items-center justify-between gap-4 rounded-xl border border-border bg-background/60 p-4">
-                <span className="text-sm font-medium text-foreground">Quantity</span>
-                <div className="flex items-center gap-3 rounded-full border border-border bg-background/60 px-3 py-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    disabled={product.stock === 0}
-                    className="text-lg font-bold text-muted transition-colors hover:text-foreground disabled:opacity-50"
-                    aria-label="Decrease quantity"
-                  >
-                    −
-                  </button>
-                  <span className="w-6 text-center text-sm font-semibold text-foreground">{quantity}</span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
-                    disabled={product.stock === 0}
-                    className="text-lg font-bold text-muted transition-colors hover:text-foreground disabled:opacity-50"
-                    aria-label="Increase quantity"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-background/60 p-4 text-sm">
-                <span className="text-muted">Total</span>
-                <span className="text-xl font-bold text-foreground">
-                  {formatCurrency(total, product.currency)}
+              {/* Price + Stock */}
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-accent px-4 py-1.5 text-sm font-bold text-background shadow-[0_0_20px_-4px_var(--accent)]">
+                  {formatCurrency(product.price, product.currency)}
+                </span>
+                <span
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+                    product.stock > 0
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                      : "border-rose-500/30 bg-rose-500/10 text-rose-400"
+                  }`}
+                >
+                  {product.stock > 0 ? `${product.stock} In Stock` : "Out of Stock"}
                 </span>
               </div>
 
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              {product.description ? (
+                <p className="mt-6 text-sm leading-relaxed text-muted">{product.description}</p>
+              ) : null}
+
+              {/* Quantity + Total */}
+              <div className="mt-8 rounded-2xl border border-border bg-background-elevated/40 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">Quantity</span>
+                  <div className="flex items-center gap-0 overflow-hidden rounded-full border border-border bg-background/60">
+                    <button
+                      type="button"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={product.stock === 0}
+                      className="px-4 py-2 text-base font-bold text-muted transition-colors hover:bg-background-elevated hover:text-foreground disabled:opacity-40"
+                      aria-label="Decrease quantity"
+                    >
+                      −
+                    </button>
+                    <span className="w-10 border-x border-border py-2 text-center text-sm font-semibold text-foreground">
+                      {quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                      disabled={product.stock === 0}
+                      className="px-4 py-2 text-base font-bold text-muted transition-colors hover:bg-background-elevated hover:text-foreground disabled:opacity-40"
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-4 border-t border-border/60 pt-4 flex items-center justify-between">
+                  <span className="text-sm text-muted">Total</span>
+                  <span className="text-xl font-bold text-foreground">
+                    {formatCurrency(total, product.currency)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
-                  className="flex-1 rounded-full border border-accent/30 bg-accent-soft px-4 py-3 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background disabled:opacity-50"
+                  className="rounded-full border border-accent/40 bg-accent-soft py-3 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background disabled:opacity-40"
                 >
-                  {added ? "Added to cart ✓" : "Add to Cart"}
+                  {added ? "Added ✓" : "Add to Cart"}
                 </button>
                 <button
                   type="button"
                   onClick={handlePurchaseNow}
                   disabled={product.stock === 0}
-                  className="flex-1 rounded-full bg-accent px-4 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="rounded-full bg-accent py-3 text-sm font-semibold text-background shadow-[0_0_24px_-4px_var(--accent)] transition-opacity hover:opacity-90 disabled:opacity-40"
                 >
-                  {product.stock === 0 ? "Out of stock" : "Purchase Now"}
+                  {product.stock === 0 ? "Out of Stock" : "Purchase Now"}
                 </button>
               </div>
             </div>
