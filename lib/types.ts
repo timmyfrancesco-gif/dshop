@@ -118,7 +118,7 @@ export interface ProductOrderResponse {
 }
 
 export interface ProductOrderStatusResponse {
-  status: "pending" | "paid";
+  status: "pending" | "paid" | "cancelled";
   orderId?: string;
   productId?: string;
   amountEur?: number;
