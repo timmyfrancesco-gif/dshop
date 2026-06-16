@@ -39,7 +39,7 @@ export default function LtcPayment({ order, onPaid, onCancelled }: LtcPaymentPro
     };
   }, [order, onPaid, onCancelled]);
 
-  const approxLtc = ltcEur ? (order.amountEur / ltcEur).toFixed(6) : null;
+  const approxLtc = ltcEur ? (order.amountEur / ltcEur).toFixed(8) : null;
 
   return (
     <div className="flex flex-col items-center gap-4 text-center">
