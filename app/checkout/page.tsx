@@ -4,7 +4,6 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
-import DeliveredNotice from "@/components/shop/DeliveredNotice";
 import LtcPayment from "@/components/shop/LtcPayment";
 import { createProductOrder, isApiConfigured } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
@@ -82,7 +81,7 @@ function CheckoutContent() {
   const productId = searchParams.get("productId");
   const qty = Math.max(1, Number(searchParams.get("qty") ?? "1") || 1);
 
-  const { items, loaded } = useProducts();
+  const { items, loaded, refetch: refetchProducts } = useProducts();
   const cart = useCart();
 
   const buyNowProduct = productId ? items.find((item) => String(item.id) === productId) : null;
@@ -211,6 +210,7 @@ function CheckoutContent() {
   function handlePaid(deliveredItem?: string | null) {
     sessionStorage.removeItem(ORDER_STORAGE_KEY);
     setDeliveredItems((prev) => [...prev, deliveredItem]);
+    refetchProducts();
     if (isLast) {
       setFinished(true);
       if (!buyNowProduct) cart.clear();
@@ -271,21 +271,10 @@ function CheckoutContent() {
       </div>
 
       {finished ? (
-        <div className="flex flex-col gap-4">
-          {deliveredItems.some((item) => item) ? (
-            deliveredItems.map((item, i) =>
-              item ? <DeliveredNotice key={i} deliveredItem={item} /> : null
-            )
-          ) : (
-            <DeliveredNotice message="All items paid! Check your email — the bot will deliver everything automatically." />
-          )}
-          <Link
-            href="/#shop"
-            className="rounded-full border border-accent/30 bg-accent-soft px-5 py-2.5 text-center text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
-          >
-            Back to Shop
-          </Link>
-        </div>
+        <SuccessScreen
+          productName={currentItem.name}
+          deliveredItems={deliveredItems}
+        />
       ) : !order ? (
         <form onSubmit={startPayment} className="flex flex-col gap-5">
           {/* Contact section */}
@@ -363,6 +352,73 @@ function CheckoutContent() {
           <LtcPayment order={order} onPaid={handlePaid} onCancelled={handleCancelled} />
         </div>
       )}
+    </div>
+  );
+}
+
+function SuccessScreen({
+  productName,
+  deliveredItems,
+}: {
+  productName: string;
+  deliveredItems: (string | null | undefined)[];
+}) {
+  const [copied, setCopied] = useState(false);
+  const hasItems = deliveredItems.some((item) => item);
+
+  async function handleCopy(text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-10 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-emerald-500/40 bg-emerald-500/10">
+        <svg viewBox="0 0 24 24" className="h-10 w-10 text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <h2 className="text-2xl font-bold text-emerald-400">Ordine Completato!</h2>
+        <p className="text-sm text-foreground">{productName}</p>
+      </div>
+
+      {hasItems ? (
+        <div className="flex w-full flex-col gap-3">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted">Prodotto Consegnato</p>
+          {deliveredItems.map((item, i) =>
+            item ? (
+              <div key={i} className="flex flex-col gap-2">
+                <div className="w-full break-all rounded-xl border border-emerald-500/20 bg-background/60 px-4 py-3 text-left font-mono text-xs text-foreground">
+                  {item}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(item)}
+                  className="self-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-1.5 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500 hover:text-white"
+                >
+                  {copied ? "Copiato ✓" : "Copia"}
+                </button>
+              </div>
+            ) : null
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-muted">
+          Pagamento confermato! Controlla la tua email per ricevere il prodotto.
+        </p>
+      )}
+
+      <Link
+        href="/#shop"
+        className="mt-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-6 py-2.5 text-sm font-semibold text-emerald-400 transition-colors hover:bg-emerald-500 hover:text-white"
+      >
+        Torna allo Shop
+      </Link>
     </div>
   );
 }
