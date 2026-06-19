@@ -10,11 +10,13 @@ const POLL_INTERVAL_MS = 1000;
 
 interface LtcPaymentProps {
   order: ProductOrderResponse;
+  /** Actual cart total — used as fallback when the API rounds amountEur to 0 */
+  cartTotal?: number;
   onPaid: (deliveredItem?: string | null) => void;
   onCancelled: () => void;
 }
 
-export default function LtcPayment({ order, onPaid, onCancelled }: LtcPaymentProps) {
+export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: LtcPaymentProps) {
   const [ltcEur, setLtcEur] = useState<number | null>(null);
 
   useEffect(() => {
@@ -23,7 +25,8 @@ export default function LtcPayment({ order, onPaid, onCancelled }: LtcPaymentPro
     });
   }, [order]);
 
-  const approxLtc = ltcEur ? (order.amountEur / ltcEur).toFixed(8) : null;
+  const displayEur = order.amountEur > 0 ? order.amountEur : (cartTotal ?? order.amountEur);
+  const approxLtc = ltcEur && displayEur > 0 ? (displayEur / ltcEur).toFixed(8) : null;
   const qrCode = useQrCode(
     approxLtc ? `litecoin:${order.address}?amount=${approxLtc}` : null,
   );
@@ -65,7 +68,7 @@ export default function LtcPayment({ order, onPaid, onCancelled }: LtcPaymentPro
       <div className="flex w-full items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2 text-sm">
         <span className="text-muted">Amount due</span>
         <span className="font-semibold text-foreground">
-          {formatEur(order.amountEur)}
+          {formatEur(displayEur)}
           {approxLtc ? ` ≈ ${approxLtc} LTC` : ""}
         </span>
       </div>
