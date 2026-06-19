@@ -349,7 +349,7 @@ function CheckoutContent() {
         </form>
       ) : (
         <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
-          <LtcPayment order={order} onPaid={handlePaid} onCancelled={handleCancelled} />
+          <LtcPayment order={order} cartTotal={queueTotal} onPaid={handlePaid} onCancelled={handleCancelled} />
         </div>
       )}
     </div>
