@@ -16,13 +16,17 @@ interface LtcPaymentProps {
 
 export default function LtcPayment({ order, onPaid, onCancelled }: LtcPaymentProps) {
   const [ltcEur, setLtcEur] = useState<number | null>(null);
-  const qrCode = useQrCode(`litecoin:${order.address}?amount=${order.amountEur}`);
 
   useEffect(() => {
     getLtcPrice().then((res) => {
       if (res) setLtcEur(res.eur);
     });
   }, [order]);
+
+  const approxLtc = ltcEur ? (order.amountEur / ltcEur).toFixed(8) : null;
+  const qrCode = useQrCode(
+    approxLtc ? `litecoin:${order.address}?amount=${approxLtc}` : null,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -38,8 +42,6 @@ export default function LtcPayment({ order, onPaid, onCancelled }: LtcPaymentPro
       clearInterval(interval);
     };
   }, [order, onPaid, onCancelled]);
-
-  const approxLtc = ltcEur ? (order.amountEur / ltcEur).toFixed(8) : null;
 
   return (
     <div className="flex flex-col items-center gap-4 text-center">
