@@ -129,6 +129,20 @@ export interface ProductOrderStatusResponse {
   requiredConfirmations?: number;
 }
 
+export interface WalletInfo {
+  balance: number;
+  address: string;
+}
+
+export interface TransferRequest {
+  amount: number;
+  toAddress: string;
+}
+
+export interface TransferResponse {
+  txId: string;
+}
+
 export interface CoinPrice {
   symbol: string;
   name: string;
