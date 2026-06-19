@@ -10,6 +10,7 @@ export interface StatsResponse {
   openTickets?: number;
   totalCustomers?: number;
   totalVolumeEur?: number;
+  totalOrders?: number;
 }
 
 export interface LtcResponse {

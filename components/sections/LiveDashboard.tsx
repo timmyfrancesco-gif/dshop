@@ -5,7 +5,7 @@ import ConnectionBadge from "@/components/ui/ConnectionBadge";
 import SectionHeading from "@/components/ui/SectionHeading";
 import StatCard from "@/components/ui/StatCard";
 import { useDashboardData } from "@/lib/hooks/useDashboardData";
-import { formatEur, formatNumber } from "@/lib/format";
+import { formatCurrency, formatEur, formatNumber } from "@/lib/format";
 
 export default function LiveDashboard() {
   const { stats, ltc, feed, isLive, isConfigured } = useDashboardData();
@@ -23,27 +23,29 @@ export default function LiveDashboard() {
           <ConnectionBadge isLive={isLive} isConfigured={isConfigured} />
         </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <StatCard
+            label="Total Orders"
+            value={stats?.totalOrders !== undefined ? formatNumber(stats.totalOrders) : stats ? formatNumber(stats.totalUserTrades) : "—"}
+          />
+          <StatCard
+            label="Total Volume"
+            value={
+              stats?.totalVolumeEur !== undefined
+                ? formatCurrency(stats.totalVolumeEur, "EUR")
+                : stats
+                  ? formatCurrency(stats.totalEscrow, "EUR")
+                  : "—"
+            }
+            accent
+          />
           <StatCard
             label="Active Ad Slots"
             value={stats ? formatNumber(stats.activeSlots) : "—"}
           />
           <StatCard
-            label="Escrow Trades"
-            value={stats ? formatNumber(stats.totalEscrow) : "—"}
-          />
-          <StatCard
-            label="Middleman Completed"
-            value={stats ? formatNumber(stats.completedMM) : "—"}
-          />
-          <StatCard
-            label="Total Transactions"
-            value={stats ? formatNumber(stats.totalUserTrades) : "—"}
-          />
-          <StatCard
             label="LTC Price"
             value={ltc ? formatEur(ltc.eur) : "—"}
-            accent
             suffix={
               ltc
                 ? `${ltc.changePct >= 0 ? "▲" : "▼"} ${Math.abs(ltc.changePct).toFixed(2)}%`
