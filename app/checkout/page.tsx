@@ -230,19 +230,19 @@ function CheckoutContent() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Checkout</h1>
-        {!finished && (
-          <p className="mt-1 text-xs text-muted uppercase tracking-widest">
-            {order ? "Step 2 of 2 · Payment" : "Step 1 of 2 · Order Details"}
-          </p>
-        )}
-        {!finished && (
-          <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-border">
-            <div
-              className="h-full rounded-full bg-accent transition-all duration-500"
-              style={{ width: order ? "100%" : "50%" }}
-            />
-          </div>
-        )}
+        <p className="mt-1 text-xs text-muted uppercase tracking-widest">
+          {finished
+            ? "Step 3 of 3 · Completato"
+            : order
+              ? "Step 2 of 3 · Pagamento"
+              : "Step 1 of 3 · Dettagli Ordine"}
+        </p>
+        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-border">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${finished ? "bg-emerald-500" : "bg-accent"}`}
+            style={{ width: finished ? "100%" : order ? "66%" : "33%" }}
+          />
+        </div>
       </div>
 
       {/* Order summary */}
