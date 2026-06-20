@@ -47,12 +47,12 @@ export default function TrackOrderPage() {
 
           <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4 rounded-2xl border border-border bg-background/60 p-6">
             <label className="flex flex-col gap-2 text-sm">
-              <span className="font-medium text-foreground">Order ID</span>
+              <span className="font-medium text-foreground">{t("track.orderIdLabel")}</span>
               <input
                 type="text"
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
-                placeholder="e.g. ord_1a2b3c"
+                placeholder={t("track.placeholder")}
                 className="rounded-lg border border-border bg-background/60 px-3 py-2 font-mono text-foreground outline-none transition-colors focus:border-accent"
               />
             </label>
@@ -64,14 +64,14 @@ export default function TrackOrderPage() {
               disabled={loading}
               className="rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {loading ? "Checking…" : "Track Order"}
+              {loading ? t("track.checking") : t("track.track")}
             </button>
           </form>
 
           {result ? (
             <div className="mt-6 rounded-2xl border border-border bg-background/60 p-6">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted">Status</span>
+                <span className="text-sm text-muted">{t("track.status")}</span>
                 <span
                   className={`rounded-full border px-3 py-1 text-xs font-semibold ${
                     result.status === "paid"
@@ -79,27 +79,27 @@ export default function TrackOrderPage() {
                       : "border-accent/30 bg-accent-soft text-accent"
                   }`}
                 >
-                  {result.status === "paid" ? "Paid & Delivered" : "Awaiting Payment"}
+                  {result.status === "paid" ? t("track.paidDelivered") : t("track.awaitingPayment")}
                 </span>
               </div>
 
               {result.orderId ? (
                 <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-muted">Order ID</span>
+                  <span className="text-muted">{t("track.orderIdLabel")}</span>
                   <span className="font-mono text-foreground">{result.orderId}</span>
                 </div>
               ) : null}
 
               {result.amountEur !== undefined ? (
                 <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-muted">Amount</span>
-                  <span className="font-semibold text-foreground">{formatEur(result.amountEur)}</span>
+                  <span className="text-muted">{t("track.amount")}</span>
+                  <span className="font-semibold text-foreground">{formatPrice(result.amountEur)}</span>
                 </div>
               ) : null}
 
               {result.address ? (
                 <div className="mt-3 flex flex-col gap-1 text-sm">
-                  <span className="text-muted">LTC Address</span>
+                  <span className="text-muted">{t("track.ltcAddress")}</span>
                   <span className="break-all rounded-lg border border-border bg-background/60 px-3 py-2 font-mono text-xs text-foreground">
                     {result.address}
                   </span>
@@ -108,11 +108,11 @@ export default function TrackOrderPage() {
 
               {result.status === "paid" ? (
                 <p className="mt-4 text-sm text-muted">
-                  Your order has been delivered. Check your Discord DMs if you haven&apos;t received it yet.
+                  {t("track.deliveredMessage")}
                 </p>
               ) : (
                 <p className="mt-4 text-sm text-muted">
-                  Send the exact amount to the address above. This page won&apos;t update automatically — refresh to check again.
+                  {t("track.pendingMessage")}
                 </p>
               )}
             </div>

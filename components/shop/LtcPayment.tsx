@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getLtcPrice, getProductOrder } from "@/lib/api";
 import { formatEur } from "@/lib/format";
+import { useLocale } from "@/lib/hooks/useLocale";
 import { useQrCode } from "@/lib/hooks/useQrCode";
 import type { ProductOrderResponse } from "@/lib/types";
 
@@ -18,6 +19,7 @@ interface LtcPaymentProps {
 type PaymentPhase = "waiting" | "confirming" | "done";
 
 export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: LtcPaymentProps) {
+  const { t } = useLocale();
   const [ltcEur, setLtcEur] = useState<number | null>(null);
   const [phase, setPhase] = useState<PaymentPhase>("waiting");
   const [confirmations, setConfirmations] = useState(0);
@@ -82,7 +84,7 @@ export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: Lt
             />
           ) : (
             <div className="flex h-48 w-48 items-center justify-center rounded-xl border border-border text-xs text-muted">
-              Generating QR code…
+              {t("ltcPayment.generatingQr")}
             </div>
           )}
 
@@ -99,8 +101,8 @@ export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: Lt
               <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83" />
             </svg>
           </div>
-          <p className="text-lg font-bold text-emerald-400">Payment Detected!</p>
-          <p className="text-sm text-muted">Waiting for network confirmations…</p>
+          <p className="text-lg font-bold text-emerald-400">{t("ltcPayment.paymentDetected")}</p>
+          <p className="text-sm text-muted">{t("ltcPayment.waitingConfirmations")}</p>
 
           <div className="mt-2 w-full">
             <div className="flex items-center justify-between text-xs text-muted">
@@ -124,7 +126,7 @@ export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: Lt
       )}
 
       <div className="flex w-full items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2 text-sm">
-        <span className="text-muted">Amount due</span>
+        <span className="text-muted">{t("ltcPayment.amountDue")}</span>
         <span className="font-semibold text-foreground">
           {formatEur(displayEur)}
           {approxLtc ? ` ≈ ${approxLtc} LTC` : ""}
@@ -134,14 +136,13 @@ export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: Lt
       {phase === "waiting" && (
         <>
           <p className="text-xs text-muted">
-            Send the exact amount above to the LTC address. This page will update automatically
-            once payment is received. Order ID:{" "}
+            {t("ltcPayment.sendExactAmount")} {t("ltcPayment.orderId")}:{" "}
             <span className="font-mono text-foreground">{order.orderId}</span>
           </p>
 
           <div className="flex items-center gap-2 text-xs text-muted">
             <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
-            Waiting for payment…
+            {t("ltcPayment.waitingForPayment")}
           </div>
         </>
       )}

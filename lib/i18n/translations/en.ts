@@ -149,6 +149,9 @@ const en: Record<string, string> = {
   "ltcPayment.orderId": "Order ID",
   "ltcPayment.waitingForPayment": "Waiting for payment…",
   "ltcPayment.generatingQr": "Generating QR code…",
+  "ltcPayment.paymentDetected": "Payment Detected!",
+  "ltcPayment.waitingConfirmations": "Waiting for network confirmations…",
+  "ltcPayment.confirmingTransaction": "Confirming transaction…",
 
   // Track Order
   "track.title": "Track Order",
