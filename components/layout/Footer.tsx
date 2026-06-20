@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 import { SITE } from "@/lib/config";
+import { useLocale } from "@/lib/hooks/useLocale";
 
 export default function Footer() {
+  const { t } = useLocale();
+
   return (
     <footer className="border-t border-border/60 bg-background-elevated/40">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8">
@@ -13,8 +18,7 @@ export default function Footer() {
               <span>{SITE.name}</span>
             </Link>
             <p className="mt-4 text-sm text-muted">
-              Premium Discord trading marketplace — escrow, middleman, exchange and
-              an automated digital shop with instant LTC checkout.
+              {t("footer.description")}
             </p>
             <div className="mt-4 flex gap-3">
               <a
@@ -32,55 +36,52 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Quick Links</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("footer.quickLinks")}</h3>
             <ul className="mt-4 flex flex-col gap-2 text-sm text-muted">
-              <li><Link href="/#top" className="hover:text-accent">Home</Link></li>
-              <li><Link href="/#shop" className="hover:text-accent">Products</Link></li>
-              <li><Link href="/#services" className="hover:text-accent">Features</Link></li>
-              <li><Link href="/#faq" className="hover:text-accent">FAQ</Link></li>
-              <li><Link href="/#vouches" className="hover:text-accent">Reviews</Link></li>
-              <li><Link href="/track" className="hover:text-accent">Track Order</Link></li>
+              <li><Link href="/#top" className="hover:text-accent">{t("nav.home")}</Link></li>
+              <li><Link href="/#shop" className="hover:text-accent">{t("nav.products")}</Link></li>
+              <li><Link href="/#services" className="hover:text-accent">{t("nav.features")}</Link></li>
+              <li><Link href="/#faq" className="hover:text-accent">{t("nav.faq")}</Link></li>
+              <li><Link href="/#vouches" className="hover:text-accent">{t("nav.reviews")}</Link></li>
+              <li><Link href="/track" className="hover:text-accent">{t("nav.trackOrder")}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Support</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("footer.support")}</h3>
             <ul className="mt-4 flex flex-col gap-2 text-sm text-muted">
               <li>
                 <a href={SITE.discordInvite} target="_blank" rel="noopener noreferrer" className="hover:text-accent">
-                  Discord Server ↗
+                  {t("footer.discordServer")} ↗
                 </a>
               </li>
-              <li><Link href="/terms" className="hover:text-accent">Terms of Service</Link></li>
-              <li><Link href="/#vouches" className="hover:text-accent">Reviews</Link></li>
-              <li><Link href="/#dashboard" className="hover:text-accent">Live Dashboard</Link></li>
-              <li><Link href="/#fees" className="hover:text-accent">Fees</Link></li>
+              <li><Link href="/terms" className="hover:text-accent">{t("nav.terms")}</Link></li>
+              <li><Link href="/#vouches" className="hover:text-accent">{t("nav.reviews")}</Link></li>
+              <li><Link href="/#dashboard" className="hover:text-accent">{t("footer.liveDashboard")}</Link></li>
+              <li><Link href="/#fees" className="hover:text-accent">{t("footer.fees")}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold text-foreground">Products</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("footer.products")}</h3>
             <ul className="mt-4 flex flex-col gap-2 text-sm text-muted">
-              <li><Link href="/#shop" className="hover:text-accent">Escrow Services</Link></li>
-              <li><Link href="/#shop" className="hover:text-accent">Middleman Passes</Link></li>
-              <li><Link href="/#shop" className="hover:text-accent">Advertising Slots</Link></li>
-              <li><Link href="/#shop" className="hover:text-accent">Digital Goods</Link></li>
+              <li><Link href="/#shop" className="hover:text-accent">{t("footer.escrowServices")}</Link></li>
+              <li><Link href="/#shop" className="hover:text-accent">{t("footer.middlemanPasses")}</Link></li>
+              <li><Link href="/#shop" className="hover:text-accent">{t("footer.advertisingSlots")}</Link></li>
+              <li><Link href="/#shop" className="hover:text-accent">{t("footer.digitalGoods")}</Link></li>
             </ul>
           </div>
         </div>
 
         <div className="flex flex-col gap-4 border-t border-border/60 pt-6 text-xs text-muted">
           <p>
-            <strong className="text-foreground">Disclaimer:</strong> Cryptocurrency
-            transactions are irreversible. Always double-check addresses and
-            amounts before sending funds, and only deal through verified staff
-            and official channels.
+            <strong className="text-foreground">Disclaimer:</strong> {t("footer.disclaimer")}
           </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p>
-              &copy; {new Date().getFullYear()} {SITE.name}. All rights reserved.
+              &copy; {new Date().getFullYear()} {SITE.name}. {t("footer.rights")}
             </p>
-            <p>Instant delivery · Secure payments · 24/7 support</p>
+            <p>{t("footer.tagline")}</p>
           </div>
         </div>
       </div>

@@ -4,8 +4,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import SectionHeading from "@/components/ui/SectionHeading";
 import SlotPurchaseModal from "@/components/modals/SlotPurchaseModal";
-import { SLOT_DURATIONS, SLOT_PRICES, SLOT_TIERS } from "@/lib/config";
-import { formatEur } from "@/lib/format";
+import { SLOT_PRICES } from "@/lib/config";
+import { useLocale } from "@/lib/hooks/useLocale";
+import type { SlotTier, SlotDuration } from "@/lib/config";
 
 export default function Pricing() {
   const [selection, setSelection] = useState<{
@@ -14,18 +15,31 @@ export default function Pricing() {
     priceEur: number;
   } | null>(null);
   const [modalKey, setModalKey] = useState(0);
+  const { t, formatPrice } = useLocale();
+
+  const SLOT_TIERS_T = [
+    { id: "first" as SlotTier, nameKey: "pricing.firstSlot", descKey: "pricing.firstSlotDesc" },
+    { id: "second" as SlotTier, nameKey: "pricing.secondSlot", descKey: "pricing.secondSlotDesc" },
+    { id: "third" as SlotTier, nameKey: "pricing.thirdSlot", descKey: "pricing.thirdSlotDesc" },
+  ];
+
+  const SLOT_DURATIONS_T = [
+    { id: "weekly" as SlotDuration, nameKey: "pricing.weekly" },
+    { id: "monthly" as SlotDuration, nameKey: "pricing.monthly" },
+    { id: "lifetime" as SlotDuration, nameKey: "pricing.lifetime" },
+  ];
 
   return (
     <section id="pricing" className="px-4 py-24 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
-          eyebrow="Advertising Slots"
-          title="Get featured in front of active traders"
-          description="Pick a tier and duration. Payment is handled in LTC — no account or login required."
+          eyebrow={t("pricing.eyebrow")}
+          title={t("pricing.title")}
+          description={t("pricing.description")}
         />
 
         <div className="mt-14 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {SLOT_TIERS.map((tier, i) => (
+          {SLOT_TIERS_T.map((tier, i) => (
             <motion.div
               key={tier.id}
               initial={{ opacity: 0, y: 24 }}
@@ -38,15 +52,15 @@ export default function Pricing() {
             >
               {tier.id === "first" ? (
                 <span className="mb-3 inline-flex w-fit items-center rounded-full bg-accent px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-background">
-                  Most Visibility
+                  {t("pricing.mostVisibility")}
                 </span>
               ) : null}
 
-              <h3 className="text-xl font-bold text-foreground">{tier.name}</h3>
-              <p className="mt-1 text-sm text-muted">{tier.description}</p>
+              <h3 className="text-xl font-bold text-foreground">{t(tier.nameKey)}</h3>
+              <p className="mt-1 text-sm text-muted">{t(tier.descKey)}</p>
 
               <div className="mt-6 flex flex-col gap-3">
-                {SLOT_DURATIONS.map((duration) => {
+                {SLOT_DURATIONS_T.map((duration) => {
                   const price = SLOT_PRICES[tier.id][duration.id];
                   return (
                     <div
@@ -55,10 +69,10 @@ export default function Pricing() {
                     >
                       <div>
                         <div className="text-sm font-medium text-foreground">
-                          {duration.name}
+                          {t(duration.nameKey)}
                         </div>
                         <div className="text-lg font-bold text-accent">
-                          {formatEur(price, 0)}
+                          {formatPrice(price)}
                         </div>
                       </div>
                       <button
@@ -69,7 +83,7 @@ export default function Pricing() {
                         }}
                         className="rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
                       >
-                        Buy
+                        {t("pricing.buy")}
                       </button>
                     </div>
                   );

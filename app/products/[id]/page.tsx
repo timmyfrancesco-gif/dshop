@@ -5,11 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
 import ServiceIcon from "@/components/ui/ServiceIcon";
-import { formatCurrency } from "@/lib/format";
 import { useCart } from "@/lib/hooks/useCart";
+import { useLocale } from "@/lib/hooks/useLocale";
 import { useProducts } from "@/lib/hooks/useProducts";
 
 export default function ProductPage() {
+  const { t, formatPrice } = useLocale();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { items, loaded, error } = useProducts();
@@ -23,7 +24,7 @@ export default function ProductPage() {
     return (
       <PageShell>
         <section className="px-4 py-24 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-muted">Loading product…</p>
+          <p className="text-center text-sm text-muted">{t("product.loading")}</p>
         </section>
       </PageShell>
     );
@@ -33,13 +34,13 @@ export default function ProductPage() {
     return (
       <PageShell>
         <section className="px-4 py-24 text-center sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold text-foreground">Unable to load product</h1>
-          <p className="mt-2 text-sm text-muted">Please try again later.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("product.errorTitle")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("product.errorSubtitle")}</p>
           <Link
             href="/#shop"
             className="mt-6 inline-block rounded-full border border-accent/30 bg-accent-soft px-5 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
           >
-            Back to Shop
+            {t("product.backToShop")}
           </Link>
         </section>
       </PageShell>
@@ -50,13 +51,13 @@ export default function ProductPage() {
     return (
       <PageShell>
         <section className="px-4 py-24 text-center sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold text-foreground">Product not found</h1>
-          <p className="mt-2 text-sm text-muted">This product may be out of stock or no longer available.</p>
+          <h1 className="text-2xl font-bold text-foreground">{t("product.notFoundTitle")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("product.notFoundSubtitle")}</p>
           <Link
             href="/#shop"
             className="mt-6 inline-block rounded-full border border-accent/30 bg-accent-soft px-5 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
           >
-            Back to Shop
+            {t("product.backToShop")}
           </Link>
         </section>
       </PageShell>
@@ -81,7 +82,7 @@ export default function ProductPage() {
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
           <Link href="/#shop" className="inline-flex items-center gap-1 text-sm font-medium text-muted transition-colors hover:text-foreground">
-            ← Back to Shop
+            ← {t("product.backToShop")}
           </Link>
 
           <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-2">
@@ -109,7 +110,7 @@ export default function ProductPage() {
               {/* Price + Stock */}
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <span className="rounded-full bg-accent px-4 py-1.5 text-sm font-bold text-background shadow-[0_0_20px_-4px_var(--accent)]">
-                  {formatCurrency(product.price, product.currency)}
+                  {formatPrice(product.price)}
                 </span>
                 <span
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
@@ -118,7 +119,7 @@ export default function ProductPage() {
                       : "border-rose-500/30 bg-rose-500/10 text-rose-400"
                   }`}
                 >
-                  {product.stock > 0 ? `${product.stock} In Stock` : "Out of Stock"}
+                  {product.stock > 0 ? `${product.stock} ${t("product.inStock")}` : t("product.outOfStock")}
                 </span>
               </div>
 
@@ -129,7 +130,7 @@ export default function ProductPage() {
               {/* Quantity + Total */}
               <div className="mt-8 rounded-2xl border border-border bg-background-elevated/40 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">Quantity</span>
+                  <span className="text-sm font-medium text-foreground">{t("product.quantity")}</span>
                   <div className="flex items-center gap-0 overflow-hidden rounded-full border border-border bg-background/60">
                     <button
                       type="button"
@@ -155,9 +156,9 @@ export default function ProductPage() {
                   </div>
                 </div>
                 <div className="mt-4 border-t border-border/60 pt-4 flex items-center justify-between">
-                  <span className="text-sm text-muted">Total</span>
+                  <span className="text-sm text-muted">{t("product.total")}</span>
                   <span className="text-xl font-bold text-foreground">
-                    {formatCurrency(total, product.currency)}
+                    {formatPrice(total)}
                   </span>
                 </div>
               </div>
@@ -170,7 +171,7 @@ export default function ProductPage() {
                   disabled={product.stock === 0}
                   className="rounded-full border border-accent/40 bg-accent-soft py-3 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background disabled:opacity-40"
                 >
-                  {added ? "Added ✓" : "Add to Cart"}
+                  {added ? `${t("product.added")} ✓` : t("product.addToCart")}
                 </button>
                 <button
                   type="button"
@@ -178,7 +179,7 @@ export default function ProductPage() {
                   disabled={product.stock === 0}
                   className="rounded-full bg-accent py-3 text-sm font-semibold text-background shadow-[0_0_24px_-4px_var(--accent)] transition-opacity hover:opacity-90 disabled:opacity-40"
                 >
-                  {product.stock === 0 ? "Out of Stock" : "Purchase Now"}
+                  {product.stock === 0 ? t("product.outOfStock") : t("product.purchaseNow")}
                 </button>
               </div>
             </div>

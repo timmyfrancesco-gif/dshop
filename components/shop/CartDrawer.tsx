@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import ServiceIcon from "@/components/ui/ServiceIcon";
-import { formatCurrency } from "@/lib/format";
+import { useLocale } from "@/lib/hooks/useLocale";
 import type { CartLine } from "@/lib/hooks/useCart";
 
 interface CartDrawerProps {
@@ -21,12 +21,13 @@ export default function CartDrawer({
   open,
   lines,
   total,
-  currency,
   onClose,
   onUpdateQuantity,
   onRemove,
   onClear,
 }: CartDrawerProps) {
+  const { t, formatPrice } = useLocale();
+
   return (
     <AnimatePresence>
       {open ? (
@@ -46,14 +47,14 @@ export default function CartDrawer({
               className="glass-panel fixed right-0 top-0 z-[101] flex h-full w-full max-w-md flex-col border-l border-border p-6 sm:p-8"
               role="dialog"
               aria-modal="true"
-              aria-label="Shopping cart"
+              aria-label={t("cart.yourCart")}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-foreground">Your Cart</h3>
+                <h3 className="text-lg font-bold text-foreground">{t("cart.yourCart")}</h3>
                 <button
                   type="button"
                   onClick={onClose}
-                  aria-label="Close cart"
+                  aria-label={t("common.close")}
                   className="rounded-full border border-border p-1.5 text-muted transition-colors hover:text-foreground"
                 >
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -65,7 +66,7 @@ export default function CartDrawer({
               {lines.length === 0 ? (
                 <div className="mt-12 flex flex-1 flex-col items-center justify-center text-center text-muted">
                   <ServiceIcon name="shop" className="h-10 w-10 opacity-50" />
-                  <p className="mt-4 text-sm">Your cart is empty.</p>
+                  <p className="mt-4 text-sm">{t("cart.emptyCart")}</p>
                 </div>
               ) : (
                 <>
@@ -91,7 +92,7 @@ export default function CartDrawer({
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-foreground">{line.item.name}</p>
                           <p className="text-xs text-muted">
-                            {formatCurrency(line.item.price, line.item.currency)}
+                            {formatPrice(line.item.price)}
                           </p>
                         </div>
 
@@ -133,9 +134,9 @@ export default function CartDrawer({
 
                   <div className="mt-6 border-t border-border pt-4">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted">Total</span>
+                      <span className="text-muted">{t("cart.total")}</span>
                       <span className="text-xl font-bold text-foreground">
-                        {formatCurrency(total, currency)}
+                        {formatPrice(total)}
                       </span>
                     </div>
                     <Link
@@ -143,14 +144,14 @@ export default function CartDrawer({
                       onClick={onClose}
                       className="mt-4 block w-full rounded-full bg-accent px-4 py-2.5 text-center text-sm font-semibold text-background transition-opacity hover:opacity-90"
                     >
-                      Checkout with LTC
+                      {t("cart.checkoutWithLtc")}
                     </Link>
                     <button
                       type="button"
                       onClick={onClear}
                       className="mt-2 w-full rounded-full border border-border px-4 py-2 text-xs font-medium text-muted transition-colors hover:text-foreground"
                     >
-                      Clear cart
+                      {t("cart.clearCart")}
                     </button>
                   </div>
                 </>

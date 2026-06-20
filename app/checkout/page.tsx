@@ -6,68 +6,50 @@ import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
 import LtcPayment from "@/components/shop/LtcPayment";
 import { createProductOrder, isApiConfigured } from "@/lib/api";
-import { formatCurrency } from "@/lib/format";
 import { useCart } from "@/lib/hooks/useCart";
+import { useLocale } from "@/lib/hooks/useLocale";
 import { useProducts } from "@/lib/hooks/useProducts";
 import type { ProductOrderResponse, ShopItem } from "@/lib/types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ORDER_STORAGE_KEY = "checkout_order_v1";
 
-const PAYMENT_METHODS = [
-  {
-    id: "ltc",
-    label: "Litecoin",
-    sub: "via Litecoin Network",
-    available: true,
-    icon: (
-      <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
-        <circle cx="16" cy="16" r="16" fill="currentColor" />
-        <path
-          d="M12.5 7.5H15v9l-2.5.82.6 1.82 1.9-.62V24.5h9v-2h-7v-3.18l2.5-.82-.6-1.82-1.9.62V7.5z"
-          fill="white"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: "btc",
-    label: "Bitcoin",
-    sub: "Coming soon",
-    available: false,
-    icon: (
-      <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
-        <circle cx="16" cy="16" r="16" fill="currentColor" />
-        <path
-          d="M22 15.6c.4-.9.3-2-.8-2.7.4-.6.5-1.3.3-2-.4-1.4-1.9-2-3.7-2H10v14h8.2c2 0 4-.9 4.3-3.2.2-1.4-.4-2.5-1.3-3.1l.8-.3-.8-1-.2 1.3zM12.5 11h4c.8 0 1.5.4 1.5 1.3s-.7 1.3-1.5 1.3h-4V11zm4.5 8.5h-4.5v-3h4.5c1 0 1.7.5 1.7 1.5s-.8 1.5-1.7 1.5z"
-          fill="white"
-        />
-      </svg>
-    ),
-  },
-  {
-    id: "card",
-    label: "Card / PayPal",
-    sub: "Coming soon",
-    available: false,
-    icon: (
-      <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
-        <circle cx="16" cy="16" r="16" fill="currentColor" />
-        <path
-          d="M22 10H10c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8c0-1.1-.9-2-2-2zm0 10H10v-4h12v4zm0-7H10v-1h12v1z"
-          fill="white"
-        />
-      </svg>
-    ),
-  },
-];
+const PAYMENT_METHODS_ICONS = {
+  ltc: (
+    <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
+      <circle cx="16" cy="16" r="16" fill="currentColor" />
+      <path
+        d="M12.5 7.5H15v9l-2.5.82.6 1.82 1.9-.62V24.5h9v-2h-7v-3.18l2.5-.82-.6-1.82-1.9.62V7.5z"
+        fill="white"
+      />
+    </svg>
+  ),
+  btc: (
+    <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
+      <circle cx="16" cy="16" r="16" fill="currentColor" />
+      <path
+        d="M22 15.6c.4-.9.3-2-.8-2.7.4-.6.5-1.3.3-2-.4-1.4-1.9-2-3.7-2H10v14h8.2c2 0 4-.9 4.3-3.2.2-1.4-.4-2.5-1.3-3.1l.8-.3-.8-1-.2 1.3zM12.5 11h4c.8 0 1.5.4 1.5 1.3s-.7 1.3-1.5 1.3h-4V11zm4.5 8.5h-4.5v-3h4.5c1 0 1.7.5 1.7 1.5s-.8 1.5-1.7 1.5z"
+        fill="white"
+      />
+    </svg>
+  ),
+  card: (
+    <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
+      <circle cx="16" cy="16" r="16" fill="currentColor" />
+      <path
+        d="M22 10H10c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8c0-1.1-.9-2-2-2zm0 10H10v-4h12v4zm0-7H10v-1h12v1z"
+        fill="white"
+      />
+    </svg>
+  ),
+};
 
 export default function CheckoutPage() {
   return (
     <PageShell>
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-lg">
-          <Suspense fallback={<p className="mt-10 text-sm text-muted">Loading…</p>}>
+          <Suspense fallback={<p className="mt-10 text-sm text-muted"><LoadingFallback /></p>}>
             <CheckoutContent />
           </Suspense>
         </div>
@@ -76,13 +58,25 @@ export default function CheckoutPage() {
   );
 }
 
+function LoadingFallback() {
+  const { t } = useLocale();
+  return <>{t("checkout.loading")}</>;
+}
+
 function CheckoutContent() {
+  const { t, formatPrice } = useLocale();
   const searchParams = useSearchParams();
   const productId = searchParams.get("productId");
   const qty = Math.max(1, Number(searchParams.get("qty") ?? "1") || 1);
 
   const { items, loaded, refetch: refetchProducts } = useProducts();
   const cart = useCart();
+
+  const paymentMethods = useMemo(() => [
+    { id: "ltc", label: t("checkout.litecoin"), sub: t("checkout.viaLtcNetwork"), available: true, icon: PAYMENT_METHODS_ICONS.ltc },
+    { id: "btc", label: t("checkout.bitcoin"), sub: t("checkout.comingSoon"), available: false, icon: PAYMENT_METHODS_ICONS.btc },
+    { id: "card", label: t("checkout.cardPaypal"), sub: t("checkout.comingSoon"), available: false, icon: PAYMENT_METHODS_ICONS.card },
+  ], [t]);
 
   const buyNowProduct = productId ? items.find((item) => String(item.id) === productId) : null;
 
@@ -127,18 +121,18 @@ function CheckoutContent() {
   }, [loaded]);
 
   if (!loaded) {
-    return <p className="mt-10 text-sm text-muted">Loading…</p>;
+    return <p className="mt-10 text-sm text-muted">{t("checkout.loading")}</p>;
   }
 
   if (queue.length === 0) {
     return (
       <div className="mt-10 rounded-2xl border border-border bg-background/60 p-8 text-center">
-        <p className="text-sm text-muted">Your cart is empty.</p>
+        <p className="text-sm text-muted">{t("checkout.emptyCart")}</p>
         <Link
           href="/#shop"
           className="mt-4 inline-block rounded-full border border-accent/30 bg-accent-soft px-5 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
         >
-          Back to Shop
+          {t("checkout.backToShop")}
         </Link>
       </div>
     );
@@ -153,14 +147,14 @@ function CheckoutContent() {
           </svg>
         </div>
         <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-bold text-rose-500">Ordine Cancellato</h2>
-          <p className="text-sm text-muted">Il tuo ordine è stato cancellato dallo staff.</p>
+          <h2 className="text-2xl font-bold text-rose-500">{t("checkout.orderCancelled")}</h2>
+          <p className="text-sm text-muted">{t("checkout.cancelledSubtitle")}</p>
         </div>
         <Link
           href="/#shop"
           className="rounded-full border border-rose-500/30 bg-rose-500/10 px-6 py-2.5 text-sm font-semibold text-rose-400 transition-colors hover:bg-rose-500 hover:text-white"
         >
-          Torna allo Shop
+          {t("checkout.backToShop")}
         </Link>
       </div>
     );
@@ -175,12 +169,12 @@ function CheckoutContent() {
     setError(null);
 
     if (!email.trim() || !EMAIL_RE.test(email.trim())) {
-      setError("Inserisci un indirizzo email valido.");
+      setError(t("checkout.invalidEmail"));
       return;
     }
 
     if (!isApiConfigured()) {
-      setError("Checkout is temporarily unavailable. Please contact staff on Discord.");
+      setError(t("checkout.unavailable"));
       return;
     }
 
@@ -192,7 +186,7 @@ function CheckoutContent() {
     setLoading(false);
 
     if (!res) {
-      setError("Something went wrong creating your order. Please try again or contact staff.");
+      setError(t("checkout.orderError"));
       return;
     }
 
@@ -229,13 +223,13 @@ function CheckoutContent() {
     <div className="flex flex-col gap-5">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Checkout</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("checkout.title")}</h1>
         <p className="mt-1 text-xs text-muted uppercase tracking-widest">
           {finished
-            ? "Step 3 of 3 · Completato"
+            ? t("checkout.step3")
             : order
-              ? "Step 2 of 3 · Pagamento"
-              : "Step 1 of 3 · Dettagli Ordine"}
+              ? t("checkout.step2")
+              : t("checkout.step1")}
         </p>
         <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-border">
           <div
@@ -249,10 +243,10 @@ function CheckoutContent() {
       <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-widest text-muted">
-            {finished ? "Riepilogo Ordine" : `${queue.length} item${queue.length > 1 ? "s" : ""}`}
+            {finished ? t("checkout.orderSummary") : `${queue.length} ${queue.length > 1 ? t("checkout.items") : t("checkout.item")}`}
           </span>
           <span className="font-bold text-foreground">
-            {formatCurrency(queueTotal, currentItem.currency)}
+            {formatPrice(queueTotal)}
           </span>
         </div>
         {queue.length > 1 && (
@@ -260,7 +254,7 @@ function CheckoutContent() {
             {queue.map((item, i) => (
               <li key={i} className="flex items-center justify-between text-xs text-muted">
                 <span>{item.name}</span>
-                <span>{formatCurrency(item.price, item.currency)}</span>
+                <span>{formatPrice(item.price)}</span>
               </li>
             ))}
           </ul>
@@ -280,14 +274,14 @@ function CheckoutContent() {
           {/* Contact section */}
           <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">
-              Contatto e Consegna
+              {t("checkout.contactDelivery")}
             </h2>
             <div className="mt-3">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Indirizzo email *"
+                placeholder={t("checkout.emailPlaceholder")}
                 autoComplete="email"
                 autoFocus
                 className="w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm text-foreground placeholder-muted outline-none transition-colors focus:border-accent"
@@ -298,10 +292,10 @@ function CheckoutContent() {
           {/* Payment method section */}
           <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">
-              Metodo di Pagamento
+              {t("checkout.paymentMethod")}
             </h2>
             <div className="mt-3 flex flex-col gap-2">
-              {PAYMENT_METHODS.map((method) => (
+              {paymentMethods.map((method) => (
                 <button
                   key={method.id}
                   type="button"
@@ -337,9 +331,9 @@ function CheckoutContent() {
             disabled={loading}
             className="flex items-center justify-center gap-2 rounded-full bg-accent py-3 text-sm font-semibold text-background shadow-[0_0_24px_-4px_var(--accent)] transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {loading ? "Creazione ordine…" : (
+            {loading ? t("checkout.creatingOrder") : (
               <>
-                Procedi al Pagamento
+                {t("checkout.proceedToPayment")}
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
@@ -363,6 +357,7 @@ function SuccessScreen({
   productName: string;
   deliveredItems: (string | null | undefined)[];
 }) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
   const hasItems = deliveredItems.some((item) => item);
 
@@ -383,13 +378,13 @@ function SuccessScreen({
       </div>
 
       <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-bold text-emerald-400">Ordine Completato!</h2>
+        <h2 className="text-2xl font-bold text-emerald-400">{t("checkout.orderComplete")}</h2>
         <p className="text-sm text-foreground">{productName}</p>
       </div>
 
       {hasItems ? (
         <div className="flex w-full flex-col gap-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted">Prodotto Consegnato</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted">{t("checkout.deliveredProduct")}</p>
           {deliveredItems.map((item, i) =>
             item ? (
               <div key={i} className="flex flex-col gap-2">
@@ -401,7 +396,7 @@ function SuccessScreen({
                   onClick={() => handleCopy(item)}
                   className="self-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-1.5 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500 hover:text-white"
                 >
-                  {copied ? "Copiato ✓" : "Copia"}
+                  {copied ? `${t("checkout.copied")} ✓` : t("checkout.copy")}
                 </button>
               </div>
             ) : null
@@ -409,7 +404,7 @@ function SuccessScreen({
         </div>
       ) : (
         <p className="text-sm text-muted">
-          Pagamento confermato! Controlla la tua email per ricevere il prodotto.
+          {t("checkout.paymentConfirmed")}
         </p>
       )}
 
@@ -417,7 +412,7 @@ function SuccessScreen({
         href="/#shop"
         className="mt-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-6 py-2.5 text-sm font-semibold text-emerald-400 transition-colors hover:bg-emerald-500 hover:text-white"
       >
-        Torna allo Shop
+        {t("checkout.backToShop")}
       </Link>
     </div>
   );

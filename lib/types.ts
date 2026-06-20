@@ -119,12 +119,28 @@ export interface ProductOrderResponse {
 }
 
 export interface ProductOrderStatusResponse {
-  status: "pending" | "paid" | "cancelled";
+  status: "pending" | "confirming" | "paid" | "cancelled";
   orderId?: string;
   productId?: string;
   amountEur?: number;
   address?: string;
   deliveredItem?: string | null;
+  confirmations?: number;
+  requiredConfirmations?: number;
+}
+
+export interface WalletInfo {
+  balance: number;
+  address: string;
+}
+
+export interface TransferRequest {
+  amount: number;
+  toAddress: string;
+}
+
+export interface TransferResponse {
+  txId: string;
 }
 
 export interface CoinPrice {

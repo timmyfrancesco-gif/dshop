@@ -1,4 +1,5 @@
 import type {
+  ApiProduct,
   FeedResponse,
   HealthResponse,
   LtcResponse,
@@ -11,6 +12,8 @@ import type {
   SlotOrderStatusResponse,
   SlotsResponse,
   StatsResponse,
+  TransferResponse,
+  WalletInfo,
 } from "./types";
 
 const API_BASE = (process.env.NEXT_PUBLIC_ASTRO_API_URL ?? "").replace(/\/+$/, "");
@@ -103,4 +106,60 @@ export function getProductOrder(
   id: string
 ): Promise<ProductOrderStatusResponse | null> {
   return apiFetch<ProductOrderStatusResponse>(`/api/product-order/${encodeURIComponent(id)}`);
+}
+
+// ── Product CRUD (admin) ──────────────────────────────────────────────
+
+export function updateProduct(
+  id: string,
+  data: Partial<ApiProduct>
+): Promise<ApiProduct | null> {
+  return apiFetch<ApiProduct>(`/api/products/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteProduct(id: string): Promise<boolean> {
+  return apiFetch<{ ok: boolean }>(`/api/products/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  }).then((res) => res !== null);
+}
+
+export function createProduct(
+  data: Omit<ApiProduct, "id">
+): Promise<ApiProduct | null> {
+  return apiFetch<ApiProduct>("/api/products", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateProductStock(
+  id: string,
+  stock: number
+): Promise<boolean> {
+  return apiFetch<{ ok: boolean }>(
+    `/api/products/${encodeURIComponent(id)}/stock`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ stock }),
+    }
+  ).then((res) => res !== null);
+}
+
+// ── Wallet ────────────────────────────────────────────────────────────
+
+export function getWalletInfo(): Promise<WalletInfo | null> {
+  return apiFetch<WalletInfo>("/api/wallet/balance");
+}
+
+export function transferFunds(
+  amount: number,
+  toAddress: string
+): Promise<TransferResponse | null> {
+  return apiFetch<TransferResponse>("/api/wallet/transfer", {
+    method: "POST",
+    body: JSON.stringify({ amount, toAddress }),
+  });
 }
