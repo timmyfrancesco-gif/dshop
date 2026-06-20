@@ -149,6 +149,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   const formatPrice = useCallback(
     (amountEur: number): string => {
+      if (amountEur === undefined || amountEur === null || !isFinite(amountEur)) return "$0.00";
       const rate = rates[currency] ?? 1;
       const converted = amountEur * rate;
       const digits = smartDecimals(converted);

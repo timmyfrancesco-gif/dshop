@@ -24,6 +24,7 @@ function smartDecimals(value: number): number {
 }
 
 export function formatEur(value: number, fractionDigits?: number): string {
+  if (value === undefined || value === null || !isFinite(value)) return "€0.00";
   const digits = fractionDigits ?? smartDecimals(value);
   return new Intl.NumberFormat("en-IE", {
     style: "currency",
@@ -44,6 +45,7 @@ export function formatUsd(value: number): string {
 }
 
 export function formatCurrency(value: number, currency: string): string {
+  if (value === undefined || value === null || !isFinite(value)) return `${currency.toUpperCase()} 0.00`;
   const digits = smartDecimals(value);
   try {
     return new Intl.NumberFormat("en-IE", {

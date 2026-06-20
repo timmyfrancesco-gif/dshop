@@ -18,6 +18,36 @@ interface LtcPaymentProps {
 
 type PaymentPhase = "waiting" | "confirming" | "done";
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  }
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="shrink-0 rounded-lg border border-border bg-background/60 px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:border-accent hover:text-accent"
+      title="Copy"
+    >
+      {copied ? (
+        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 text-emerald-400" fill="currentColor" aria-hidden>
+          <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+          <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12a1.5 1.5 0 01.439 1.061V14.5A1.5 1.5 0 0115.5 16H8.5A1.5 1.5 0 017 14.5V3.5z" />
+          <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-1h-2.5A2.5 2.5 0 018 14V6H4.5z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: LtcPaymentProps) {
   const { t } = useLocale();
   const [ltcEur, setLtcEur] = useState<number | null>(null);
@@ -54,6 +84,7 @@ export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: Lt
         setPhase("confirming");
       } else if (statusRes.status === "paid") {
         setPhase("done");
+        clearInterval(interval);
         onPaid(statusRes.deliveredItem);
       } else if (statusRes.status === "cancelled") {
         clearInterval(interval);
@@ -70,6 +101,10 @@ export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: Lt
   const confirmPct = requiredConfirmations > 0
     ? Math.min(100, Math.round((confirmations / requiredConfirmations) * 100))
     : 0;
+
+  const amountText = approxLtc
+    ? `${formatEur(displayEur)} ≈ ${approxLtc} LTC`
+    : formatEur(displayEur);
 
   return (
     <div className="flex flex-col items-center gap-4 text-center">
@@ -88,8 +123,12 @@ export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: Lt
             </div>
           )}
 
-          <div className="w-full break-all rounded-lg border border-border bg-background/60 px-3 py-2 font-mono text-xs text-foreground">
-            {order.address}
+          {/* Address with copy */}
+          <div className="flex w-full items-center gap-2">
+            <div className="flex-1 break-all rounded-lg border border-border bg-background/60 px-3 py-2 font-mono text-xs text-foreground">
+              {order.address}
+            </div>
+            <CopyButton text={order.address} />
           </div>
         </>
       )}
@@ -125,12 +164,15 @@ export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: Lt
         </div>
       )}
 
-      <div className="flex w-full items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2 text-sm">
-        <span className="text-muted">{t("ltcPayment.amountDue")}</span>
-        <span className="font-semibold text-foreground">
-          {formatEur(displayEur)}
-          {approxLtc ? ` ≈ ${approxLtc} LTC` : ""}
-        </span>
+      {/* Amount with copy */}
+      <div className="flex w-full items-center gap-2">
+        <div className="flex flex-1 items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2 text-sm">
+          <span className="text-muted">{t("ltcPayment.amountDue")}</span>
+          <span className="font-semibold text-foreground">
+            {amountText}
+          </span>
+        </div>
+        <CopyButton text={approxLtc ?? String(displayEur)} />
       </div>
 
       {phase === "waiting" && (
