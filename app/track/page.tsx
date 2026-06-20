@@ -4,9 +4,11 @@ import { useState } from "react";
 import PageShell from "@/components/layout/PageShell";
 import { getProductOrder } from "@/lib/api";
 import { formatEur } from "@/lib/format";
+import { useLocale } from "@/lib/hooks/useLocale";
 import type { ProductOrderStatusResponse } from "@/lib/types";
 
 export default function TrackOrderPage() {
+  const { t, formatPrice } = useLocale();
   const [orderId, setOrderId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +20,7 @@ export default function TrackOrderPage() {
     setResult(null);
 
     if (!orderId.trim()) {
-      setError("Please enter your order ID.");
+      setError(t("track.enterOrderId"));
       return;
     }
 
@@ -27,7 +29,7 @@ export default function TrackOrderPage() {
     setLoading(false);
 
     if (!res) {
-      setError("Order not found. Double-check the order ID and try again.");
+      setError(t("track.notFound"));
       return;
     }
 
@@ -38,9 +40,9 @@ export default function TrackOrderPage() {
     <PageShell>
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-xl">
-          <h1 className="text-3xl font-bold text-foreground sm:text-4xl">Track Order</h1>
+          <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{t("track.title")}</h1>
           <p className="mt-2 text-sm text-muted">
-            Enter your order ID to check its current status.
+            {t("track.subtitle")}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4 rounded-2xl border border-border bg-background/60 p-6">

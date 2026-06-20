@@ -3,14 +3,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { useRef } from "react";
-import { SITE } from "@/lib/config";
-
-const STATS = [
-  { label: "Rating", value: "4.9", icon: "star" },
-  { label: "Trades Completed", value: "25K+", icon: "bolt" },
-  { label: "Total Volume", value: "300K+", icon: "chart" },
-  { label: "Happy Traders", value: "5K+", icon: "users" },
-];
+import { useLocale } from "@/lib/hooks/useLocale";
 
 const STAT_ICONS: Record<string, React.ReactNode> = {
   star: (
@@ -30,10 +23,18 @@ const STAT_ICONS: Record<string, React.ReactNode> = {
 export default function Hero() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const { t } = useLocale();
 
   const blobY = useTransform(scrollYProgress, [0, 1], [0, 160]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const contentY = useTransform(scrollYProgress, [0, 1], [0, 80]);
+
+  const STATS = [
+    { label: t("hero.statRating"), value: "4.9", icon: "star" },
+    { label: t("hero.statTrades"), value: "25K+", icon: "bolt" },
+    { label: t("hero.statVolume"), value: "300K+", icon: "chart" },
+    { label: t("hero.statTraders"), value: "5K+", icon: "users" },
+  ];
 
   return (
     <section
@@ -56,7 +57,7 @@ export default function Hero() {
           transition={{ duration: 0.6 }}
           className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent-soft px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.3em] text-accent"
         >
-          ✦ Premium Trading Hub
+          {t("hero.badge")}
         </motion.span>
 
         <motion.h1
@@ -65,7 +66,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.1 }}
           className="text-balance text-6xl font-black uppercase tracking-tight sm:text-8xl lg:text-9xl"
         >
-          <span className="text-gradient-accent">Heaven</span>
+          <span className="text-gradient-accent">{t("hero.title")}</span>
         </motion.h1>
 
         <motion.p
@@ -74,8 +75,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="mt-6 max-w-2xl text-balance text-lg text-muted sm:text-xl"
         >
-          {SITE.tagline} Escrow, middleman protection, exchange, advertising
-          slots, a digital shop and a casino — all in one Discord server.
+          {t("hero.description")}
         </motion.p>
 
         <motion.div
@@ -88,7 +88,7 @@ export default function Hero() {
             href="/#shop"
             className="rounded-full bg-accent px-8 py-3 text-base font-semibold text-background shadow-[0_0_30px_-5px_var(--accent)] transition-transform hover:scale-105"
           >
-            Explore Shop
+            {t("hero.cta1")}
           </Link>
           <div className="flex items-center gap-2 rounded-full border border-border bg-background-elevated/60 px-5 py-3 text-sm font-medium text-foreground">
             <span className="flex gap-0.5 text-accent" aria-hidden>
@@ -98,7 +98,7 @@ export default function Hero() {
                 </svg>
               ))}
             </span>
-            Excellent <span className="font-bold text-accent">4.9</span> out of 5
+            {t("hero.cta2")} <span className="font-bold text-accent">4.9</span> {t("hero.cta2Suffix")}
           </div>
         </motion.div>
 

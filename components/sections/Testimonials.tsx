@@ -3,21 +3,24 @@
 import { motion } from "framer-motion";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { TESTIMONIALS } from "@/lib/config";
+import { useLocale } from "@/lib/hooks/useLocale";
 
 export default function Testimonials() {
+  const { t } = useLocale();
+
   return (
     <section id="vouches" className="px-4 py-24 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
-          eyebrow="Vouches"
-          title="Trusted by traders across the community"
-          description="A few words from people who've used our services. All identities anonymized for privacy."
+          eyebrow={t("reviews.eyebrow")}
+          title={t("reviews.title")}
+          description={t("reviews.description")}
         />
 
         <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {TESTIMONIALS.map((t, i) => (
+          {TESTIMONIALS.map((testimonial, i) => (
             <motion.figure
-              key={t.author + i}
+              key={testimonial.author + i}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
@@ -32,10 +35,10 @@ export default function Testimonials() {
                 ))}
               </div>
               <blockquote className="flex-1 text-sm text-foreground">
-                &ldquo;{t.quote}&rdquo;
+                &ldquo;{testimonial.quote}&rdquo;
               </blockquote>
               <figcaption className="mt-4 text-xs text-muted">
-                <span className="font-semibold text-foreground">{t.author}</span> — {t.role}
+                <span className="font-semibold text-foreground">{testimonial.author}</span> — {testimonial.role}
               </figcaption>
             </motion.figure>
           ))}

@@ -6,18 +6,11 @@ import Link from "next/link";
 import SectionHeading from "@/components/ui/SectionHeading";
 import ServiceIcon from "@/components/ui/ServiceIcon";
 import CartDrawer from "@/components/shop/CartDrawer";
-import { formatCurrency } from "@/lib/format";
 import { useCart } from "@/lib/hooks/useCart";
 import { useProducts } from "@/lib/hooks/useProducts";
+import { useLocale } from "@/lib/hooks/useLocale";
 
 type SortOption = "default" | "price-asc" | "price-desc" | "name";
-
-const SORT_OPTIONS: { id: SortOption; label: string }[] = [
-  { id: "default", label: "Featured" },
-  { id: "price-asc", label: "Price: Low to High" },
-  { id: "price-desc", label: "Price: High to Low" },
-  { id: "name", label: "Name: A to Z" },
-];
 
 export default function Shop() {
   const { items, loaded, error } = useProducts();
@@ -25,8 +18,16 @@ export default function Shop() {
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState<SortOption>("default");
   const [cartOpen, setCartOpen] = useState(false);
+  const { t, formatPrice } = useLocale();
 
   const cart = useCart();
+
+  const SORT_OPTIONS: { id: SortOption; label: string }[] = [
+    { id: "default", label: t("shop.sortFeatured") },
+    { id: "price-asc", label: t("shop.sortPriceLow") },
+    { id: "price-desc", label: t("shop.sortPriceHigh") },
+    { id: "name", label: t("shop.sortName") },
+  ];
 
   const categories = useMemo(() => {
     const unique = Array.from(new Set(items.map((item) => item.category)));
@@ -70,9 +71,9 @@ export default function Shop() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeading
             align="left"
-            eyebrow="Digital Shop"
-            title="Browse what's in stock"
-            description="Products are added and restocked live by our Discord bot. Add items to your cart and pay with LTC, all on this site."
+            eyebrow={t("shop.eyebrow")}
+            title={t("shop.title")}
+            description={t("shop.description")}
           />
 
           <button
@@ -87,7 +88,7 @@ export default function Shop() {
                 d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z"
               />
             </svg>
-            Cart
+            {t("shop.cart")}
             {cart.count > 0 ? (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-xs font-bold text-background">
                 {cart.count}
@@ -130,7 +131,7 @@ export default function Shop() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search products…"
+                placeholder={t("shop.searchPlaceholder")}
                 className="w-full rounded-full border border-border bg-background/60 py-2 pl-9 pr-4 text-sm text-foreground outline-none transition-colors focus:border-accent sm:w-56"
               />
             </div>
@@ -150,14 +151,14 @@ export default function Shop() {
         </div>
 
         {!loaded ? (
-          <p className="mt-14 text-center text-sm text-muted">Loading products…</p>
+          <p className="mt-14 text-center text-sm text-muted">{t("shop.loadingProducts")}</p>
         ) : error ? (
           <p className="mt-14 text-center text-sm text-muted">
-            Unable to load products right now — please try again later.
+            {t("shop.errorProducts")}
           </p>
         ) : visibleItems.length === 0 ? (
           <p className="mt-14 text-center text-sm text-muted">
-            No products available right now — check back soon.
+            {t("shop.noProducts")}
           </p>
         ) : (
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -191,11 +192,11 @@ export default function Shop() {
                   )}
 
                   <span className="absolute left-3 top-3 rounded-full bg-gradient-to-r from-casino-from to-casino-to px-3 py-1 text-xs font-bold text-white shadow-lg">
-                    {formatCurrency(item.price, item.currency)}
+                    {formatPrice(item.price)}
                   </span>
 
                   <span className="absolute bottom-3 left-3 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
-                    In Stock
+                    {t("shop.inStock")}
                   </span>
                 </Link>
 
@@ -211,12 +212,12 @@ export default function Shop() {
                       href={`/products/${item.id}`}
                       className="flex-1 rounded-full border border-accent/30 bg-accent-soft px-4 py-2 text-center text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
                     >
-                      View Details
+                      {t("shop.viewDetails")}
                     </Link>
                     <button
                       type="button"
                       onClick={() => cart.addItem(item, 1)}
-                      aria-label={`Add ${item.name} to cart`}
+                      aria-label={`${t("shop.addToCart")} ${item.name}`}
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-accent hover:text-accent"
                     >
                       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
