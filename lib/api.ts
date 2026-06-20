@@ -19,6 +19,17 @@ import type {
 const API_BASE = (process.env.NEXT_PUBLIC_ASTRO_API_URL ?? "").replace(/\/+$/, "");
 const DEFAULT_TIMEOUT_MS = 5000;
 
+function getInternalBase(): string {
+  if (!API_BASE) return "";
+  try {
+    const url = new URL(API_BASE);
+    url.port = "3001";
+    return url.origin;
+  } catch {
+    return "";
+  }
+}
+
 async function apiFetch<T>(
   path: string,
   init?: RequestInit,
@@ -58,8 +69,35 @@ export function getHealth(): Promise<HealthResponse | null> {
   return apiFetch<HealthResponse>("/api/health");
 }
 
-export function getStats(): Promise<StatsResponse | null> {
-  return apiFetch<StatsResponse>("/api/stats");
+export async function getStats(): Promise<StatsResponse | null> {
+  const [stats, internal] = await Promise.all([
+    apiFetch<StatsResponse>("/api/stats"),
+    fetchInternalStats(),
+  ]);
+  if (!stats) return null;
+  if (internal?.activeTickets !== undefined) {
+    stats.openTickets = internal.activeTickets;
+  }
+  return stats;
+}
+
+async function fetchInternalStats(): Promise<{ activeTickets?: number } | null> {
+  const base = getInternalBase();
+  if (!base) return null;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+    const res = await fetch(`${base}/internal/stats`, {
+      signal: controller.signal,
+      cache: "no-store",
+      headers: { Accept: "application/json" },
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    return (await res.json()) as { activeTickets?: number };
+  } catch {
+    return null;
+  }
 }
 
 export function getLtcPrice(): Promise<LtcResponse | null> {
