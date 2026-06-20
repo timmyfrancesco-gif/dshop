@@ -3,7 +3,6 @@
 import { useState } from "react";
 import PageShell from "@/components/layout/PageShell";
 import { getProductOrder } from "@/lib/api";
-import { formatEur } from "@/lib/format";
 import { useLocale } from "@/lib/hooks/useLocale";
 import type { ProductOrderStatusResponse } from "@/lib/types";
 

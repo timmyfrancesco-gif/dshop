@@ -1,5 +1,8 @@
+"use client";
+
 import PageShell from "@/components/layout/PageShell";
 import { SITE } from "@/lib/config";
+import { useLocale } from "@/lib/hooks/useLocale";
 
 const SECTIONS = [
   {
@@ -33,12 +36,13 @@ const SECTIONS = [
 ];
 
 export default function TermsPage() {
+  const { t } = useLocale();
   return (
     <PageShell>
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
-          <h1 className="text-3xl font-bold text-foreground sm:text-4xl">Terms of Service</h1>
-          <p className="mt-2 text-sm text-muted">Last updated: 2026</p>
+          <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{t("terms.title")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("terms.lastUpdated")}</p>
 
           <div className="mt-10 flex flex-col gap-8">
             {SECTIONS.map((section) => (

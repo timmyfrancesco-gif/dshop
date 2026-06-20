@@ -150,7 +150,7 @@ export default function LtcPayment({ order, cartTotal, onPaid, onCancelled }: Lt
       {phase === "confirming" && (
         <div className="flex items-center gap-2 text-xs text-emerald-400">
           <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-          Confirming transaction…
+          {t("ltcPayment.confirmingTransaction")}
         </div>
       )}
     </div>
