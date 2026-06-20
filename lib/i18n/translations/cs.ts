@@ -149,6 +149,9 @@ const cs: Record<string, string> = {
   "ltcPayment.orderId": "ID objednávky",
   "ltcPayment.waitingForPayment": "Čekání na platbu…",
   "ltcPayment.generatingQr": "Generování QR kódu…",
+  "ltcPayment.paymentDetected": "Platba detekována!",
+  "ltcPayment.waitingConfirmations": "Čekání na potvrzení sítě…",
+  "ltcPayment.confirmingTransaction": "Potvrzování transakce…",
 
   // Track Order
   "track.title": "Sledovat objednávku",

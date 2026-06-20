@@ -149,6 +149,9 @@ const sv: Record<string, string> = {
   "ltcPayment.orderId": "Beställnings-ID",
   "ltcPayment.waitingForPayment": "Väntar på betalning…",
   "ltcPayment.generatingQr": "Genererar QR-kod…",
+  "ltcPayment.paymentDetected": "Betalning upptäckt!",
+  "ltcPayment.waitingConfirmations": "Väntar på nätverksbekräftelser…",
+  "ltcPayment.confirmingTransaction": "Bekräftar transaktion…",
 
   // Track Order
   "track.title": "Spåra beställning",

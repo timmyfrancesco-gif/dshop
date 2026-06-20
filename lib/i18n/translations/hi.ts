@@ -149,6 +149,9 @@ const hi: Record<string, string> = {
   "ltcPayment.orderId": "ऑर्डर ID",
   "ltcPayment.waitingForPayment": "भुगतान की प्रतीक्षा…",
   "ltcPayment.generatingQr": "QR कोड बना रहा है…",
+  "ltcPayment.paymentDetected": "भुगतान का पता चला!",
+  "ltcPayment.waitingConfirmations": "नेटवर्क पुष्टिकरण की प्रतीक्षा में…",
+  "ltcPayment.confirmingTransaction": "लेनदेन की पुष्टि हो रही है…",
 
   // Track Order
   "track.title": "ऑर्डर ट्रैक करें",

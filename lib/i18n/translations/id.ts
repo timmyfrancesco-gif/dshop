@@ -149,6 +149,9 @@ const id: Record<string, string> = {
   "ltcPayment.orderId": "ID Pesanan",
   "ltcPayment.waitingForPayment": "Menunggu pembayaran…",
   "ltcPayment.generatingQr": "Membuat kode QR…",
+  "ltcPayment.paymentDetected": "Pembayaran Terdeteksi!",
+  "ltcPayment.waitingConfirmations": "Menunggu konfirmasi jaringan…",
+  "ltcPayment.confirmingTransaction": "Mengonfirmasi transaksi…",
 
   // Track Order
   "track.title": "Lacak Pesanan",

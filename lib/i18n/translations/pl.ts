@@ -149,6 +149,9 @@ const pl: Record<string, string> = {
   "ltcPayment.orderId": "ID zamówienia",
   "ltcPayment.waitingForPayment": "Oczekiwanie na płatność…",
   "ltcPayment.generatingQr": "Generowanie kodu QR…",
+  "ltcPayment.paymentDetected": "Wykryto płatność!",
+  "ltcPayment.waitingConfirmations": "Oczekiwanie na potwierdzenia sieci…",
+  "ltcPayment.confirmingTransaction": "Potwierdzanie transakcji…",
 
   // Track Order
   "track.title": "Śledź zamówienie",

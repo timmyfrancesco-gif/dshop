@@ -139,6 +139,9 @@ const ja: Record<string, string> = {
   "ltcPayment.orderId": "注文 ID",
   "ltcPayment.waitingForPayment": "支払い待ち…",
   "ltcPayment.generatingQr": "QR コードを生成中…",
+  "ltcPayment.paymentDetected": "支払いが検出されました！",
+  "ltcPayment.waitingConfirmations": "ネットワークの確認を待っています…",
+  "ltcPayment.confirmingTransaction": "トランザクションを確認中…",
 
   "track.title": "注文追跡",
   "track.subtitle": "注文 ID を入力して現在のステータスを確認してください。",

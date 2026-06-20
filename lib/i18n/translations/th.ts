@@ -149,6 +149,9 @@ const th: Record<string, string> = {
   "ltcPayment.orderId": "หมายเลขคำสั่งซื้อ",
   "ltcPayment.waitingForPayment": "กำลังรอการชำระเงิน…",
   "ltcPayment.generatingQr": "กำลังสร้าง QR code…",
+  "ltcPayment.paymentDetected": "ตรวจพบการชำระเงิน!",
+  "ltcPayment.waitingConfirmations": "รอการยืนยันจากเครือข่าย…",
+  "ltcPayment.confirmingTransaction": "กำลังยืนยันธุรกรรม…",
 
   // Track Order
   "track.title": "ติดตามคำสั่งซื้อ",

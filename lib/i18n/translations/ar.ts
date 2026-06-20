@@ -149,6 +149,9 @@ const ar: Record<string, string> = {
   "ltcPayment.orderId": "رقم الطلب",
   "ltcPayment.waitingForPayment": "في انتظار الدفع…",
   "ltcPayment.generatingQr": "جاري إنشاء رمز QR…",
+  "ltcPayment.paymentDetected": "تم اكتشاف الدفع!",
+  "ltcPayment.waitingConfirmations": "في انتظار تأكيدات الشبكة…",
+  "ltcPayment.confirmingTransaction": "جاري تأكيد المعاملة…",
 
   // Track Order
   "track.title": "تتبع الطلب",

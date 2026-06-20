@@ -149,6 +149,9 @@ const tr: Record<string, string> = {
   "ltcPayment.orderId": "Sipariş Numarası",
   "ltcPayment.waitingForPayment": "Ödeme bekleniyor…",
   "ltcPayment.generatingQr": "QR kodu oluşturuluyor…",
+  "ltcPayment.paymentDetected": "Ödeme Algılandı!",
+  "ltcPayment.waitingConfirmations": "Ağ onayları bekleniyor…",
+  "ltcPayment.confirmingTransaction": "İşlem onaylanıyor…",
 
   // Track Order
   "track.title": "Sipariş Takibi",

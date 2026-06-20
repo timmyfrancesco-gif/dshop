@@ -149,6 +149,9 @@ const nl: Record<string, string> = {
   "ltcPayment.orderId": "Bestelnummer",
   "ltcPayment.waitingForPayment": "Wachten op betaling…",
   "ltcPayment.generatingQr": "QR-code genereren…",
+  "ltcPayment.paymentDetected": "Betaling gedetecteerd!",
+  "ltcPayment.waitingConfirmations": "Wachten op netwerkbevestigingen…",
+  "ltcPayment.confirmingTransaction": "Transactie bevestigen…",
 
   // Track Order
   "track.title": "Bestelling Volgen",

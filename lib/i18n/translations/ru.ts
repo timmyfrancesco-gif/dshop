@@ -139,6 +139,9 @@ const ru: Record<string, string> = {
   "ltcPayment.orderId": "ID заказа",
   "ltcPayment.waitingForPayment": "Ожидание оплаты…",
   "ltcPayment.generatingQr": "Генерация QR-кода…",
+  "ltcPayment.paymentDetected": "Платёж обнаружен!",
+  "ltcPayment.waitingConfirmations": "Ожидание подтверждений сети…",
+  "ltcPayment.confirmingTransaction": "Подтверждение транзакции…",
 
   "track.title": "Отследить заказ",
   "track.subtitle": "Введите ID заказа, чтобы проверить его текущий статус.",

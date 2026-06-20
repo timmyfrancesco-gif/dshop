@@ -149,6 +149,9 @@ const ko: Record<string, string> = {
   "ltcPayment.orderId": "주문 ID",
   "ltcPayment.waitingForPayment": "결제 대기 중…",
   "ltcPayment.generatingQr": "QR 코드 생성 중…",
+  "ltcPayment.paymentDetected": "결제가 감지되었습니다!",
+  "ltcPayment.waitingConfirmations": "네트워크 확인을 기다리는 중…",
+  "ltcPayment.confirmingTransaction": "거래 확인 중…",
 
   // Track Order
   "track.title": "주문 추적",

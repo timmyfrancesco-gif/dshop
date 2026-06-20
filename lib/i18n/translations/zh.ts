@@ -139,6 +139,9 @@ const zh: Record<string, string> = {
   "ltcPayment.orderId": "订单 ID",
   "ltcPayment.waitingForPayment": "等待付款…",
   "ltcPayment.generatingQr": "正在生成二维码…",
+  "ltcPayment.paymentDetected": "检测到付款！",
+  "ltcPayment.waitingConfirmations": "等待网络确认…",
+  "ltcPayment.confirmingTransaction": "确认交易中…",
 
   "track.title": "追踪订单",
   "track.subtitle": "输入您的订单 ID 以查看当前状态。",

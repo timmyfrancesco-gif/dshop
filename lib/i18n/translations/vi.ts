@@ -149,6 +149,9 @@ const vi: Record<string, string> = {
   "ltcPayment.orderId": "Mã đơn hàng",
   "ltcPayment.waitingForPayment": "Đang chờ thanh toán…",
   "ltcPayment.generatingQr": "Đang tạo mã QR…",
+  "ltcPayment.paymentDetected": "Đã phát hiện thanh toán!",
+  "ltcPayment.waitingConfirmations": "Đang chờ xác nhận từ mạng…",
+  "ltcPayment.confirmingTransaction": "Đang xác nhận giao dịch…",
 
   // Track Order
   "track.title": "Theo dõi đơn hàng",
