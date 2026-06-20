@@ -261,35 +261,40 @@ function CheckoutContent() {
         </div>
       </div>
 
-      {/* Order summary */}
+      {/* Order summary — improved with product image, name, subtitle, qty, price */}
       <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-widest text-muted">
-            {finished ? t("checkout.orderSummary") : `${queue.length} ${queue.length > 1 ? t("checkout.items") : t("checkout.item")}`}
-          </span>
-          <span className="font-bold text-foreground">
-            {formatPrice(queueTotal)}
-          </span>
+        <div className="flex items-center gap-3">
+          {/* Product image or icon fallback */}
+          {currentItem.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={currentItem.image}
+              alt={currentItem.name}
+              className="h-12 w-12 rounded-lg border border-border object-cover"
+            />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-accent/10 text-lg">
+              {currentItem.icon || "📦"}
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground truncate">{currentItem.name}</p>
+            <p className="text-xs text-muted">Default</p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-xs text-muted">{queue.length}x</p>
+            <p className="text-sm font-bold text-foreground">{formatPrice(queueTotal)}</p>
+          </div>
         </div>
-        {queue.length > 1 && (
-          <ul className="mt-3 flex flex-col gap-1 border-t border-border/60 pt-3">
-            {queue.map((item, i) => (
-              <li key={i} className="flex items-center justify-between text-xs text-muted">
-                <span>{item.name}</span>
-                <span>{formatPrice(item.price)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {queue.length === 1 && (
-          <p className="mt-1 text-sm text-foreground">{currentItem.name}</p>
-        )}
       </div>
 
       {finished ? (
         <SuccessScreen
           productName={currentItem.name}
           deliveredItems={deliveredItems}
+          orderId={order?.orderId}
+          email={email}
+          totalEur={queueTotal}
         />
       ) : !order ? (
         <form onSubmit={startPayment} className="flex flex-col gap-5">
@@ -365,9 +370,20 @@ function CheckoutContent() {
         </form>
       ) : (
         <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
-          <LtcPayment order={order} cartTotal={queueTotal} onPaid={handlePaid} onCancelled={handleCancelled} />
+          <LtcPayment order={order} cartTotal={queueTotal} email={email} onPaid={handlePaid} onCancelled={handleCancelled} />
         </div>
       )}
+
+      {/* Back to Shop link at the very bottom */}
+      <div className="text-center pt-2">
+        <Link
+          href="/#shop"
+          onClick={() => { try { if (finished) sessionStorage.removeItem(FINISHED_STORAGE_KEY); } catch {} }}
+          className="text-sm text-muted hover:text-accent transition-colors"
+        >
+          {t("checkout.backToShop")}
+        </Link>
+      </div>
     </div>
   );
 }
@@ -375,68 +391,204 @@ function CheckoutContent() {
 function SuccessScreen({
   productName,
   deliveredItems,
+  orderId,
+  email,
+  totalEur,
 }: {
   productName: string;
   deliveredItems: (string | null | undefined)[];
+  orderId?: string;
+  email?: string;
+  totalEur?: number;
 }) {
-  const { t } = useLocale();
-  const [copied, setCopied] = useState(false);
+  const { t, formatPrice } = useLocale();
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [copiedAll, setCopiedAll] = useState(false);
   const hasItems = deliveredItems.some((item) => item);
+  const validItems = deliveredItems.filter((item): item is string => !!item);
+  const [expanded, setExpanded] = useState(true);
 
-  async function handleCopy(text: string) {
+  async function handleCopySingle(text: string, idx: number) {
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 2000);
     } catch {}
   }
 
+  async function handleCopyAll() {
+    if (validItems.length === 0) return;
+    try {
+      await navigator.clipboard.writeText(validItems.join("\n"));
+      setCopiedAll(true);
+      setTimeout(() => setCopiedAll(false), 2000);
+    } catch {}
+  }
+
+  function handleDownload() {
+    if (validItems.length === 0) return;
+    const content = validItems.join("\n");
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `order-${orderId ?? "items"}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   return (
-    <div className="flex flex-col items-center gap-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-10 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-emerald-500/40 bg-emerald-500/10">
-        <svg viewBox="0 0 24 24" className="h-10 w-10 text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M5 13l4 4L19 7" />
-        </svg>
+    <div className="flex flex-col gap-5">
+      {/* Success banner */}
+      <div className="border border-accent/30 bg-accent/5 rounded-xl p-4">
+        <p className="text-sm text-accent">
+          Your order has been completed <strong>successfully</strong>!
+        </p>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-bold text-emerald-400">{t("checkout.orderComplete")}</h2>
-        <p className="text-sm text-foreground">{productName}</p>
-      </div>
+      {/* Delivered Items section */}
+      <div>
+        <h3 className="text-accent font-semibold text-lg mb-3">{t("checkout.deliveredItems")}</h3>
 
-      {hasItems ? (
-        <div className="flex w-full flex-col gap-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-muted">{t("checkout.deliveredProduct")}</p>
-          {deliveredItems.map((item, i) =>
-            item ? (
-              <div key={i} className="flex flex-col gap-2">
-                <div className="w-full break-all rounded-xl border border-emerald-500/20 bg-background/60 px-4 py-3 text-left font-mono text-xs text-foreground">
-                  {item}
-                </div>
+        {/* Product card */}
+        <div className="rounded-xl border border-border bg-background-elevated/40 overflow-hidden">
+          {/* Product header row */}
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="w-full flex items-center justify-between px-4 py-3 hover:bg-background/40 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="text-left">
+                <p className="text-sm font-semibold text-foreground">{productName}</p>
+                <p className="text-xs text-muted">Default</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 rounded-full px-2.5 py-0.5 text-xs">
+                {t("checkout.delivered")}
+              </span>
+              <svg
+                viewBox="0 0 24 24"
+                className={`h-4 w-4 text-muted transition-transform ${expanded ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </div>
+          </button>
+
+          {/* Expanded deliverables */}
+          {expanded && hasItems && (
+            <div className="border-t border-border px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted mb-2">
+                {t("checkout.deliverables")}
+              </p>
+              <div className="flex flex-col gap-2">
+                {validItems.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2"
+                  >
+                    <span className="flex-1 break-all font-mono text-xs text-foreground">
+                      {item}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopySingle(item, i)}
+                      className="shrink-0 text-muted hover:text-accent transition-colors"
+                      title="Copy"
+                    >
+                      {copiedIdx === i ? (
+                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 text-emerald-400" fill="currentColor" aria-hidden>
+                          <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                          <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12a1.5 1.5 0 01.439 1.061V14.5A1.5 1.5 0 0115.5 16H8.5A1.5 1.5 0 017 14.5V3.5z" />
+                          <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-1h-2.5A2.5 2.5 0 018 14V6H4.5z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Download + Copy All buttons */}
+              <div className="flex gap-2 mt-3">
                 <button
                   type="button"
-                  onClick={() => handleCopy(item)}
-                  className="self-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-5 py-1.5 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500 hover:text-white"
+                  onClick={handleDownload}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-border py-2.5 text-sm text-foreground hover:border-accent transition-colors"
                 >
-                  {copied ? `${t("checkout.copied")} ✓` : t("checkout.copy")}
+                  <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
+                    <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
+                    <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+                  </svg>
+                  {t("checkout.downloadAll")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyAll}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-accent/80 hover:bg-accent py-2.5 text-sm text-foreground transition-colors"
+                >
+                  {copiedAll ? (
+                    <svg viewBox="0 0 20 20" className="h-4 w-4 text-emerald-400" fill="currentColor" aria-hidden>
+                      <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor" aria-hidden>
+                      <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12a1.5 1.5 0 01.439 1.061V14.5A1.5 1.5 0 0115.5 16H8.5A1.5 1.5 0 017 14.5V3.5z" />
+                      <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-1h-2.5A2.5 2.5 0 018 14V6H4.5z" />
+                    </svg>
+                  )}
+                  {copiedAll ? t("checkout.copied") : t("checkout.copyAll")}
                 </button>
               </div>
-            ) : null
+            </div>
+          )}
+
+          {/* No items fallback */}
+          {expanded && !hasItems && (
+            <div className="border-t border-border px-4 py-3">
+              <p className="text-sm text-muted">
+                {t("checkout.paymentConfirmed")}
+              </p>
+            </div>
           )}
         </div>
-      ) : (
-        <p className="text-sm text-muted">
-          {t("checkout.paymentConfirmed")}
-        </p>
-      )}
+      </div>
 
-      <Link
-        href="/#shop"
-        onClick={() => { try { sessionStorage.removeItem(FINISHED_STORAGE_KEY); } catch {} }}
-        className="mt-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-6 py-2.5 text-sm font-semibold text-emerald-400 transition-colors hover:bg-emerald-500 hover:text-white"
-      >
-        {t("checkout.backToShop")}
-      </Link>
+      {/* Order details */}
+      {(orderId || email || totalEur) && (
+        <div className="flex flex-col gap-3">
+          {orderId && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted">{t("ltcPayment.invoiceId")}</span>
+              <span className="text-sm text-foreground font-mono">{orderId}</span>
+            </div>
+          )}
+          {email && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted">{t("ltcPayment.emailAddress")}</span>
+              <span className="text-sm text-foreground">{email}</span>
+            </div>
+          )}
+          {totalEur !== undefined && totalEur > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted">{t("ltcPayment.totalPrice")}</span>
+              <span className="text-sm text-foreground">{formatPrice(totalEur)}</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
