@@ -1,12 +1,16 @@
 import type {
   ApiProduct,
+  AuthResponse,
+  AuthUser,
   FeedResponse,
   HealthResponse,
+  LoginRequest,
   LtcResponse,
   ProductOrderRequest,
   ProductOrderResponse,
   ProductOrderStatusResponse,
   ProductsResponse,
+  RegisterRequest,
   ReviewRequest,
   ReviewResponse,
   ReviewsResponse,
@@ -248,4 +252,81 @@ export function transferFunds(
     method: "POST",
     body: JSON.stringify({ amount, toAddress }),
   }, 30_000);
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────
+
+function authApiFetch<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T | null> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("hm_auth_token") : null;
+  return apiFetch<T>(path, {
+    ...init,
+    headers: {
+      ...init?.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+}
+
+export async function registerUser(
+  payload: RegisterRequest,
+): Promise<{ data: AuthResponse | null; error?: string }> {
+  if (!API_BASE) return { data: null, error: "API not configured" };
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: "POST",
+      cache: "no-store",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    if (!res.ok) return { data: null, error: body.error ?? "Registration failed" };
+    return { data: body as AuthResponse };
+  } catch {
+    return { data: null, error: "Network error" };
+  }
+}
+
+export async function loginUser(
+  payload: LoginRequest,
+): Promise<{ data: AuthResponse | null; error?: string }> {
+  if (!API_BASE) return { data: null, error: "API not configured" };
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: "POST",
+      cache: "no-store",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json();
+    if (!res.ok) return { data: null, error: body.error ?? "Login failed" };
+    return { data: body as AuthResponse };
+  } catch {
+    return { data: null, error: "Network error" };
+  }
+}
+
+export async function loginWithDiscord(
+  code: string,
+): Promise<{ data: AuthResponse | null; error?: string }> {
+  if (!API_BASE) return { data: null, error: "API not configured" };
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/discord/callback`, {
+      method: "POST",
+      cache: "no-store",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    const body = await res.json();
+    if (!res.ok) return { data: null, error: body.error ?? "Discord login failed" };
+    return { data: body as AuthResponse };
+  } catch {
+    return { data: null, error: "Network error" };
+  }
+}
+
+export function getMe(): Promise<AuthUser | null> {
+  return authApiFetch<AuthUser>("/api/auth/me");
 }

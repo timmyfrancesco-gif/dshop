@@ -150,6 +150,36 @@ export interface CoinPrice {
   changePct: number | null;
 }
 
+// ── Auth ─────────────────────────────────────────────────────────────
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  username: string;
+  avatar?: string;
+  discordId?: string;
+  role: "user" | "admin";
+  createdAt: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: AuthUser;
+}
+
+export interface RegisterRequest {
+  email: string;
+  username: string;
+  password: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+// ── Reviews ──────────────────────────────────────────────────────────
+
 export interface ReviewRequest {
   orderId: string;
   rating: number;

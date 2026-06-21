@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 import LocaleSelector from "@/components/ui/LocaleSelector";
 import { SITE } from "@/lib/config";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { useLocale } from "@/lib/hooks/useLocale";
 
 const NAV_KEYS = [
@@ -17,9 +18,101 @@ const NAV_KEYS = [
   { href: "/terms", key: "nav.terms" },
 ];
 
+function UserMenu() {
+  const { t } = useLocale();
+  const { user, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  if (!user) {
+    return (
+      <Link
+        href="/login"
+        className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
+      >
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        {t("auth.login")}
+      </Link>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 rounded-full border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-accent"
+      >
+        {user.avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={user.avatar}
+            alt=""
+            className="h-6 w-6 rounded-full"
+          />
+        ) : (
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">
+            {user.username.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <span className="max-w-[100px] truncate">{user.username}</span>
+        <svg viewBox="0 0 24 24" className={`h-3.5 w-3.5 text-muted transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-background shadow-xl z-50">
+          <div className="px-4 py-3 border-b border-border">
+            <p className="text-sm font-medium text-foreground truncate">{user.username}</p>
+            <p className="text-xs text-muted truncate">{user.email}</p>
+          </div>
+          <div className="py-1">
+            <Link
+              href="/track"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-background-elevated transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-muted" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+                <rect x="9" y="3" width="6" height="4" rx="1" />
+              </svg>
+              {t("auth.myOrders")}
+            </Link>
+            <button
+              type="button"
+              onClick={() => { logout(); setOpen(false); }}
+              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-rose-400 hover:bg-background-elevated transition-colors"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              {t("auth.logout")}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Header() {
   const [open, setOpen] = useState(false);
   const { t } = useLocale();
+  const { user } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
@@ -43,6 +136,7 @@ export default function Header() {
 
         <div className="hidden items-center gap-3 lg:flex">
           <LocaleSelector />
+          <UserMenu />
           <a
             href={SITE.discordInvite}
             target="_blank"
@@ -96,6 +190,28 @@ export default function Header() {
             <div className="flex justify-center">
               <LocaleSelector />
             </div>
+            {/* Mobile auth */}
+            {user ? (
+              <div className="flex items-center justify-center gap-2 py-2">
+                {user.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={user.avatar} alt="" className="h-6 w-6 rounded-full" />
+                ) : (
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">
+                    {user.username.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm font-medium text-foreground">{user.username}</span>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="rounded-full border border-border px-4 py-2 text-center text-sm font-semibold text-foreground"
+              >
+                {t("auth.login")}
+              </Link>
+            )}
             <a
               href={SITE.discordInvite}
               target="_blank"
