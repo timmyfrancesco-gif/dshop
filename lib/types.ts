@@ -156,6 +156,18 @@ export interface ReviewRequest {
   comment?: string;
 }
 
+export interface Review {
+  orderId: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
+
 export interface ReviewResponse {
-  ok: boolean;
+  success: boolean;
+  review: Review;
+}
+
+export interface ReviewsResponse {
+  reviews: Review[];
 }

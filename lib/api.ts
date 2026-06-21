@@ -9,6 +9,7 @@ import type {
   ProductsResponse,
   ReviewRequest,
   ReviewResponse,
+  ReviewsResponse,
   SlotOrderRequest,
   SlotOrderResponse,
   SlotOrderStatusResponse,
@@ -190,13 +191,31 @@ export function updateProductStock(
 
 // ── Reviews ──────────────────────────────────────────────────────────
 
-export function submitReview(
+export async function submitReview(
   payload: ReviewRequest
-): Promise<ReviewResponse | null> {
-  return apiFetch<ReviewResponse>("/api/review", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+): Promise<{ data: ReviewResponse | null; status: number }> {
+  if (!API_BASE) return { data: null, status: 0 };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${API_BASE}/api/review`, {
+      method: "POST",
+      signal: controller.signal,
+      cache: "no-store",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return { data: null, status: res.status };
+    return { data: (await res.json()) as ReviewResponse, status: res.status };
+  } catch {
+    clearTimeout(timeout);
+    return { data: null, status: 0 };
+  }
+}
+
+export function getReviews(): Promise<ReviewsResponse | null> {
+  return apiFetch<ReviewsResponse>("/api/reviews");
 }
 
 // ── Wallet ────────────────────────────────────────────────────────────

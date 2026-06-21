@@ -94,6 +94,10 @@ const en: Record<string, string> = {
   "reviews.eyebrow": "Vouches",
   "reviews.title": "Trusted by traders across the community",
   "reviews.description": "A few words from people who've used our services. All identities anonymized for privacy.",
+  "reviews.verifiedBuyer": "Verified Buyer",
+  "reviews.shopCustomer": "Shop Customer",
+  "reviews.greatExperience": "Great experience!",
+  "reviews.leftRating": "Left a rating.",
 
   // Footer
   "footer.quickLinks": "Quick Links",

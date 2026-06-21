@@ -464,9 +464,9 @@ function SuccessScreen({
     if (!orderId || rating === 0) return;
     setReviewLoading(true);
     setReviewError(null);
-    const res = await submitReview({ orderId, rating, comment: reviewText.trim() || undefined });
+    const { data, status } = await submitReview({ orderId, rating, comment: reviewText.trim() || undefined });
     setReviewLoading(false);
-    if (res) {
+    if (data?.success || status === 409) {
       setReviewSubmitted(true);
       try { sessionStorage.setItem(`review_submitted_${orderId}`, "1"); } catch {}
     } else {
