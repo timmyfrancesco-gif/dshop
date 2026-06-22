@@ -152,6 +152,14 @@ function IconChevronLeft({ className }: { className?: string }) {
   );
 }
 
+function IconChevronDown({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
 function IconSearch({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -179,6 +187,15 @@ function IconTrendUp({ className }: { className?: string }) {
   );
 }
 
+function IconStorefront({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
 /* ================================================================== */
 /*  SVG Charts                                                         */
 /* ================================================================== */
@@ -186,7 +203,7 @@ function IconTrendUp({ className }: { className?: string }) {
 function BarChart({
   data,
   labels,
-  color = "#a78bfa",
+  color = "#6366f1",
   height = 160,
 }: {
   data: number[];
@@ -213,15 +230,15 @@ function BarChart({
                 y={y}
                 width={barWidth * 10}
                 height={barH}
-                rx="4"
+                rx="6"
                 fill={color}
-                opacity="0.85"
+                opacity="0.9"
               />
               <text
                 x={x + (barWidth * 10) / 2}
                 y={height + 16}
                 textAnchor="middle"
-                className="fill-muted"
+                fill="#71717a"
                 fontSize="9"
               >
                 {labels[i] ?? ""}
@@ -231,7 +248,7 @@ function BarChart({
                   x={x + (barWidth * 10) / 2}
                   y={y - 5}
                   textAnchor="middle"
-                  className="fill-foreground"
+                  fill="#fafafa"
                   fontSize="9"
                   fontWeight="600"
                 >
@@ -248,7 +265,7 @@ function BarChart({
 
 function SparkLine({
   data,
-  color = "#a78bfa",
+  color = "#6366f1",
   height = 40,
   width = 120,
 }: {
@@ -292,34 +309,37 @@ export default function SecretDashboardPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background">
-        <svg className="h-8 w-8 animate-spin text-accent" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
-          <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-        </svg>
+      <main className="flex min-h-screen items-center justify-center" style={{ backgroundColor: "#09090b" }}>
+        <div className="flex flex-col items-center gap-4">
+          <svg className="h-10 w-10 animate-spin text-indigo-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+            <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+          <p className="text-sm text-zinc-500">Loading dashboard...</p>
+        </div>
       </main>
     );
   }
 
   if (!user || user.role !== "admin") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-background-elevated/60 p-8 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-rose-500/40 bg-rose-500/10">
-            <svg viewBox="0 0 24 24" className="h-7 w-7 text-rose-500" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <main className="flex min-h-screen items-center justify-center px-4" style={{ backgroundColor: "#09090b" }}>
+        <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-white/5 p-8 text-center" style={{ backgroundColor: "#121214" }}>
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/10 ring-2 ring-rose-500/20">
+            <svg viewBox="0 0 24 24" className="h-8 w-8 text-rose-500" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
           </div>
-          <h1 className="text-lg font-bold text-foreground">Access Denied</h1>
-          <p className="text-sm text-muted">
+          <h1 className="text-lg font-bold text-white">Access Denied</h1>
+          <p className="text-sm text-zinc-500">
             {!user
               ? "You need to log in with a Discord account that has admin permissions."
               : "Your account doesn't have admin permissions. Contact the server owner."}
           </p>
           <Link
             href={user ? "/" : "/login"}
-            className="rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+            className="rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-600"
           >
             {user ? "Back to Home" : "Login"}
           </Link>
@@ -337,7 +357,7 @@ export default function SecretDashboardPage() {
 
 function AdminPanel() {
   const { user: authUser } = useAuth();
-  /* ── state ── */
+  /* -- state -- */
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
@@ -361,7 +381,7 @@ function AdminPanel() {
     setTimeout(() => setToast(null), 3500);
   }, []);
 
-  /* ── data fetching ── */
+  /* -- data fetching -- */
   const refresh = useCallback(async () => {
     setLoading(true);
     const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes] =
@@ -398,7 +418,7 @@ function AdminPanel() {
     };
   }, [autoRefresh, refresh]);
 
-  /* ── computed ── */
+  /* -- computed -- */
   const filteredProducts = productSearch.trim()
     ? products.filter(
         (p) =>
@@ -414,7 +434,7 @@ function AdminPanel() {
   const customerCount = stats?.totalCustomers ?? 0;
   const avgOrderValue = orderCount > 0 ? revenueTotal / orderCount : 0;
 
-  /* ── daily aggregations for charts ── */
+  /* -- daily aggregations for charts -- */
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
@@ -448,7 +468,7 @@ function AdminPanel() {
     }).length;
   });
 
-  /* ── product actions ── */
+  /* -- product actions -- */
   async function handleStockChange(product: ApiProduct, delta: number) {
     const newStock = Math.max(0, product.stock + delta);
     const ok = await updateProductStock(product.id, newStock);
@@ -526,7 +546,7 @@ function AdminPanel() {
     setSidebarOpen(false);
   }
 
-  /* ── best selling products ── */
+  /* -- best selling products -- */
   const productSales = new Map<string, number>();
   orderFeed.forEach((f) => {
     const name = f.label.replace(/^Ordine\s*/i, "").replace(/^Order\s*/i, "").trim();
@@ -538,7 +558,7 @@ function AdminPanel() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  /* ── top spenders ── */
+  /* -- top spenders -- */
   const spenderMap = new Map<string, number>();
   orderFeed.forEach((f) => {
     const method = f.method ?? "Unknown";
@@ -548,16 +568,16 @@ function AdminPanel() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  /* ── render ── */
+  /* -- render -- */
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#09090b" }}>
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed right-4 top-4 z-[100] animate-[fadeIn_0.2s] rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg ${
+          className={`fixed right-4 top-4 z-[100] animate-[fadeIn_0.2s] rounded-xl border px-5 py-3 text-sm font-semibold shadow-2xl backdrop-blur-sm ${
             toast.ok
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-              : "border-rose-500/30 bg-rose-500/10 text-rose-400"
+              ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
+              : "border-rose-500/20 bg-rose-500/10 text-rose-400"
           }`}
         >
           {toast.msg}
@@ -567,35 +587,38 @@ function AdminPanel() {
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* ── Sidebar ── */}
+      {/* -- Sidebar -- */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-border bg-background-elevated/60 transition-transform duration-300 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col border-r border-white/5 transition-transform duration-300 lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
+        style={{ backgroundColor: "#0f0f12" }}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center gap-3 border-b border-border px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/20">
-            <span className="text-sm font-bold text-accent">HM</span>
+        <div className="flex h-16 items-center gap-3 border-b border-white/5 px-5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/15">
+            <span className="text-sm font-bold text-indigo-400">HM</span>
           </div>
-          <span className="text-sm font-bold text-foreground">Heaven Market</span>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-white">Heaven Market</span>
+            <span className="text-[10px] text-zinc-500">Admin Panel</span>
+          </div>
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
             className="ml-auto lg:hidden"
           >
-            <IconX className="h-5 w-5 text-muted" />
+            <IconX className="h-5 w-5 text-zinc-500" />
           </button>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <SidebarLabel>Menu</SidebarLabel>
           <SidebarItem
             icon={<IconDashboard className="h-4 w-4" />}
             label="Dashboard"
@@ -603,105 +626,137 @@ function AdminPanel() {
             onClick={() => navigateTo("dashboard")}
           />
 
-          <SidebarLabel>Catalogo</SidebarLabel>
-          <SidebarItem
-            icon={<IconProducts className="h-4 w-4" />}
-            label="Prodotti"
-            active={activeNav === "products" || activeNav === "product-edit"}
-            onClick={() => navigateTo("products")}
-          />
+          <SidebarGroup label="Catalog">
+            <SidebarItem
+              icon={<IconProducts className="h-4 w-4" />}
+              label="Products"
+              active={activeNav === "products" || activeNav === "product-edit"}
+              onClick={() => navigateTo("products")}
+              indent
+            />
+          </SidebarGroup>
 
-          <SidebarLabel>Ordini</SidebarLabel>
-          <SidebarItem
-            icon={<IconOrders className="h-4 w-4" />}
-            label="Ordini / Invoices"
-            active={activeNav === "orders"}
-            onClick={() => navigateTo("orders")}
-          />
-          <SidebarItem
-            icon={<IconCustomers className="h-4 w-4" />}
-            label="Clienti"
-            active={activeNav === "customers"}
-            onClick={() => navigateTo("customers")}
-          />
-          <SidebarItem
-            icon={<IconTickets className="h-4 w-4" />}
-            label="Tickets"
-            active={activeNav === "tickets"}
-            onClick={() => navigateTo("tickets")}
-          />
+          <SidebarGroup label="Orders">
+            <SidebarItem
+              icon={<IconOrders className="h-4 w-4" />}
+              label="Invoices"
+              active={activeNav === "orders"}
+              onClick={() => navigateTo("orders")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconCustomers className="h-4 w-4" />}
+              label="Customers"
+              active={activeNav === "customers"}
+              onClick={() => navigateTo("customers")}
+              indent
+            />
+          </SidebarGroup>
 
-          <SidebarLabel>Wallets</SidebarLabel>
-          <SidebarItem
-            icon={<IconWallet className="h-4 w-4" />}
-            label="Crypto (LTC)"
-            active={activeNav === "wallet"}
-            onClick={() => navigateTo("wallet")}
-          />
+          <SidebarGroup label="Wallets">
+            <SidebarItem
+              icon={<IconWallet className="h-4 w-4" />}
+              label="Crypto"
+              active={activeNav === "wallet"}
+              onClick={() => navigateTo("wallet")}
+              indent
+            />
+          </SidebarGroup>
 
-          <div className="mt-4" />
-          <SidebarItem
-            icon={<IconSettings className="h-4 w-4" />}
-            label="Impostazioni"
-            active={activeNav === "settings"}
-            onClick={() => navigateTo("settings")}
-          />
+          <SidebarGroup label="Storefront">
+            <SidebarItem
+              icon={<IconSettings className="h-4 w-4" />}
+              label="Settings"
+              active={activeNav === "settings"}
+              onClick={() => navigateTo("settings")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconTickets className="h-4 w-4" />}
+              label="Tickets"
+              active={activeNav === "tickets"}
+              onClick={() => navigateTo("tickets")}
+              indent
+            />
+          </SidebarGroup>
         </nav>
 
-        {/* Bottom user / bot status */}
-        <div className="border-t border-border px-4 py-3">
-          <div className="flex items-center gap-2">
+        {/* Bottom user profile + bot status */}
+        <div className="border-t border-white/5 p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-500/15 text-sm font-bold text-indigo-400">
+              {authUser?.username?.charAt(0)?.toUpperCase() ?? "A"}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-white">
+                {authUser?.username ?? "Admin"}
+              </p>
+              <p className="truncate text-[11px] text-zinc-500">
+                {authUser?.email ?? ""}
+              </p>
+            </div>
             <span
-              className={`h-2 w-2 rounded-full ${
+              className={`h-2.5 w-2.5 shrink-0 rounded-full ${
                 botOnline === null
-                  ? "bg-muted"
+                  ? "bg-zinc-600"
                   : botOnline
                     ? "bg-emerald-400 animate-pulse"
                     : "bg-rose-400"
               }`}
+              title={botOnline === null ? "Checking..." : botOnline ? "Bot Online" : "Bot Offline"}
             />
-            <span className="text-[11px] text-muted">
-              Bot {botOnline === null ? "..." : botOnline ? "Online" : "Offline"}
-            </span>
           </div>
-          <p className="mt-1 truncate text-xs text-muted">{authUser?.email ?? ""}</p>
         </div>
       </aside>
 
-      {/* ── Main Content ── */}
+      {/* -- Main Content -- */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
-        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background px-4 lg:px-6">
+        <header className="flex h-14 shrink-0 items-center gap-3 border-b border-white/5 px-4 lg:px-6" style={{ backgroundColor: "#09090b" }}>
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden"
           >
-            <IconMenu className="h-5 w-5 text-muted" />
+            <IconMenu className="h-5 w-5 text-zinc-400" />
           </button>
 
-          <h2 className="text-sm font-semibold text-foreground capitalize">
-            {activeNav === "product-edit"
-              ? editingProduct
-                ? `Modifica: ${editingProduct.name}`
-                : "Nuovo Prodotto"
-              : activeNav === "dashboard"
-                ? "Dashboard"
-                : activeNav}
-          </h2>
+          <div className="flex flex-col">
+            <h2 className="text-sm font-semibold text-white">
+              {activeNav === "product-edit"
+                ? editingProduct
+                  ? `Edit: ${editingProduct.name}`
+                  : "New Product"
+                : activeNav === "dashboard"
+                  ? "Dashboard"
+                  : activeNav === "products"
+                    ? "Products"
+                    : activeNav === "orders"
+                      ? "Invoices"
+                      : activeNav === "customers"
+                        ? "Customers"
+                        : activeNav === "wallet"
+                          ? "Wallet"
+                          : activeNav === "settings"
+                            ? "Settings"
+                            : activeNav === "tickets"
+                              ? "Tickets"
+                              : activeNav}
+            </h2>
+          </div>
 
           <div className="ml-auto flex items-center gap-3">
             {lastUpdated ? (
-              <span className="hidden text-xs text-muted sm:inline">
+              <span className="hidden text-xs text-zinc-500 sm:inline">
                 {formatRelativeTime(Math.floor(lastUpdated / 1000))}
               </span>
             ) : null}
-            <label className="hidden items-center gap-1.5 text-xs text-muted sm:flex">
+            <label className="hidden items-center gap-1.5 text-xs text-zinc-500 sm:flex cursor-pointer">
               <input
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="accent-accent"
+                className="accent-indigo-500"
               />
               Auto
             </label>
@@ -709,24 +764,24 @@ function AdminPanel() {
               type="button"
               onClick={refresh}
               disabled={loading}
-              className="rounded-lg border border-border px-3 py-1 text-xs font-semibold text-foreground transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition-all hover:border-indigo-500/50 hover:text-indigo-400 disabled:opacity-50"
             >
               {loading ? "..." : "Refresh"}
             </button>
             {/* Bot badge */}
             <span
-              className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold sm:flex ${
+              className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold sm:flex ${
                 botOnline === null
-                  ? "border-border text-muted"
+                  ? "border-white/10 text-zinc-500"
                   : botOnline
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                    : "border-rose-500/30 bg-rose-500/10 text-rose-400"
+                    ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-400"
+                    : "border-rose-500/20 bg-rose-500/5 text-rose-400"
               }`}
             >
               <span
                 className={`h-1.5 w-1.5 rounded-full ${
                   botOnline === null
-                    ? "bg-muted"
+                    ? "bg-zinc-600"
                     : botOnline
                       ? "bg-emerald-400 animate-pulse"
                       : "bg-rose-400"
@@ -742,7 +797,7 @@ function AdminPanel() {
         </header>
 
         {/* Content area */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6" style={{ backgroundColor: "#09090b" }}>
           {activeNav === "dashboard" && (
             <DashboardView
               stats={stats}
@@ -811,7 +866,7 @@ function AdminPanel() {
         </main>
       </div>
 
-      {/* ── Modals ── */}
+      {/* -- Modals -- */}
       {modal?.kind === "confirm-delete" && (
         <ConfirmModal
           title="Conferma Eliminazione"
@@ -840,11 +895,29 @@ function AdminPanel() {
 /*  Sidebar Components                                                 */
 /* ================================================================== */
 
-function SidebarLabel({ children }: { children: React.ReactNode }) {
+function SidebarGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(true);
+
   return (
-    <p className="mb-1 mt-4 px-3 text-[10px] font-semibold uppercase tracking-widest text-muted first:mt-0">
-      {children}
-    </p>
+    <div className="mt-4">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500 hover:text-zinc-400 transition-colors"
+      >
+        {label}
+        <IconChevronDown
+          className={`h-3 w-3 transition-transform duration-200 ${open ? "" : "-rotate-90"}`}
+        />
+      </button>
+      {open && <div className="mt-1">{children}</div>}
+    </div>
   );
 }
 
@@ -853,24 +926,31 @@ function SidebarItem({
   label,
   active,
   onClick,
+  indent,
 }: {
   icon: React.ReactNode;
   label: string;
   active: boolean;
   onClick: () => void;
+  indent?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-all ${
+        indent ? "ml-2" : ""
+      } ${
         active
-          ? "border-l-2 border-accent bg-accent/10 font-semibold text-accent"
-          : "text-muted hover:bg-background/40 hover:text-foreground"
+          ? "bg-indigo-500/10 font-semibold text-indigo-400"
+          : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
       }`}
     >
-      {icon}
+      <span className={active ? "text-indigo-400" : "text-zinc-500"}>{icon}</span>
       {label}
+      {active && (
+        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-400" />
+      )}
     </button>
   );
 }
@@ -909,14 +989,14 @@ function DashboardView({
     <div className="space-y-6">
       {/* LTC banner */}
       {ltc && (
-        <div className="flex items-center gap-4 rounded-xl border border-border bg-background-elevated/40 px-4 py-2.5">
-          <span className="text-xs font-semibold uppercase tracking-widest text-muted">
-            LTC
-          </span>
-          <span className="font-bold text-foreground">{formatEur(ltc.eur)}</span>
-          <span className="text-sm text-muted">/ ${ltc.usd.toFixed(2)}</span>
+        <div className="flex items-center gap-4 rounded-xl border border-white/5 px-5 py-3" style={{ backgroundColor: "#121214" }}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+            <span className="text-xs font-bold text-amber-400">LTC</span>
+          </div>
+          <span className="text-lg font-bold text-white">{formatEur(ltc.eur)}</span>
+          <span className="text-sm text-zinc-500">/ ${ltc.usd.toFixed(2)}</span>
           <span
-            className={`ml-auto rounded-full px-2 py-0.5 text-xs font-semibold ${
+            className={`ml-auto rounded-full px-3 py-1 text-xs font-semibold ${
               ltc.changePct >= 0
                 ? "bg-emerald-500/10 text-emerald-400"
                 : "bg-rose-500/10 text-rose-400"
@@ -938,20 +1018,20 @@ function DashboardView({
           sparkData={dailyRevenue}
         />
         <StatCard
-          label="Ordini"
+          label="Orders"
           value={orderCount.toString()}
           change="+8.2%"
           positive
           sparkData={dailyOrders}
         />
         <StatCard
-          label="Clienti"
+          label="Customers"
           value={customerCount.toString()}
           change="+3.1%"
           positive
         />
         <StatCard
-          label="Valore Medio"
+          label="Avg Order"
           value={formatCurrency(avgOrderValue, "EUR")}
           change=""
         />
@@ -960,91 +1040,89 @@ function DashboardView({
       {/* Charts row */}
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Revenue chart */}
-        <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
-          <h3 className="mb-4 text-sm font-semibold text-foreground">
-            Revenue (7 giorni)
-          </h3>
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white">Revenue (7 days)</h3>
+            <span className="text-xs text-zinc-500">Last 7 days</span>
+          </div>
           <BarChart
             data={dailyRevenue}
             labels={dayLabels}
-            color="#a78bfa"
+            color="#6366f1"
             height={160}
           />
         </div>
 
         {/* Orders chart */}
-        <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
-          <h3 className="mb-4 text-sm font-semibold text-foreground">
-            Ordini (7 giorni)
-          </h3>
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-white">Orders (7 days)</h3>
+            <span className="text-xs text-zinc-500">Last 7 days</span>
+          </div>
           <BarChart
             data={dailyOrders}
             labels={dayLabels}
-            color="#34d399"
+            color="#22c55e"
             height={160}
           />
         </div>
       </div>
 
-      {/* Bottom row: Latest orders + Best selling + Top spenders */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Latest completed orders */}
-        <div className="rounded-2xl border border-border bg-background-elevated/40 p-5 lg:col-span-1">
-          <h3 className="mb-3 text-sm font-semibold text-foreground">
-            Ultimi Ordini
-          </h3>
-          {orderFeed.length === 0 ? (
-            <p className="text-xs text-muted">Nessun ordine recente.</p>
-          ) : (
-            <ul className="space-y-2">
-              {orderFeed.slice(0, 8).map((item, i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between border-b border-border/40 pb-2 last:border-0"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-foreground">
-                      {item.label}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {formatRelativeTime(item.ts)}
-                    </p>
-                  </div>
-                  {item.amount !== undefined && (
-                    <span className="ml-2 shrink-0 text-sm font-semibold text-emerald-400">
-                      {formatCurrency(item.amount, "EUR")}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
+      {/* Recent orders feed */}
+      <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-white">Recent Orders</h3>
+          <span className="text-xs text-zinc-500">{orderFeed.length} total</span>
         </div>
+        {orderFeed.length === 0 ? (
+          <p className="text-sm text-zinc-500">No recent orders.</p>
+        ) : (
+          <div className="space-y-0">
+            {orderFeed.slice(0, 10).map((item, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 border-b border-white/5 py-3 last:border-0"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
+                  <IconProducts className="h-4 w-4 text-indigo-400" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-white">{item.label}</p>
+                  <p className="text-xs text-zinc-500">{formatRelativeTime(item.ts)}</p>
+                </div>
+                {item.method && (
+                  <span className="hidden rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-medium text-zinc-400 sm:inline-block">
+                    {item.method}
+                  </span>
+                )}
+                {item.amount !== undefined && (
+                  <span className="shrink-0 text-sm font-semibold text-emerald-400">
+                    {formatCurrency(item.amount, "EUR")}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
+      {/* Bottom insights grid */}
+      <div className="grid gap-4 lg:grid-cols-3">
         {/* Best selling */}
-        <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
-          <h3 className="mb-3 text-sm font-semibold text-foreground">
-            Best Selling
-          </h3>
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <h3 className="mb-4 text-sm font-semibold text-white">Best Selling</h3>
           {bestSelling.length === 0 ? (
-            <p className="text-xs text-muted">Nessun dato disponibile.</p>
+            <p className="text-xs text-zinc-500">No data available.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {bestSelling.map(([name, count], i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between border-b border-border/40 pb-2 last:border-0"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent">
-                      {i + 1}
-                    </span>
-                    <span className="truncate text-sm text-foreground">
-                      {name}
-                    </span>
-                  </div>
-                  <span className="text-xs font-semibold text-muted">
-                    {count} vendite
+                <li key={i} className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-xs font-bold text-indigo-400">
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-zinc-300">{name}</span>
+                  <span className="shrink-0 rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-zinc-400">
+                    {count} sold
                   </span>
                 </li>
               ))}
@@ -1052,33 +1130,53 @@ function DashboardView({
           )}
         </div>
 
-        {/* Top spenders */}
-        <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
-          <h3 className="mb-3 text-sm font-semibold text-foreground">
-            Top Spenders
-          </h3>
+        {/* Top Spenders (Payment Methods) */}
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <h3 className="mb-4 text-sm font-semibold text-white">Top Spenders</h3>
           {topSpenders.length === 0 ? (
-            <p className="text-xs text-muted">Nessun dato disponibile.</p>
+            <p className="text-xs text-zinc-500">No data available.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               {topSpenders.map(([method, total], i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between border-b border-border/40 pb-2 last:border-0"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/10 text-xs font-bold text-emerald-400">
-                      {i + 1}
-                    </span>
-                    <span className="truncate text-sm text-foreground">
-                      {method}
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold text-foreground">
+                <li key={i} className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-xs font-bold text-emerald-400">
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-zinc-300">{method}</span>
+                  <span className="shrink-0 text-sm font-semibold text-white">
                     {formatCurrency(total, "EUR")}
                   </span>
                 </li>
               ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Most Used Methods */}
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <h3 className="mb-4 text-sm font-semibold text-white">Most Used Methods</h3>
+          {topSpenders.length === 0 ? (
+            <p className="text-xs text-zinc-500">No data available.</p>
+          ) : (
+            <ul className="space-y-3">
+              {topSpenders.map(([method, total], i) => {
+                const totalAll = topSpenders.reduce((s, [, v]) => s + v, 0);
+                const pct = totalAll > 0 ? ((total / totalAll) * 100).toFixed(1) : "0";
+                return (
+                  <li key={i} className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-zinc-300">{method}</span>
+                      <span className="text-xs font-medium text-zinc-500">{pct}%</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+                      <div
+                        className="h-full rounded-full bg-indigo-500 transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -1101,17 +1199,17 @@ function StatCard({
   sparkData?: number[];
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
+    <div className="rounded-xl border border-white/5 p-4" style={{ backgroundColor: "#121214" }}>
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wider text-muted">{label}</p>
-          <p className="mt-1 text-xl font-bold text-foreground">{value}</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">{label}</p>
+          <p className="mt-1.5 text-2xl font-bold text-white">{value}</p>
           {change && (
-            <div className="mt-1 flex items-center gap-1">
+            <div className="mt-1.5 flex items-center gap-1">
               {positive && <IconTrendUp className="h-3 w-3 text-emerald-400" />}
               <span
                 className={`text-xs font-semibold ${
-                  positive ? "text-emerald-400" : "text-muted"
+                  positive ? "text-emerald-400" : "text-zinc-500"
                 }`}
               >
                 {change}
@@ -1122,7 +1220,7 @@ function StatCard({
         {sparkData && sparkData.length > 1 && (
           <SparkLine
             data={sparkData}
-            color={positive ? "#34d399" : "#a78bfa"}
+            color={positive ? "#22c55e" : "#6366f1"}
             width={80}
             height={32}
           />
@@ -1159,153 +1257,135 @@ function ProductsView({
   const outOfStock = products.filter((p) => p.stock <= 0).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-bold text-foreground">Prodotti</h3>
-          <span className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
-            {inStock} in stock
-          </span>
-          {outOfStock > 0 && (
-            <span className="rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-semibold text-rose-400">
-              {outOfStock} esauriti
-            </span>
-          )}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h3 className="text-xl font-bold text-white">Products</h3>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            Manage your product catalog ({products.length} total)
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="relative">
-            <IconSearch className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+            <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
               value={productSearch}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Cerca prodotto..."
-              className="w-52 rounded-lg border border-border bg-background/60 py-1.5 pl-8 pr-3 text-xs text-foreground outline-none transition-colors focus:border-accent"
+              placeholder="Search products..."
+              className="w-56 rounded-lg border border-white/10 py-2 pl-9 pr-3 text-xs text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-600"
+              style={{ backgroundColor: "#161619" }}
             />
           </div>
           <button
             type="button"
             onClick={onNew}
-            className="rounded-lg bg-accent px-4 py-1.5 text-xs font-bold text-background transition-opacity hover:opacity-90"
+            className="rounded-lg bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600"
           >
-            + Nuovo Prodotto
+            + Create Product
           </button>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-2xl border border-border bg-background-elevated/40">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b border-border text-xs uppercase tracking-wider text-muted">
-              <th className="px-4 py-3">Img</th>
-              <th className="px-4 py-3">Nome</th>
-              <th className="px-4 py-3">Prezzo</th>
-              <th className="hidden px-4 py-3 sm:table-cell">LTC</th>
-              <th className="px-4 py-3">Stock</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Azioni</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={7}
-                  className="px-4 py-8 text-center text-sm text-muted"
+      {/* Product grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {products.length === 0 ? (
+          <div className="col-span-full flex flex-col items-center justify-center rounded-xl border border-white/5 py-16" style={{ backgroundColor: "#121214" }}>
+            <IconProducts className="h-10 w-10 text-zinc-600" />
+            <p className="mt-3 text-sm text-zinc-500">No products found.</p>
+          </div>
+        ) : (
+          products.map((p) => (
+            <div
+              key={p.id}
+              className="group flex flex-col overflow-hidden rounded-xl border border-white/5 transition-all hover:border-white/10 cursor-pointer"
+              style={{ backgroundColor: "#121214" }}
+              onClick={() => onEdit(p)}
+            >
+              {/* Banner / Image */}
+              <div className="relative h-28 w-full overflow-hidden">
+                {p.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.image}
+                    alt=""
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-purple-500/10">
+                    <IconProducts className="h-8 w-8 text-indigo-400/40" />
+                  </div>
+                )}
+                {/* Stock badge */}
+                <span
+                  className={`absolute right-2 top-2 rounded-md px-2 py-0.5 text-[10px] font-bold backdrop-blur-sm ${
+                    p.stock > 0
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : "bg-rose-500/20 text-rose-400"
+                  }`}
                 >
-                  Nessun prodotto trovato.
-                </td>
-              </tr>
-            ) : (
-              products.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b border-border/40 transition-colors hover:bg-background/40 cursor-pointer"
-                  onClick={() => onEdit(p)}
-                >
-                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    {p.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={p.image}
-                        alt=""
-                        className="h-10 w-10 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-background-elevated text-xs text-muted">
-                        ---
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-foreground">{p.name}</p>
-                    <p className="max-w-[12rem] truncate text-xs text-muted">
-                      {p.description}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-foreground">
+                  {p.stock > 0 ? `${p.stock} in stock` : "Out of stock"}
+                </span>
+              </div>
+
+              {/* Info */}
+              <div className="flex flex-1 flex-col p-4">
+                <h4 className="text-sm font-semibold text-white truncate">{p.name}</h4>
+                <p className="mt-1 truncate text-xs text-zinc-500">{p.description}</p>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="rounded-md bg-indigo-500/10 px-2 py-0.5 text-xs font-bold text-indigo-400">
                     {formatCurrency(p.price, p.currency)}
-                  </td>
-                  <td className="hidden px-4 py-3 font-mono text-xs text-muted sm:table-cell">
-                    {ltc ? (p.price / ltc.eur).toFixed(6) : "---"}
-                  </td>
-                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => onStockChange(p, -1)}
-                        className="flex h-6 w-6 items-center justify-center rounded border border-border text-xs font-bold text-rose-400 transition-colors hover:border-rose-400 hover:bg-rose-500/10"
-                      >
-                        -
-                      </button>
-                      <span className="min-w-[2rem] text-center text-sm font-semibold text-foreground">
-                        {p.stock}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => onStockChange(p, 1)}
-                        className="flex h-6 w-6 items-center justify-center rounded border border-border text-xs font-bold text-emerald-400 transition-colors hover:border-emerald-400 hover:bg-emerald-500/10"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                        p.stock > 0
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : "bg-rose-500/10 text-rose-400"
-                      }`}
-                    >
-                      {p.stock > 0 ? "In Stock" : "Esaurito"}
+                  </span>
+                  {ltc && (
+                    <span className="text-[10px] text-zinc-600 font-mono">
+                      {(p.price / ltc.eur).toFixed(4)} LTC
                     </span>
-                  </td>
-                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => onEdit(p)}
-                        className="rounded-lg border border-border px-2.5 py-1 text-xs font-semibold text-muted transition-colors hover:border-accent hover:text-accent"
-                      >
-                        Modifica
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDelete(p)}
-                        className="rounded-lg border border-rose-500/30 px-2.5 py-1 text-xs font-semibold text-rose-400 transition-colors hover:bg-rose-500/10"
-                      >
-                        Elimina
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-between border-t border-white/5 px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onStockChange(p, -1)}
+                    className="flex h-6 w-6 items-center justify-center rounded border border-white/10 text-xs font-bold text-rose-400 transition-all hover:border-rose-400/30 hover:bg-rose-500/10"
+                  >
+                    -
+                  </button>
+                  <span className="min-w-[2rem] text-center text-xs font-semibold text-zinc-300">
+                    {p.stock}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onStockChange(p, 1)}
+                    className="flex h-6 w-6 items-center justify-center rounded border border-white/10 text-xs font-bold text-emerald-400 transition-all hover:border-emerald-400/30 hover:bg-emerald-500/10"
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(p)}
+                    className="text-xs text-zinc-500 transition-colors hover:text-indigo-400"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(p)}
+                    className="text-xs text-zinc-500 transition-colors hover:text-rose-400"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -1354,119 +1434,123 @@ function ProductEditView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
           onClick={onCancel}
-          className="flex items-center gap-1 text-sm text-muted transition-colors hover:text-foreground"
+          className="flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-white"
         >
           <IconChevronLeft className="h-4 w-4" />
-          Torna ai prodotti
+          Back to Products
         </button>
         <div className="flex items-center gap-2">
           {product && (
             <button
               type="button"
               onClick={() => onDelete(product)}
-              className="rounded-lg border border-rose-500/30 px-4 py-1.5 text-xs font-semibold text-rose-400 transition-colors hover:bg-rose-500/10"
+              className="rounded-lg border border-rose-500/20 px-4 py-2 text-xs font-semibold text-rose-400 transition-all hover:bg-rose-500/10"
             >
-              Elimina
+              Delete
             </button>
           )}
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-border px-4 py-1.5 text-xs font-semibold text-muted transition-colors hover:text-foreground"
+            className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-zinc-400 transition-all hover:text-white"
           >
-            Annulla
+            Cancel
           </button>
           <button
             type="button"
             onClick={handleSave}
             disabled={saving || !name.trim() || !price.trim()}
-            className="rounded-lg bg-accent px-4 py-1.5 text-xs font-bold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="rounded-lg bg-indigo-500 px-5 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
           >
-            {saving ? "Salvataggio..." : "Salva"}
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-0 border-b border-border">
+      <div className="flex gap-0 border-b border-white/10">
         <button
           type="button"
           onClick={() => setActiveTab("general")}
-          className={`border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
             activeTab === "general"
-              ? "border-accent text-accent"
-              : "border-transparent text-muted hover:text-foreground"
+              ? "border-indigo-500 text-indigo-400"
+              : "border-transparent text-zinc-500 hover:text-zinc-300"
           }`}
         >
-          Generale
+          General
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("pricing")}
-          className={`border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
             activeTab === "pricing"
-              ? "border-accent text-accent"
-              : "border-transparent text-muted hover:text-foreground"
+              ? "border-indigo-500 text-indigo-400"
+              : "border-transparent text-zinc-500 hover:text-zinc-300"
           }`}
         >
-          Prezzo & Stock
+          Pricing & Stock
         </button>
       </div>
 
       {/* Tab content */}
-      <div className="rounded-2xl border border-border bg-background-elevated/40 p-6">
+      <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
         {activeTab === "general" && (
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="space-y-4">
-              <label className="flex flex-col gap-1.5 text-xs font-semibold text-muted">
-                Nome *
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-5">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Name *</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-accent"
+                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
+                  style={{ backgroundColor: "#161619" }}
                 />
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-semibold text-muted">
-                Descrizione
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Description</label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
-                  className="rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-accent"
+                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 resize-none"
+                  style={{ backgroundColor: "#161619" }}
                 />
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-semibold text-muted">
-                Categoria
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Category</label>
                 <input
                   type="text"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  placeholder="es. Digital, Account, etc."
-                  className="rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-accent"
+                  placeholder="e.g. Digital, Account, etc."
+                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-600"
+                  style={{ backgroundColor: "#161619" }}
                 />
-              </label>
+              </div>
             </div>
-            <div className="space-y-4">
-              <label className="flex flex-col gap-1.5 text-xs font-semibold text-muted">
-                URL Immagine
+            <div className="space-y-5">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Image URL</label>
                 <input
                   type="url"
                   value={image}
                   onChange={(e) => setImage(e.target.value)}
                   placeholder="https://..."
-                  className="rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-accent"
+                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-600"
+                  style={{ backgroundColor: "#161619" }}
                 />
-              </label>
+              </div>
               {image.trim() && (
-                <div className="rounded-xl border border-border bg-background/40 p-4">
-                  <p className="mb-2 text-xs text-muted">Preview</p>
+                <div className="rounded-xl border border-white/5 p-4" style={{ backgroundColor: "#161619" }}>
+                  <p className="mb-3 text-xs font-medium text-zinc-500">Preview</p>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={image}
@@ -1480,38 +1564,40 @@ function ProductEditView({
         )}
 
         {activeTab === "pricing" && (
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="space-y-4">
-              <label className="flex flex-col gap-1.5 text-xs font-semibold text-muted">
-                Prezzo *
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-5">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Price *</label>
                 <input
                   type="number"
                   step="any"
                   min="0"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  className="rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-accent"
+                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
+                  style={{ backgroundColor: "#161619" }}
                 />
-              </label>
-              <label className="flex flex-col gap-1.5 text-xs font-semibold text-muted">
-                Valuta
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Currency</label>
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="rounded-lg border border-border bg-background/60 px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-accent"
+                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
+                  style={{ backgroundColor: "#161619" }}
                 >
                   <option value="EUR">EUR</option>
                   <option value="USD">USD</option>
                   <option value="GBP">GBP</option>
                 </select>
-              </label>
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs font-semibold text-muted">Stock</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Stock</label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setStock((s) => Math.max(0, s - 1))}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-lg font-bold text-rose-400 transition-colors hover:border-rose-400 hover:bg-rose-500/10"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-lg font-bold text-rose-400 transition-all hover:border-rose-400/30 hover:bg-rose-500/10"
                   >
                     -
                   </button>
@@ -1522,35 +1608,36 @@ function ProductEditView({
                     onChange={(e) =>
                       setStock(Math.max(0, parseInt(e.target.value) || 0))
                     }
-                    className="w-20 rounded-lg border border-border bg-background/60 px-3 py-2 text-center text-sm font-semibold text-foreground outline-none focus:border-accent"
+                    className="w-20 rounded-lg border border-white/10 px-3 py-2 text-center text-sm font-semibold text-white outline-none focus:border-indigo-500/50"
+                    style={{ backgroundColor: "#161619" }}
                   />
                   <button
                     type="button"
                     onClick={() => setStock((s) => s + 1)}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-lg font-bold text-emerald-400 transition-colors hover:border-emerald-400 hover:bg-emerald-500/10"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-lg font-bold text-emerald-400 transition-all hover:border-emerald-400/30 hover:bg-emerald-500/10"
                   >
                     +
                   </button>
                 </div>
               </div>
             </div>
-            <div className="space-y-4">
-              <label className="flex flex-col gap-1.5 text-xs font-semibold text-muted">
-                Stock Items / Serials
-                <p className="text-[11px] font-normal text-muted">
-                  Incolla codici/seriali, uno per riga. Questi sono gli item
-                  consegnabili.
+            <div className="space-y-5">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Stock Items / Serials</label>
+                <p className="text-[11px] text-zinc-600">
+                  Paste codes/serials, one per line. These are the deliverable items.
                 </p>
                 <textarea
                   value={stockItems}
                   onChange={(e) => setStockItems(e.target.value)}
                   rows={6}
                   placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
-                  className="rounded-lg border border-border bg-background/60 px-3 py-2.5 font-mono text-xs text-foreground outline-none transition-colors focus:border-accent"
+                  className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
+                  style={{ backgroundColor: "#161619" }}
                 />
-              </label>
+              </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted">
+                <span className="text-xs text-zinc-500">
                   {stockItems.trim()
                     ? `${stockItems.trim().split("\n").length} items`
                     : "0 items"}
@@ -1565,9 +1652,9 @@ function ProductEditView({
                     setStock((s) => s + lines.length);
                   }}
                   disabled={!stockItems.trim()}
-                  className="rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/30 disabled:opacity-50"
+                  className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 disabled:opacity-50"
                 >
-                  Aggiungi allo Stock
+                  Add to Stock
                 </button>
               </div>
             </div>
@@ -1591,35 +1678,40 @@ function OrdersView({
   allFeed: FeedItem[];
   ltc: LtcResponse | null;
 }) {
-  // Use all feed to show diverse activity
   const orderItems = allFeed.filter(
     (f) => f.type === "order" || f.type === "escrow"
   );
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-bold text-foreground">Ordini / Invoices</h3>
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-xl font-bold text-white">Invoices</h3>
+        <p className="mt-0.5 text-sm text-zinc-500">
+          View all orders and transactions ({orderItems.length} total)
+        </p>
+      </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-border bg-background-elevated/40">
+      <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-border text-xs uppercase tracking-wider text-muted">
-              <th className="px-4 py-3">ID</th>
-              <th className="px-4 py-3">Prodotto</th>
-              <th className="hidden px-4 py-3 sm:table-cell">Cliente</th>
-              <th className="px-4 py-3">Importo</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Data</th>
+            <tr className="border-b border-white/5">
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">ID</th>
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Product</th>
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Price</th>
+              <th className="hidden px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 sm:table-cell">Method</th>
+              <th className="hidden px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 md:table-cell">Email</th>
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Created</th>
             </tr>
           </thead>
           <tbody>
             {orderItems.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
-                  className="px-4 py-8 text-center text-sm text-muted"
+                  colSpan={7}
+                  className="px-4 py-12 text-center text-sm text-zinc-500"
                 >
-                  Nessun ordine trovato.
+                  No orders found.
                 </td>
               </tr>
             ) : (
@@ -1633,26 +1725,35 @@ function OrdersView({
                 return (
                   <tr
                     key={i}
-                    className="border-b border-border/40 transition-colors hover:bg-background/40"
+                    className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
                   >
-                    <td className="px-4 py-3 font-mono text-xs text-muted">
+                    <td className="px-4 py-3">
+                      <OrderStatusBadge status={status} />
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-zinc-500">
                       #{(1000 + i).toString().padStart(5, "0")}
                     </td>
-                    <td className="px-4 py-3 font-medium text-foreground">
+                    <td className="px-4 py-3 font-medium text-white">
                       {item.label}
                     </td>
-                    <td className="hidden px-4 py-3 text-xs text-muted sm:table-cell">
-                      {item.method ?? "N/A"}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-foreground">
+                    <td className="px-4 py-3 font-semibold text-white">
                       {item.amount !== undefined
                         ? formatCurrency(item.amount, "EUR")
                         : "---"}
                     </td>
-                    <td className="px-4 py-3">
-                      <OrderStatusBadge status={status} />
+                    <td className="hidden px-4 py-3 sm:table-cell">
+                      {item.method ? (
+                        <span className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-zinc-400">
+                          {item.method}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-zinc-600">N/A</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted">
+                    <td className="hidden px-4 py-3 text-xs text-zinc-500 md:table-cell">
+                      ---
+                    </td>
+                    <td className="px-4 py-3 text-xs text-zinc-500">
                       {formatRelativeTime(item.ts)}
                     </td>
                   </tr>
@@ -1667,21 +1768,20 @@ function OrdersView({
 }
 
 function OrderStatusBadge({ status }: { status: string }) {
-  const colors =
+  const config =
     status === "paid"
-      ? "bg-emerald-500/10 text-emerald-400"
+      ? { bg: "bg-emerald-500/10", text: "text-emerald-400", dot: "bg-emerald-400", label: "Paid" }
       : status === "pending"
-        ? "bg-amber-500/10 text-amber-400"
-        : "bg-rose-500/10 text-rose-400";
+        ? { bg: "bg-amber-500/10", text: "text-amber-400", dot: "bg-amber-400", label: "Pending" }
+        : status === "confirming"
+          ? { bg: "bg-blue-500/10", text: "text-blue-400", dot: "bg-blue-400", label: "Confirming" }
+          : { bg: "bg-rose-500/10", text: "text-rose-400", dot: "bg-rose-400", label: "Cancelled" };
   return (
     <span
-      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${colors}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${config.bg} ${config.text}`}
     >
-      {status === "paid"
-        ? "Completato"
-        : status === "pending"
-          ? "In Attesa"
-          : "Annullato"}
+      <span className={`h-1.5 w-1.5 rounded-full ${config.dot}`} />
+      {config.label}
     </span>
   );
 }
@@ -1691,7 +1791,6 @@ function OrderStatusBadge({ status }: { status: string }) {
 /* ================================================================== */
 
 function CustomersView({ feed }: { feed: FeedItem[] }) {
-  // Aggregate customers from feed methods
   const customerMap = new Map<
     string,
     { orders: number; total: number; lastSeen: number }
@@ -1716,17 +1815,22 @@ function CustomersView({ feed }: { feed: FeedItem[] }) {
     .sort((a, b) => b[1].total - a[1].total);
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-bold text-foreground">Clienti</h3>
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-xl font-bold text-white">Customers</h3>
+        <p className="mt-0.5 text-sm text-zinc-500">
+          Customer overview ({customers.length} total)
+        </p>
+      </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-border bg-background-elevated/40">
+      <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-border text-xs uppercase tracking-wider text-muted">
-              <th className="px-4 py-3">Cliente</th>
-              <th className="px-4 py-3">Ordini</th>
-              <th className="px-4 py-3">Totale Speso</th>
-              <th className="px-4 py-3">Ultimo Ordine</th>
+            <tr className="border-b border-white/5">
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Customer</th>
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Orders</th>
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Total Spent</th>
+              <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Last Order</th>
             </tr>
           </thead>
           <tbody>
@@ -1734,30 +1838,30 @@ function CustomersView({ feed }: { feed: FeedItem[] }) {
               <tr>
                 <td
                   colSpan={4}
-                  className="px-4 py-8 text-center text-sm text-muted"
+                  className="px-4 py-12 text-center text-sm text-zinc-500"
                 >
-                  Nessun cliente trovato.
+                  No customers found.
                 </td>
               </tr>
             ) : (
               customers.map(([name, data], i) => (
                 <tr
                   key={i}
-                  className="border-b border-border/40 transition-colors hover:bg-background/40"
+                  className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
                 >
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-xs font-bold text-indigo-400">
                         {name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="font-medium text-foreground">{name}</span>
+                      <span className="font-medium text-white">{name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-foreground">{data.orders}</td>
-                  <td className="px-4 py-3 font-semibold text-foreground">
+                  <td className="px-4 py-3 text-zinc-300">{data.orders}</td>
+                  <td className="px-4 py-3 font-semibold text-white">
                     {formatCurrency(data.total, "EUR")}
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted">
+                  <td className="px-4 py-3 text-xs text-zinc-500">
                     {data.lastSeen > 0
                       ? formatRelativeTime(Math.floor(data.lastSeen / 1000))
                       : "N/A"}
@@ -1778,38 +1882,34 @@ function CustomersView({ feed }: { feed: FeedItem[] }) {
 
 function TicketsView({ openTickets }: { openTickets: number }) {
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-bold text-foreground">Tickets</h3>
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-xl font-bold text-white">Tickets</h3>
+        <p className="mt-0.5 text-sm text-zinc-500">Support ticket overview</p>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
-          <p className="text-xs uppercase tracking-wider text-muted">
-            Ticket Aperti
-          </p>
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Open Tickets</p>
           <p
-            className={`mt-2 text-3xl font-bold ${openTickets > 0 ? "text-amber-400" : "text-foreground"}`}
+            className={`mt-3 text-3xl font-bold ${openTickets > 0 ? "text-amber-400" : "text-white"}`}
           >
             {openTickets}
           </p>
         </div>
-        <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
-          <p className="text-xs uppercase tracking-wider text-muted">
-            Tempo Medio Risposta
-          </p>
-          <p className="mt-2 text-3xl font-bold text-foreground">---</p>
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Avg Response Time</p>
+          <p className="mt-3 text-3xl font-bold text-white">---</p>
         </div>
-        <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
-          <p className="text-xs uppercase tracking-wider text-muted">
-            Soddisfazione
-          </p>
-          <p className="mt-2 text-3xl font-bold text-foreground">---</p>
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Satisfaction</p>
+          <p className="mt-3 text-3xl font-bold text-white">---</p>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
-        <p className="text-sm text-muted">
-          I ticket vengono gestiti tramite Discord. Qui puoi visualizzare le
-          statistiche aggregate.
+      <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+        <p className="text-sm text-zinc-500">
+          Tickets are managed through Discord. You can view aggregated statistics here.
         </p>
       </div>
     </div>
@@ -1854,31 +1954,52 @@ function WalletView({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-bold text-foreground">Wallet Crypto</h3>
+      <div>
+        <h3 className="text-xl font-bold text-white">Crypto Wallet</h3>
+        <p className="mt-0.5 text-sm text-zinc-500">Manage your LTC wallet and transfers</p>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* Balance */}
-        <div className="rounded-2xl border-2 border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-background-elevated/40 p-6">
-          <p className="text-xs uppercase tracking-wider text-muted">
-            Saldo Disponibile
-          </p>
-          <p className="mt-2 text-3xl font-bold text-amber-400">
+        {/* Balance card */}
+        <div className="rounded-xl border-2 border-amber-500/20 p-6" style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.05) 0%, #121214 100%)" }}>
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+              <IconWallet className="h-4 w-4 text-amber-400" />
+            </div>
+            <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Available Balance</p>
+          </div>
+          <p className="mt-4 text-3xl font-bold text-amber-400">
             {wallet ? `${wallet.balance.toFixed(8)} LTC` : "---"}
           </p>
           {wallet && ltc && (
-            <p className="mt-1 text-lg text-muted">
-              ~ {formatCurrency(wallet.balance * ltc.eur, "EUR")}
-            </p>
+            <div className="mt-2 flex items-center gap-3">
+              <span className="text-lg text-zinc-400">
+                ~ {formatCurrency(wallet.balance * ltc.eur, "EUR")}
+              </span>
+              <span className="text-sm text-zinc-600">
+                / ${(wallet.balance * ltc.usd).toFixed(2)}
+              </span>
+            </div>
+          )}
+          {wallet && (
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById("transfer-section");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="mt-4 rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-black transition-all hover:bg-amber-600"
+            >
+              Withdraw
+            </button>
           )}
         </div>
 
-        {/* Address */}
-        <div className="rounded-2xl border border-border bg-background-elevated/40 p-6">
-          <p className="text-xs uppercase tracking-wider text-muted">
-            Indirizzo di Ricezione
-          </p>
-          <div className="mt-3 flex items-center gap-2">
-            <code className="flex-1 truncate rounded-lg bg-background/60 px-3 py-2 font-mono text-xs text-foreground">
+        {/* Address card */}
+        <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Receiving Address</p>
+          <div className="mt-4 flex items-center gap-2">
+            <code className="flex-1 truncate rounded-lg border border-white/5 px-3 py-2.5 font-mono text-xs text-white" style={{ backgroundColor: "#161619" }}>
               {wallet?.address ?? "---"}
             </code>
             {wallet?.address && (
@@ -1886,28 +2007,26 @@ function WalletView({
                 type="button"
                 onClick={() => {
                   navigator.clipboard.writeText(wallet.address);
-                  showToast("Indirizzo copiato!", true);
+                  showToast("Address copied!", true);
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-border transition-colors hover:border-accent hover:text-accent"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 transition-all hover:border-indigo-500/50 hover:text-indigo-400"
               >
-                <IconCopy className="h-4 w-4 text-muted" />
+                <IconCopy className="h-4 w-4 text-zinc-400" />
               </button>
             )}
           </div>
-          <p className="mt-2 text-[11px] text-muted">
-            Questo indirizzo non puo essere modificato
+          <p className="mt-3 text-[11px] text-zinc-600">
+            This address cannot be changed
           </p>
         </div>
       </div>
 
       {/* Transfer form */}
-      <div className="rounded-2xl border border-border bg-background-elevated/40 p-6">
-        <h4 className="mb-4 text-sm font-semibold text-foreground">
-          Trasferisci Fondi
-        </h4>
-        <form onSubmit={handleSubmit} className="grid gap-4 lg:grid-cols-3">
-          <label className="flex flex-col gap-1.5 text-xs font-semibold text-muted">
-            Importo (LTC)
+      <div id="transfer-section" className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
+        <h4 className="mb-5 text-sm font-semibold text-white">Transfer Funds</h4>
+        <form onSubmit={handleSubmit} className="grid gap-5 lg:grid-cols-3">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-zinc-400">Amount (LTC)</label>
             <input
               type="number"
               step="any"
@@ -1916,19 +2035,21 @@ function WalletView({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00000000"
-              className="rounded-lg border border-border bg-background/60 px-3 py-2.5 font-mono text-sm text-foreground outline-none transition-colors focus:border-accent"
+              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
+              style={{ backgroundColor: "#161619" }}
             />
-          </label>
-          <label className="flex flex-col gap-1.5 text-xs font-semibold text-muted">
-            Indirizzo Destinazione
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-zinc-400">Destination Address</label>
             <input
               type="text"
               value={toAddress}
               onChange={(e) => setToAddress(e.target.value)}
               placeholder="ltc1q..."
-              className="rounded-lg border border-border bg-background/60 px-3 py-2.5 font-mono text-sm text-foreground outline-none transition-colors focus:border-accent"
+              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
+              style={{ backgroundColor: "#161619" }}
             />
-          </label>
+          </div>
           <div className="flex items-end">
             <button
               type="submit"
@@ -1937,60 +2058,73 @@ function WalletView({
                 parseFloat(amount) <= 0 ||
                 !toAddress.trim()
               }
-              className="w-full rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-bold text-black transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="w-full rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-bold text-black transition-all hover:bg-amber-600 disabled:opacity-50"
             >
-              Trasferisci
+              Transfer
             </button>
           </div>
         </form>
         {wallet && (
-          <p className="mt-2 text-xs text-muted">
-            Saldo disponibile: {wallet.balance.toFixed(8)} LTC
+          <p className="mt-3 text-xs text-zinc-600">
+            Available: {wallet.balance.toFixed(8)} LTC
           </p>
         )}
       </div>
 
       {/* Transaction history */}
-      <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
-        <h4 className="mb-3 text-sm font-semibold text-foreground">
-          Cronologia Transazioni
-        </h4>
+      <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+        <div className="mb-4 flex items-center justify-between">
+          <h4 className="text-sm font-semibold text-white">Transaction History</h4>
+          <span className="text-xs text-zinc-500">{walletFeed.length} transactions</span>
+        </div>
         {walletFeed.length === 0 ? (
-          <p className="text-sm text-muted">Nessuna transazione.</p>
+          <p className="text-sm text-zinc-500">No transactions.</p>
         ) : (
-          <ul className="space-y-0">
-            {walletFeed.slice(0, 20).map((item, i) => (
-              <li
-                key={i}
-                className="flex items-center justify-between border-b border-border/40 py-2.5 last:border-0"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`flex h-6 shrink-0 items-center rounded px-1.5 text-[10px] font-bold uppercase text-white ${
-                      item.type === "exchange"
-                        ? "bg-cyan-500"
-                        : item.type === "escrow"
-                          ? "bg-emerald-500"
-                          : "bg-blue-500"
-                    }`}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-white/5">
+                  <th className="pb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">Type</th>
+                  <th className="pb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">Description</th>
+                  <th className="pb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 text-right">Amount</th>
+                  <th className="pb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 text-right">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {walletFeed.slice(0, 20).map((item, i) => (
+                  <tr
+                    key={i}
+                    className="border-b border-white/5 last:border-0"
                   >
-                    {item.type}
-                  </span>
-                  <span className="text-sm text-foreground">{item.label}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  {item.amount !== undefined && (
-                    <span className="font-semibold text-foreground">
-                      {formatCurrency(item.amount, "EUR")}
-                    </span>
-                  )}
-                  <span className="text-xs text-muted">
-                    {formatRelativeTime(item.ts)}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    <td className="py-2.5">
+                      <span
+                        className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase ${
+                          item.type === "exchange"
+                            ? "bg-cyan-500/10 text-cyan-400"
+                            : item.type === "escrow"
+                              ? "bg-emerald-500/10 text-emerald-400"
+                              : "bg-indigo-500/10 text-indigo-400"
+                        }`}
+                      >
+                        {item.type}
+                      </span>
+                    </td>
+                    <td className="py-2.5 text-sm text-zinc-300">{item.label}</td>
+                    <td className="py-2.5 text-right">
+                      {item.amount !== undefined && (
+                        <span className="font-semibold text-white">
+                          {formatCurrency(item.amount, "EUR")}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2.5 text-right text-xs text-zinc-500">
+                      {formatRelativeTime(item.ts)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
@@ -2017,18 +2151,19 @@ function SettingsView({
   const { user: settingsUser } = useAuth();
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-bold text-foreground">Impostazioni</h3>
+      <div>
+        <h3 className="text-xl font-bold text-white">Settings</h3>
+        <p className="mt-0.5 text-sm text-zinc-500">Configure your dashboard preferences</p>
+      </div>
 
-      <div className="rounded-2xl border border-border bg-background-elevated/40 p-6">
-        <h4 className="mb-4 text-sm font-semibold text-foreground">
-          Dashboard
-        </h4>
+      <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
+        <h4 className="mb-5 text-sm font-semibold text-white">Dashboard</h4>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-foreground">Auto-refresh</p>
-              <p className="text-xs text-muted">
-                Aggiorna i dati automaticamente ogni 15 secondi
+              <p className="text-sm text-white">Auto-refresh</p>
+              <p className="text-xs text-zinc-500">
+                Automatically refresh data every 15 seconds
               </p>
             </div>
             <label className="relative inline-flex cursor-pointer items-center">
@@ -2038,44 +2173,55 @@ function SettingsView({
                 onChange={(e) => onAutoRefreshChange(e.target.checked)}
                 className="peer sr-only"
               />
-              <div className="h-6 w-11 rounded-full bg-background peer-checked:bg-accent after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-border after:bg-foreground after:transition-all peer-checked:after:translate-x-full" />
+              <div className="h-6 w-11 rounded-full bg-zinc-700 peer-checked:bg-indigo-500 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-background-elevated/40 p-6">
-        <h4 className="mb-4 text-sm font-semibold text-foreground">
-          Informazioni Sistema
-        </h4>
-        <div className="grid gap-3 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted">Bot Status</span>
-            <span
-              className={
-                botOnline
-                  ? "font-semibold text-emerald-400"
-                  : "font-semibold text-rose-400"
-              }
-            >
-              {botOnline === null
-                ? "Verifica..."
-                : botOnline
-                  ? "Online"
-                  : "Offline"}
+      <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
+        <h4 className="mb-5 text-sm font-semibold text-white">System Info</h4>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
+            <span className="text-sm text-zinc-500">Bot Status</span>
+            <span className="flex items-center gap-2">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  botOnline === null
+                    ? "bg-zinc-600"
+                    : botOnline
+                      ? "bg-emerald-400 animate-pulse"
+                      : "bg-rose-400"
+                }`}
+              />
+              <span
+                className={`text-sm font-semibold ${
+                  botOnline
+                    ? "text-emerald-400"
+                    : botOnline === false
+                      ? "text-rose-400"
+                      : "text-zinc-500"
+                }`}
+              >
+                {botOnline === null
+                  ? "Checking..."
+                  : botOnline
+                    ? "Online"
+                    : "Offline"}
+              </span>
             </span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted">Prodotti</span>
-            <span className="text-foreground">{products.length}</span>
+          <div className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
+            <span className="text-sm text-zinc-500">Products</span>
+            <span className="text-sm font-medium text-white">{products.length}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted">Eventi Caricati</span>
-            <span className="text-foreground">{feed.length}</span>
+          <div className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
+            <span className="text-sm text-zinc-500">Events Loaded</span>
+            <span className="text-sm font-medium text-white">{feed.length}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted">Admin Email</span>
-            <span className="text-foreground">{settingsUser?.email ?? ""}</span>
+          <div className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-white/[0.02] transition-colors">
+            <span className="text-sm text-zinc-500">Admin Email</span>
+            <span className="text-sm font-medium text-white">{settingsUser?.email ?? ""}</span>
           </div>
         </div>
       </div>
@@ -2096,11 +2242,12 @@ function ModalOverlay({
 }) {
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-2xl border border-border bg-background-elevated p-6 shadow-2xl"
+        className="relative w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl"
+        style={{ backgroundColor: "#161619" }}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -2128,15 +2275,15 @@ function ConfirmModal({
 
   return (
     <ModalOverlay onClose={onClose}>
-      <h3 className="mb-2 text-base font-bold text-foreground">{title}</h3>
-      <p className="mb-6 text-sm text-muted">{message}</p>
-      <div className="flex justify-end gap-2">
+      <h3 className="mb-2 text-base font-bold text-white">{title}</h3>
+      <p className="mb-6 text-sm text-zinc-400">{message}</p>
+      <div className="flex justify-end gap-3">
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-border px-4 py-2 text-sm font-semibold text-muted transition-colors hover:text-foreground"
+          className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-400 transition-all hover:text-white"
         >
-          Annulla
+          Cancel
         </button>
         <button
           type="button"
@@ -2145,7 +2292,7 @@ function ConfirmModal({
             setBusy(true);
             onConfirm();
           }}
-          className={`rounded-lg px-4 py-2 text-sm font-bold transition-opacity disabled:opacity-50 ${confirmClass}`}
+          className={`rounded-lg px-4 py-2 text-sm font-bold transition-all disabled:opacity-50 ${confirmClass}`}
         >
           {busy ? "..." : confirmLabel}
         </button>
