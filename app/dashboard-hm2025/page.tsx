@@ -304,8 +304,26 @@ function SparkLine({
 /*  Auth Gate                                                          */
 /* ================================================================== */
 
+const DASH_PASSWORD = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD ?? "";
+
 export default function SecretDashboardPage() {
   const { user, loading } = useAuth();
+  const [pwUnlocked, setPwUnlocked] = useState(false);
+  const [pwInput, setPwInput] = useState("");
+  const [pwError, setPwError] = useState(false);
+
+  const isAdmin = user?.role === "admin";
+  const hasAccess = isAdmin || pwUnlocked;
+
+  function handlePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (DASH_PASSWORD && pwInput === DASH_PASSWORD) {
+      setPwUnlocked(true);
+      setPwError(false);
+    } else {
+      setPwError(true);
+    }
+  }
 
   if (loading) {
     return (
@@ -321,28 +339,60 @@ export default function SecretDashboardPage() {
     );
   }
 
-  if (!user || user.role !== "admin") {
+  if (!hasAccess) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4" style={{ backgroundColor: "#09090b" }}>
         <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-white/5 p-8 text-center" style={{ backgroundColor: "#121214" }}>
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/10 ring-2 ring-rose-500/20">
-            <svg viewBox="0 0 24 24" className="h-8 w-8 text-rose-500" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/10 ring-2 ring-indigo-500/20">
+            <svg viewBox="0 0 24 24" className="h-8 w-8 text-indigo-500" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
           </div>
-          <h1 className="text-lg font-bold text-white">Access Denied</h1>
+          <h1 className="text-lg font-bold text-white">Admin Dashboard</h1>
           <p className="text-sm text-zinc-500">
-            {!user
-              ? "You need to log in with a Discord account that has admin permissions."
-              : "Your account doesn't have admin permissions. Contact the server owner."}
+            Log in with Discord (admin role) or enter the dashboard password.
           </p>
+
+          {/* Discord login option */}
           <Link
-            href={user ? "/" : "/login"}
-            className="rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-600"
+            href="/login"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#5865F2] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#4752C4]"
           >
-            {user ? "Back to Home" : "Login"}
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
+              <path d="M20.3 4.5A18.5 18.5 0 0015.7 3l-.3.6a14 14 0 014.2 1.6 13.6 13.6 0 00-12.2 0A14 14 0 017.6 3.6L7.3 3a18.5 18.5 0 00-4.6 1.5C1 8 .5 11.4.7 14.8a13.8 13.8 0 004.1 2.1l.8-1.3a8.7 8.7 0 01-1.5-.7l.4-.3a11.7 11.7 0 009 0l.4.3a8.7 8.7 0 01-1.5.7l.8 1.3a13.8 13.8 0 004.1-2.1c.3-3.9-.6-7.3-1.9-10.3zM8.7 12.7c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6.8 0 1.5.7 1.5 1.6 0 .9-.7 1.6-1.5 1.6zm6.6 0c-.8 0-1.4-.7-1.4-1.6 0-.9.6-1.6 1.4-1.6.9 0 1.5.7 1.5 1.6 0 .9-.6 1.6-1.5 1.6z" />
+            </svg>
+            Login with Discord
           </Link>
+
+          {/* Divider */}
+          <div className="flex w-full items-center gap-3">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-xs text-zinc-600">or</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+
+          {/* Password form */}
+          <form onSubmit={handlePasswordSubmit} className="flex w-full flex-col gap-3">
+            <input
+              type="password"
+              value={pwInput}
+              onChange={(e) => { setPwInput(e.target.value); setPwError(false); }}
+              placeholder="Dashboard password"
+              className={`w-full rounded-xl border bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-indigo-500 ${
+                pwError ? "border-rose-500" : "border-white/10"
+              }`}
+            />
+            {pwError && (
+              <p className="text-xs text-rose-400">Wrong password. Try again.</p>
+            )}
+            <button
+              type="submit"
+              className="rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-600"
+            >
+              Enter Dashboard
+            </button>
+          </form>
         </div>
       </main>
     );
