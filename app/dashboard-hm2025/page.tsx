@@ -450,9 +450,12 @@ function AdminPanel() {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [productSearch, setProductSearch] = useState("");
 
+  const apiConfigured = Boolean(process.env.NEXT_PUBLIC_ASTRO_API_URL);
+  const tokenConfigured = Boolean(process.env.NEXT_PUBLIC_ADMIN_TOKEN);
+
   const showToast = useCallback((msg: string, ok: boolean) => {
     setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3500);
+    setTimeout(() => setToast(null), 5000);
   }, []);
 
   /* -- data fetching -- */
@@ -566,7 +569,7 @@ function AdminPanel() {
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
       showToast(`"${product.name}" eliminato`, true);
     } else {
-      showToast("Errore eliminazione prodotto", false);
+      showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato su Vercel — fai Redeploy" : "Errore eliminazione prodotto — controlla console (F12)", false);
     }
     setModal(null);
   }
@@ -583,7 +586,7 @@ function AdminPanel() {
         );
         showToast(`"${updated.name}" aggiornato`, true);
       } else {
-        showToast("Errore aggiornamento prodotto", false);
+        showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato — fai Redeploy su Vercel" : "Errore aggiornamento prodotto — controlla console (F12)", false);
       }
     } else {
       const created = await createProduct(data as Omit<ApiProduct, "id">);
@@ -591,7 +594,7 @@ function AdminPanel() {
         setProducts((prev) => [...prev, created]);
         showToast(`"${created.name}" creato`, true);
       } else {
-        showToast("Errore creazione prodotto", false);
+        showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato — fai Redeploy su Vercel" : "Errore creazione prodotto — controlla console (F12)", false);
       }
     }
     setActiveNav("products");
@@ -609,7 +612,7 @@ function AdminPanel() {
       setSmmProducts((prev) => prev.filter((p) => p.id !== product.id));
       showToast(`"${product.name}" deleted`, true);
     } else {
-      showToast("Error deleting SMM product", false);
+      showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato — fai Redeploy su Vercel" : "Error deleting SMM product — check console (F12)", false);
     }
     setModal(null);
   }
@@ -626,7 +629,7 @@ function AdminPanel() {
         );
         showToast(`"${updated.name}" updated`, true);
       } else {
-        showToast("Error updating SMM product", false);
+        showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato — fai Redeploy su Vercel" : "Error updating SMM product — check console (F12)", false);
       }
     } else {
       const created = await createSmmProduct(data as Omit<SmmProduct, "id" | "createdAt">);
@@ -634,7 +637,7 @@ function AdminPanel() {
         setSmmProducts((prev) => [...prev, created]);
         showToast(`"${created.name}" created`, true);
       } else {
-        showToast("Error creating SMM product", false);
+        showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato — fai Redeploy su Vercel" : "Error creating SMM product — check console (F12)", false);
       }
     }
     setActiveNav("smm-products");
@@ -936,6 +939,16 @@ function AdminPanel() {
 
         {/* Content area */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6" style={{ backgroundColor: "#09090b" }}>
+          {(!apiConfigured || !tokenConfigured) && (
+            <div className="mb-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+              <h4 className="text-sm font-bold text-amber-400">Configuration Warning</h4>
+              <div className="mt-1 space-y-1 text-xs text-amber-400/80">
+                {!apiConfigured && <p>• NEXT_PUBLIC_ASTRO_API_URL is not set — API calls will fail.</p>}
+                {!tokenConfigured && <p>• NEXT_PUBLIC_ADMIN_TOKEN is not set — admin actions (create/edit/delete products) will fail.</p>}
+                <p className="text-zinc-500">Add the missing variables on Vercel, then <strong>Redeploy</strong> (env vars are baked at build time).</p>
+              </div>
+            </div>
+          )}
           {activeNav === "dashboard" && (
             <DashboardView
               stats={stats}

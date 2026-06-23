@@ -48,7 +48,10 @@ async function apiFetch<T>(
   init?: RequestInit,
   timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<T | null> {
-  if (!API_BASE) return null;
+  if (!API_BASE) {
+    console.warn("[API] API_BASE not configured");
+    return null;
+  }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -65,9 +68,14 @@ async function apiFetch<T>(
       },
     });
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error(`[API] ${init?.method ?? "GET"} ${path} → ${res.status}`, text.slice(0, 200));
+      return null;
+    }
     return (await res.json()) as T;
-  } catch {
+  } catch (err) {
+    console.error(`[API] ${init?.method ?? "GET"} ${path} failed:`, err instanceof Error ? err.message : err);
     return null;
   } finally {
     clearTimeout(timeout);
