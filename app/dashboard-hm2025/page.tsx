@@ -36,6 +36,32 @@ import type {
 
 const AUTO_REFRESH_MS = 15_000;
 
+const STOREFRONT_CONFIG_KEY = "hm_storefront_config";
+
+const NAV_TITLES: Record<string, string> = {
+  dashboard: "Dashboard",
+  products: "Products",
+  "smm-products": "SMM Products",
+  addons: "Addons",
+  categories: "Categories",
+  coupons: "Coupons",
+  "quantity-deals": "Quantity Deals",
+  "bundle-offers": "Bundle Offers",
+  orders: "Invoices",
+  customers: "Customers",
+  feedbacks: "Feedbacks",
+  tickets: "Tickets",
+  "abandoned-checkouts": "Abandoned Checkouts",
+  wallet: "Wallet",
+  "storefront-configure": "Configure Storefront",
+  themes: "Themes",
+  "custom-pages": "Custom Pages",
+  images: "Images",
+  files: "Files",
+  "activity-logs": "Activity Logs",
+  settings: "Settings",
+};
+
 /* ================================================================== */
 /*  Types                                                              */
 /* ================================================================== */
@@ -44,13 +70,26 @@ type NavSection =
   | "dashboard"
   | "products"
   | "product-edit"
+  | "smm-products"
+  | "smm-product-edit"
+  | "addons"
+  | "categories"
+  | "coupons"
+  | "quantity-deals"
+  | "bundle-offers"
   | "orders"
   | "customers"
+  | "feedbacks"
   | "tickets"
+  | "abandoned-checkouts"
   | "wallet"
-  | "settings"
-  | "smm-products"
-  | "smm-product-edit";
+  | "storefront-configure"
+  | "themes"
+  | "custom-pages"
+  | "images"
+  | "files"
+  | "activity-logs"
+  | "settings";
 
 type ModalKind =
   | { kind: "confirm-delete"; product: ApiProduct }
@@ -213,6 +252,133 @@ function IconStorefront({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
       <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
+function IconTag({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+      <line x1="7" y1="7" x2="7.01" y2="7" />
+    </svg>
+  );
+}
+
+function IconGrid({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+function IconGift({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 12 20 22 4 22 4 12" />
+      <rect x="2" y="7" width="20" height="5" />
+      <line x1="12" y1="22" x2="12" y2="7" />
+      <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+      <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+    </svg>
+  );
+}
+
+function IconPercent({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="19" y1="5" x2="5" y2="19" />
+      <circle cx="6.5" cy="6.5" r="2.5" />
+      <circle cx="17.5" cy="17.5" r="2.5" />
+    </svg>
+  );
+}
+
+function IconPuzzle({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 3v2.5a1.5 1.5 0 0 0 3 0V3h4a1 1 0 0 1 1 1v4h-2.5a1.5 1.5 0 0 0 0 3H18v4a1 1 0 0 1-1 1h-4v-2.5a1.5 1.5 0 0 0-3 0V21H6a1 1 0 0 1-1-1v-4H3.5a1.5 1.5 0 0 1 0-3H5V4a1 1 0 0 1 1-1z" />
+    </svg>
+  );
+}
+
+function IconStar({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function IconCart({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="21" r="1" />
+      <circle cx="20" cy="21" r="1" />
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+    </svg>
+  );
+}
+
+function IconPalette({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="13.5" cy="6.5" r=".75" fill="currentColor" />
+      <circle cx="17.5" cy="10.5" r=".75" fill="currentColor" />
+      <circle cx="8.5" cy="7.5" r=".75" fill="currentColor" />
+      <circle cx="6.5" cy="12.5" r=".75" fill="currentColor" />
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+    </svg>
+  );
+}
+
+function IconFileText({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <line x1="10" y1="9" x2="8" y2="9" />
+    </svg>
+  );
+}
+
+function IconImage({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    </svg>
+  );
+}
+
+function IconFolder({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function IconActivity({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+    </svg>
+  );
+}
+
+function IconCrypto({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.5 8h3.5a2 2 0 0 1 0 4H9.5zM9.5 12h4a2 2 0 0 1 0 4H9.5zM9.5 8v8M11 6v2M11 16v2M13 6v2M13 16v2" />
     </svg>
   );
 }
@@ -769,6 +935,41 @@ function AdminPanel() {
               onClick={() => navigateTo("smm-products")}
               indent
             />
+            <SidebarItem
+              icon={<IconPuzzle className="h-4 w-4" />}
+              label="Addons"
+              active={activeNav === "addons"}
+              onClick={() => navigateTo("addons")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconGrid className="h-4 w-4" />}
+              label="Categories"
+              active={activeNav === "categories"}
+              onClick={() => navigateTo("categories")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconTag className="h-4 w-4" />}
+              label="Coupons"
+              active={activeNav === "coupons"}
+              onClick={() => navigateTo("coupons")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconPercent className="h-4 w-4" />}
+              label="Quantity Deals"
+              active={activeNav === "quantity-deals"}
+              onClick={() => navigateTo("quantity-deals")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconGift className="h-4 w-4" />}
+              label="Bundle Offers"
+              active={activeNav === "bundle-offers"}
+              onClick={() => navigateTo("bundle-offers")}
+              indent
+            />
           </SidebarGroup>
 
           <SidebarGroup label="Orders">
@@ -786,24 +987,11 @@ function AdminPanel() {
               onClick={() => navigateTo("customers")}
               indent
             />
-          </SidebarGroup>
-
-          <SidebarGroup label="Wallets">
             <SidebarItem
-              icon={<IconWallet className="h-4 w-4" />}
-              label="Crypto"
-              active={activeNav === "wallet"}
-              onClick={() => navigateTo("wallet")}
-              indent
-            />
-          </SidebarGroup>
-
-          <SidebarGroup label="Storefront">
-            <SidebarItem
-              icon={<IconSettings className="h-4 w-4" />}
-              label="Settings"
-              active={activeNav === "settings"}
-              onClick={() => navigateTo("settings")}
+              icon={<IconStar className="h-4 w-4" />}
+              label="Feedbacks"
+              active={activeNav === "feedbacks"}
+              onClick={() => navigateTo("feedbacks")}
               indent
             />
             <SidebarItem
@@ -813,7 +1001,78 @@ function AdminPanel() {
               onClick={() => navigateTo("tickets")}
               indent
             />
+            <SidebarItem
+              icon={<IconCart className="h-4 w-4" />}
+              label="Abandoned Checkouts"
+              active={activeNav === "abandoned-checkouts"}
+              onClick={() => navigateTo("abandoned-checkouts")}
+              indent
+            />
           </SidebarGroup>
+
+          <SidebarGroup label="Wallets">
+            <SidebarItem
+              icon={<IconCrypto className="h-4 w-4" />}
+              label="Crypto"
+              active={activeNav === "wallet"}
+              onClick={() => navigateTo("wallet")}
+              indent
+            />
+          </SidebarGroup>
+
+          <SidebarGroup label="Storefront">
+            <SidebarItem
+              icon={<IconStorefront className="h-4 w-4" />}
+              label="Configure"
+              active={activeNav === "storefront-configure"}
+              onClick={() => navigateTo("storefront-configure")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconPalette className="h-4 w-4" />}
+              label="Themes"
+              active={activeNav === "themes"}
+              onClick={() => navigateTo("themes")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconFileText className="h-4 w-4" />}
+              label="Custom Pages"
+              active={activeNav === "custom-pages"}
+              onClick={() => navigateTo("custom-pages")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconImage className="h-4 w-4" />}
+              label="Images"
+              active={activeNav === "images"}
+              onClick={() => navigateTo("images")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconFolder className="h-4 w-4" />}
+              label="Files"
+              active={activeNav === "files"}
+              onClick={() => navigateTo("files")}
+              indent
+            />
+            <SidebarItem
+              icon={<IconActivity className="h-4 w-4" />}
+              label="Activity Logs"
+              active={activeNav === "activity-logs"}
+              onClick={() => navigateTo("activity-logs")}
+              indent
+            />
+          </SidebarGroup>
+
+          <div className="mt-4">
+            <SidebarItem
+              icon={<IconSettings className="h-4 w-4" />}
+              label="Settings"
+              active={activeNav === "settings"}
+              onClick={() => navigateTo("settings")}
+            />
+          </div>
         </nav>
 
         {/* Bottom user profile + bot status */}
@@ -866,23 +1125,7 @@ function AdminPanel() {
                   ? editingSmmProduct
                     ? `Edit: ${editingSmmProduct.name}`
                     : "New SMM Product"
-                  : activeNav === "dashboard"
-                    ? "Dashboard"
-                    : activeNav === "products"
-                      ? "Products"
-                      : activeNav === "smm-products"
-                        ? "SMM Products"
-                        : activeNav === "orders"
-                          ? "Invoices"
-                          : activeNav === "customers"
-                            ? "Customers"
-                            : activeNav === "wallet"
-                              ? "Wallet"
-                              : activeNav === "settings"
-                                ? "Settings"
-                                : activeNav === "tickets"
-                                  ? "Tickets"
-                                  : activeNav}
+                  : NAV_TITLES[activeNav] ?? activeNav}
             </h2>
           </div>
 
@@ -1032,6 +1275,21 @@ function AdminPanel() {
               feed={feed}
             />
           )}
+          {activeNav === "addons" && <AddonsView />}
+          {activeNav === "categories" && <CategoriesView products={products} />}
+          {activeNav === "coupons" && <CouponsView />}
+          {activeNav === "quantity-deals" && <QuantityDealsView />}
+          {activeNav === "bundle-offers" && <BundleOffersView />}
+          {activeNav === "feedbacks" && <FeedbacksView feed={feed} />}
+          {activeNav === "abandoned-checkouts" && <AbandonedCheckoutsView />}
+          {activeNav === "storefront-configure" && (
+            <StorefrontConfigureView showToast={showToast} />
+          )}
+          {activeNav === "themes" && <ThemesView showToast={showToast} />}
+          {activeNav === "custom-pages" && <CustomPagesView />}
+          {activeNav === "images" && <ImagesView />}
+          {activeNav === "files" && <FilesView />}
+          {activeNav === "activity-logs" && <ActivityLogsView feed={feed} />}
         </main>
       </div>
 
@@ -1585,7 +1843,9 @@ function ProductEditView({
   onCancel: () => void;
   onDelete: (product: ApiProduct) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"general" | "pricing">("general");
+  const [activeTab, setActiveTab] = useState<
+    "general" | "pricing" | "custom-fields" | "visibility" | "discord" | "misc"
+  >("general");
   const [name, setName] = useState(product?.name ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
   const [image, setImage] = useState(product?.image ?? "");
@@ -1595,6 +1855,18 @@ function ProductEditView({
   const [stock, setStock] = useState(product?.stock ?? 0);
   const [stockItems, setStockItems] = useState("");
   const [saving, setSaving] = useState(false);
+  // Custom fields tab
+  const [customFields, setCustomFields] = useState("");
+  // Visibility tab
+  const [published, setPublished] = useState(true);
+  const [availableFrom, setAvailableFrom] = useState("");
+  const [availableUntil, setAvailableUntil] = useState("");
+  // Discord tab
+  const [discordRoleId, setDiscordRoleId] = useState("");
+  const [discordServerId, setDiscordServerId] = useState("");
+  // Misc tab
+  const [notes, setNotes] = useState("");
+  const [tags, setTags] = useState("");
 
   function handleSave() {
     if (!name.trim() || !price.trim()) return;
@@ -1675,6 +1947,50 @@ function ProductEditView({
           }`}
         >
           Pricing & Stock
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("custom-fields")}
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
+            activeTab === "custom-fields"
+              ? "border-indigo-500 text-indigo-400"
+              : "border-transparent text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Custom Fields
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("visibility")}
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
+            activeTab === "visibility"
+              ? "border-indigo-500 text-indigo-400"
+              : "border-transparent text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Visibility
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("discord")}
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
+            activeTab === "discord"
+              ? "border-indigo-500 text-indigo-400"
+              : "border-transparent text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Discord
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("misc")}
+          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
+            activeTab === "misc"
+              ? "border-indigo-500 text-indigo-400"
+              : "border-transparent text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Miscellaneous
         </button>
       </div>
 
@@ -1839,7 +2155,1003 @@ function ProductEditView({
             </div>
           </div>
         )}
+
+        {activeTab === "custom-fields" && (
+          <div className="max-w-2xl space-y-5">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Custom Fields</label>
+              <p className="text-[11px] text-zinc-600">
+                Add custom key-value pairs, one per line in the format{" "}
+                <code className="rounded bg-white/5 px-1 text-zinc-400">key: value</code>.
+                These are shown to the customer at checkout.
+              </p>
+              <textarea
+                value={customFields}
+                onChange={(e) => setCustomFields(e.target.value)}
+                rows={8}
+                placeholder={"region: EU\nwarranty: 30 days\nplatform: PC"}
+                className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
+                style={{ backgroundColor: "#161619" }}
+              />
+              <span className="text-xs text-zinc-500">
+                {customFields.trim()
+                  ? `${customFields.trim().split("\n").filter((l) => l.includes(":")).length} field(s)`
+                  : "0 fields"}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "visibility" && (
+          <div className="max-w-2xl space-y-6">
+            <div className="flex items-center justify-between rounded-lg border border-white/5 px-4 py-3" style={{ backgroundColor: "#161619" }}>
+              <div>
+                <p className="text-sm font-medium text-white">{published ? "Published" : "Hidden"}</p>
+                <p className="text-xs text-zinc-500">
+                  {published
+                    ? "This product is visible in the storefront."
+                    : "This product is hidden from the storefront."}
+                </p>
+              </div>
+              <ToggleSwitch checked={published} onChange={setPublished} />
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Available From</label>
+                <input
+                  type="date"
+                  value={availableFrom}
+                  onChange={(e) => setAvailableFrom(e.target.value)}
+                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
+                  style={{ backgroundColor: "#161619" }}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Available Until</label>
+                <input
+                  type="date"
+                  value={availableUntil}
+                  onChange={(e) => setAvailableUntil(e.target.value)}
+                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
+                  style={{ backgroundColor: "#161619" }}
+                />
+              </div>
+            </div>
+            <p className="text-[11px] text-zinc-600">
+              Leave the date range empty to keep the product available indefinitely while published.
+            </p>
+          </div>
+        )}
+
+        {activeTab === "discord" && (
+          <div className="max-w-2xl space-y-5">
+            <p className="text-[11px] text-zinc-600">
+              Optionally grant a Discord role automatically when a customer purchases this product.
+            </p>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Discord Server ID</label>
+              <input
+                type="text"
+                value={discordServerId}
+                onChange={(e) => setDiscordServerId(e.target.value)}
+                placeholder="e.g. 123456789012345678"
+                className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
+                style={{ backgroundColor: "#161619" }}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Discord Role ID (granted on purchase)</label>
+              <input
+                type="text"
+                value={discordRoleId}
+                onChange={(e) => setDiscordRoleId(e.target.value)}
+                placeholder="e.g. 987654321098765432"
+                className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
+                style={{ backgroundColor: "#161619" }}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === "misc" && (
+          <div className="max-w-2xl space-y-5">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Internal Notes</label>
+              <p className="text-[11px] text-zinc-600">Only visible to admins. Not shown to customers.</p>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={5}
+                placeholder="Add any internal notes about this product..."
+                className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
+                style={{ backgroundColor: "#161619" }}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Tags</label>
+              <input
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="Comma separated, e.g. featured, new, sale"
+                className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
+                style={{ backgroundColor: "#161619" }}
+              />
+              {tags.trim() && (
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {tags
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean)
+                    .map((t, i) => (
+                      <span
+                        key={i}
+                        className="rounded-md bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-400"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Shared UI helpers                                                  */
+/* ================================================================== */
+
+function ToggleSwitch({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+        checked ? "bg-indigo-500" : "bg-zinc-700"
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+          checked ? "left-[22px]" : "left-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
+function ViewHeader({
+  title,
+  subtitle,
+  action,
+}: {
+  title: string;
+  subtitle: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h3 className="text-xl font-bold text-white">{title}</h3>
+        <p className="mt-0.5 text-sm text-zinc-500">{subtitle}</p>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  message,
+  hint,
+}: {
+  icon: React.ReactNode;
+  message: string;
+  hint?: string;
+}) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center rounded-xl border border-white/5 py-16 text-center"
+      style={{ backgroundColor: "#121214" }}
+    >
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.03] text-zinc-600">
+        {icon}
+      </div>
+      <p className="mt-4 text-sm font-medium text-zinc-400">{message}</p>
+      {hint && <p className="mt-1 text-xs text-zinc-600">{hint}</p>}
+    </div>
+  );
+}
+
+function PrimaryButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-lg bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600"
+    >
+      {label}
+    </button>
+  );
+}
+
+/* ================================================================== */
+/*  Catalog: Categories / Coupons / Addons / Quantity / Bundles       */
+/* ================================================================== */
+
+function CategoriesView({ products }: { products: ApiProduct[] }) {
+  const categories: { name: string; count: number; color: string }[] = [];
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Categories"
+        subtitle={`Organize your products into categories (${categories.length} total)`}
+        action={<PrimaryButton label="+ New Category" />}
+      />
+      {categories.length === 0 ? (
+        <EmptyState
+          icon={<IconGrid className="h-6 w-6" />}
+          message="No categories yet."
+          hint={`Group your ${products.length} product(s) into categories to make them easier to browse.`}
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {categories.map((c) => (
+            <div
+              key={c.name}
+              className="rounded-xl border border-white/5 p-5"
+              style={{ backgroundColor: "#121214" }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="h-9 w-9 rounded-lg" style={{ backgroundColor: c.color }} />
+                <div>
+                  <h4 className="text-sm font-semibold text-white">{c.name}</h4>
+                  <p className="text-xs text-zinc-500">{c.count} products</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type Coupon = {
+  code: string;
+  discount: number;
+  uses: number;
+  limit: number;
+  expiry: string;
+  expired: boolean;
+};
+
+function CouponsView() {
+  const coupons: Coupon[] = [];
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Coupons"
+        subtitle={`Create discount codes for your customers (${coupons.length} total)`}
+        action={<PrimaryButton label="+ New Coupon" />}
+      />
+      {coupons.length === 0 ? (
+        <EmptyState
+          icon={<IconTag className="h-6 w-6" />}
+          message="No coupons created."
+          hint="Create your first discount code to run a promotion."
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/5">
+                {["Code", "Discount", "Uses", "Expiry", "Status"].map((h) => (
+                  <th key={h} className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {coupons.map((c) => (
+                <tr key={c.code} className="border-b border-white/5 hover:bg-white/[0.02]">
+                  <td className="px-4 py-3 font-mono font-medium text-white">{c.code}</td>
+                  <td className="px-4 py-3 text-zinc-300">{c.discount}%</td>
+                  <td className="px-4 py-3 text-zinc-300">{c.uses}/{c.limit}</td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">{c.expiry}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        c.expired
+                          ? "bg-rose-500/10 text-rose-400"
+                          : "bg-emerald-500/10 text-emerald-400"
+                      }`}
+                    >
+                      {c.expired ? "Expired" : "Active"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddonsView() {
+  const addons: { id: string; name: string; price: number }[] = [];
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Addons"
+        subtitle={`Optional extras customers can add to their order (${addons.length} total)`}
+        action={<PrimaryButton label="+ New Addon" />}
+      />
+      {addons.length === 0 ? (
+        <EmptyState
+          icon={<IconPuzzle className="h-6 w-6" />}
+          message="No addons available."
+          hint="Addons let customers upgrade their purchase at checkout."
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {addons.map((a) => (
+            <div key={a.id} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+              <h4 className="text-sm font-semibold text-white">{a.name}</h4>
+              <p className="mt-2 text-xs font-bold text-indigo-400">{formatCurrency(a.price, "EUR")}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuantityDealsView() {
+  const deals: { min: number; discount: number }[] = [];
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Quantity Deals"
+        subtitle={`Reward customers for buying in bulk (${deals.length} total)`}
+        action={<PrimaryButton label="+ New Deal" />}
+      />
+      {deals.length === 0 ? (
+        <EmptyState
+          icon={<IconPercent className="h-6 w-6" />}
+          message="No quantity deals configured."
+          hint="Offer a percentage discount when customers reach a quantity threshold."
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/5">
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Min. Quantity</th>
+                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Discount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {deals.map((d, i) => (
+                <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
+                  <td className="px-4 py-3 text-white">{d.min}+</td>
+                  <td className="px-4 py-3 text-emerald-400 font-semibold">{d.discount}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BundleOffersView() {
+  const bundles: { id: string; name: string; price: number; items: number }[] = [];
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Bundle Offers"
+        subtitle={`Sell multiple products together at a special price (${bundles.length} total)`}
+        action={<PrimaryButton label="+ New Bundle" />}
+      />
+      {bundles.length === 0 ? (
+        <EmptyState
+          icon={<IconGift className="h-6 w-6" />}
+          message="No bundle offers created."
+          hint="Combine products into a discounted bundle to increase order value."
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {bundles.map((b) => (
+            <div key={b.id} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+              <h4 className="text-sm font-semibold text-white">{b.name}</h4>
+              <p className="mt-1 text-xs text-zinc-500">{b.items} products</p>
+              <p className="mt-2 text-sm font-bold text-indigo-400">{formatCurrency(b.price, "EUR")}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Orders: Feedbacks / Abandoned Checkouts                           */
+/* ================================================================== */
+
+function FeedbacksView({ feed }: { feed: FeedItem[] }) {
+  const orderCount = feed.filter((f) => f.type === "order").length;
+  // Resolve "now" once on mount to keep render pure.
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    Promise.resolve().then(() => setNow(Math.floor(Date.now() / 1000)));
+  }, []);
+  const sampleFeedbacks = [
+    { name: "Marco R.", rating: 5, comment: "Fast delivery and exactly as described. Will buy again!", ts: now - 3600 },
+    { name: "Luca B.", rating: 5, comment: "Great service, the bot delivered instantly. Highly recommended.", ts: now - 86400 },
+    { name: "Sara T.", rating: 4, comment: "Good product, took a little while but support was helpful.", ts: now - 172800 },
+    { name: "Alex M.", rating: 5, comment: "Smooth transaction, escrow worked perfectly.", ts: now - 259200 },
+  ];
+  const avg = (sampleFeedbacks.reduce((s, f) => s + f.rating, 0) / sampleFeedbacks.length).toFixed(1);
+
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Feedbacks"
+        subtitle={`Customer reviews and ratings (${sampleFeedbacks.length} reviews · ${orderCount} orders)`}
+      />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Average Rating</p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-3xl font-bold text-white">{avg}</span>
+            <div className="flex">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <IconStar
+                  key={i}
+                  className={`h-4 w-4 ${i < Math.round(Number(avg)) ? "text-amber-400" : "text-zinc-700"}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Total Reviews</p>
+          <p className="mt-2 text-3xl font-bold text-white">{sampleFeedbacks.length}</p>
+        </div>
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">5-Star Reviews</p>
+          <p className="mt-2 text-3xl font-bold text-emerald-400">
+            {sampleFeedbacks.filter((f) => f.rating === 5).length}
+          </p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {sampleFeedbacks.map((f, i) => (
+          <div key={i} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-400">
+                  {f.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">{f.name}</p>
+                  <div className="mt-0.5 flex">
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <IconStar key={j} className={`h-3.5 w-3.5 ${j < f.rating ? "text-amber-400" : "text-zinc-700"}`} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs text-zinc-500">{formatRelativeTime(f.ts)}</span>
+            </div>
+            <p className="mt-3 text-sm text-zinc-300">{f.comment}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AbandonedCheckoutsView() {
+  const checkouts: {
+    email: string;
+    product: string;
+    amount: number;
+    date: string;
+    status: string;
+  }[] = [];
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Abandoned Checkouts"
+        subtitle={`Carts that were started but never completed (${checkouts.length} total)`}
+      />
+      {checkouts.length === 0 ? (
+        <EmptyState
+          icon={<IconCart className="h-6 w-6" />}
+          message="No abandoned checkouts."
+          hint="Checkouts that customers start but don't pay for will appear here."
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/5">
+                {["Email", "Product", "Amount", "Date", "Status"].map((h) => (
+                  <th key={h} className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {checkouts.map((c, i) => (
+                <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
+                  <td className="px-4 py-3 text-zinc-300">{c.email}</td>
+                  <td className="px-4 py-3 text-white">{c.product}</td>
+                  <td className="px-4 py-3 font-semibold text-white">{formatCurrency(c.amount, "EUR")}</td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">{c.date}</td>
+                  <td className="px-4 py-3">
+                    <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-400">
+                      {c.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Storefront: Configure / Themes / Pages / Images / Files / Logs    */
+/* ================================================================== */
+
+type StorefrontConfig = {
+  storeName: string;
+  logoUrl: string;
+  description: string;
+  discordInvite: string;
+  shopUrl: string;
+  primaryColor: string;
+  currency: string;
+  bannerText: string;
+  bannerEnabled: boolean;
+};
+
+const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
+  storeName: "Heaven Market",
+  logoUrl: "",
+  description: "",
+  discordInvite: "",
+  shopUrl: "",
+  primaryColor: "#6366f1",
+  currency: "EUR",
+  bannerText: "",
+  bannerEnabled: false,
+};
+
+function StorefrontConfigureView({
+  showToast,
+}: {
+  showToast: (msg: string, ok: boolean) => void;
+}) {
+  const [config, setConfig] = useState<StorefrontConfig>(DEFAULT_STOREFRONT_CONFIG);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      try {
+        const raw = localStorage.getItem(STOREFRONT_CONFIG_KEY);
+        if (raw) {
+          setConfig({ ...DEFAULT_STOREFRONT_CONFIG, ...JSON.parse(raw) });
+        }
+      } catch {
+        /* ignore */
+      }
+      setLoaded(true);
+    });
+  }, []);
+
+  function update<K extends keyof StorefrontConfig>(key: K, value: StorefrontConfig[K]) {
+    setConfig((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleSave() {
+    try {
+      localStorage.setItem(STOREFRONT_CONFIG_KEY, JSON.stringify(config));
+      showToast("Storefront settings saved", true);
+    } catch {
+      showToast("Failed to save settings", false);
+    }
+  }
+
+  const inputClass =
+    "rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50";
+
+  if (!loaded) {
+    return <p className="text-sm text-zinc-500">Loading...</p>;
+  }
+
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Configure Storefront"
+        subtitle="Customize how your store looks and behaves"
+        action={<PrimaryButton label="Save Changes" onClick={handleSave} />}
+      />
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
+          <h4 className="mb-5 text-sm font-semibold text-white">Branding</h4>
+          <div className="space-y-5">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Store Name</label>
+              <input
+                type="text"
+                value={config.storeName}
+                onChange={(e) => update("storeName", e.target.value)}
+                className={inputClass}
+                style={{ backgroundColor: "#161619" }}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Store Logo URL</label>
+              <input
+                type="text"
+                value={config.logoUrl}
+                onChange={(e) => update("logoUrl", e.target.value)}
+                placeholder="https://..."
+                className={`${inputClass} placeholder:text-zinc-600`}
+                style={{ backgroundColor: "#161619" }}
+              />
+              {config.logoUrl.trim() && (
+                <div className="mt-1 rounded-lg border border-white/5 p-3" style={{ backgroundColor: "#161619" }}>
+                  <p className="mb-2 text-[11px] text-zinc-500">Logo Preview</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={config.logoUrl} alt="logo" className="h-14 w-auto max-w-[160px] rounded object-contain" />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Store Description</label>
+              <textarea
+                value={config.description}
+                onChange={(e) => update("description", e.target.value)}
+                rows={3}
+                className={`${inputClass} resize-none`}
+                style={{ backgroundColor: "#161619" }}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Primary Color</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={config.primaryColor}
+                  onChange={(e) => update("primaryColor", e.target.value)}
+                  className="h-10 w-12 cursor-pointer rounded-lg border border-white/10 bg-transparent"
+                />
+                <input
+                  type="text"
+                  value={config.primaryColor}
+                  onChange={(e) => update("primaryColor", e.target.value)}
+                  className={`${inputClass} flex-1 font-mono`}
+                  style={{ backgroundColor: "#161619" }}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Currency</label>
+              <select
+                value={config.currency}
+                onChange={(e) => update("currency", e.target.value)}
+                className={inputClass}
+                style={{ backgroundColor: "#161619" }}
+              >
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
+            <h4 className="mb-5 text-sm font-semibold text-white">Links</h4>
+            <div className="space-y-5">
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Discord Invite Link</label>
+                <input
+                  type="text"
+                  value={config.discordInvite}
+                  onChange={(e) => update("discordInvite", e.target.value)}
+                  placeholder="https://discord.gg/..."
+                  className={`${inputClass} placeholder:text-zinc-600`}
+                  style={{ backgroundColor: "#161619" }}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Shop URL</label>
+                <input
+                  type="text"
+                  value={config.shopUrl}
+                  onChange={(e) => update("shopUrl", e.target.value)}
+                  placeholder="https://..."
+                  className={`${inputClass} placeholder:text-zinc-600`}
+                  style={{ backgroundColor: "#161619" }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
+            <h4 className="mb-5 text-sm font-semibold text-white">Announcement Banner</h4>
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-white">Show banner</p>
+                  <p className="text-xs text-zinc-500">Display an announcement at the top of the store</p>
+                </div>
+                <ToggleSwitch
+                  checked={config.bannerEnabled}
+                  onChange={(v) => update("bannerEnabled", v)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-semibold text-zinc-400">Banner Text</label>
+                <input
+                  type="text"
+                  value={config.bannerText}
+                  onChange={(e) => update("bannerText", e.target.value)}
+                  placeholder="e.g. Summer sale — 20% off everything!"
+                  className={`${inputClass} placeholder:text-zinc-600`}
+                  style={{ backgroundColor: "#161619" }}
+                />
+              </div>
+              {config.bannerEnabled && config.bannerText.trim() && (
+                <div
+                  className="rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-white"
+                  style={{ backgroundColor: config.primaryColor }}
+                >
+                  {config.bannerText}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ThemesView({ showToast }: { showToast: (msg: string, ok: boolean) => void }) {
+  const themes = [
+    { id: "dark", name: "Dark", swatches: ["#09090b", "#121214", "#6366f1"] },
+    { id: "light", name: "Light", swatches: ["#fafafa", "#ffffff", "#6366f1"] },
+    { id: "midnight", name: "Midnight", swatches: ["#020617", "#0f172a", "#818cf8"] },
+    { id: "ocean", name: "Ocean", swatches: ["#082f49", "#0c4a6e", "#38bdf8"] },
+  ];
+  const [active, setActive] = useState("dark");
+  return (
+    <div className="space-y-5">
+      <ViewHeader title="Themes" subtitle="Choose a look for your storefront" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {themes.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => {
+              setActive(t.id);
+              showToast(`"${t.name}" theme applied`, true);
+            }}
+            className={`overflow-hidden rounded-xl border text-left transition-all ${
+              active === t.id ? "border-indigo-500 ring-1 ring-indigo-500/30" : "border-white/5 hover:border-white/10"
+            }`}
+            style={{ backgroundColor: "#121214" }}
+          >
+            <div className="flex h-24">
+              {t.swatches.map((s, i) => (
+                <span key={i} className="flex-1" style={{ backgroundColor: s }} />
+              ))}
+            </div>
+            <div className="flex items-center justify-between p-4">
+              <span className="text-sm font-semibold text-white">{t.name}</span>
+              {active === t.id && (
+                <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400">
+                  Active
+                </span>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CustomPagesView() {
+  const pages: { title: string; slug: string; edited: string }[] = [];
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Custom Pages"
+        subtitle={`Add static pages like FAQ or Terms (${pages.length} total)`}
+        action={<PrimaryButton label="+ New Page" />}
+      />
+      {pages.length === 0 ? (
+        <EmptyState
+          icon={<IconFileText className="h-6 w-6" />}
+          message="No custom pages."
+          hint="Create pages such as Terms of Service, FAQ, or About."
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/5">
+                {["Title", "Slug", "Last Edited"].map((h) => (
+                  <th key={h} className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pages.map((p) => (
+                <tr key={p.slug} className="border-b border-white/5 hover:bg-white/[0.02]">
+                  <td className="px-4 py-3 font-medium text-white">{p.title}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-zinc-500">/{p.slug}</td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">{p.edited}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ImagesView() {
+  const images: { id: string; url: string }[] = [];
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Images"
+        subtitle={`Manage uploaded images (${images.length} total)`}
+        action={<PrimaryButton label="Upload Image" />}
+      />
+      {images.length === 0 ? (
+        <EmptyState
+          icon={<IconImage className="h-6 w-6" />}
+          message="No images uploaded."
+          hint="Upload images to use across your products and pages."
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+          {images.map((img) => (
+            <div key={img.id} className="overflow-hidden rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt="" className="h-28 w-full object-cover" />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilesView() {
+  const files: { name: string; size: string; type: string; date: string }[] = [];
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Files"
+        subtitle={`Deliverable files for your products (${files.length} total)`}
+        action={<PrimaryButton label="Upload File" />}
+      />
+      {files.length === 0 ? (
+        <EmptyState
+          icon={<IconFolder className="h-6 w-6" />}
+          message="No files uploaded."
+          hint="Upload files that can be delivered to customers on purchase."
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/5">
+                {["Name", "Size", "Type", "Uploaded"].map((h) => (
+                  <th key={h} className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {files.map((f, i) => (
+                <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
+                  <td className="px-4 py-3 font-medium text-white">{f.name}</td>
+                  <td className="px-4 py-3 text-zinc-300">{f.size}</td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">{f.type}</td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">{f.date}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActivityLogsView({ feed }: { feed: FeedItem[] }) {
+  const logs = feed.slice(0, 50);
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Activity Logs"
+        subtitle={`Recent actions and events (${logs.length} shown)`}
+      />
+      {logs.length === 0 ? (
+        <EmptyState
+          icon={<IconActivity className="h-6 w-6" />}
+          message="No activity yet."
+          hint="Recent events from your store and bot will appear here."
+        />
+      ) : (
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <ol className="relative space-y-5 border-l border-white/10 pl-5">
+            {logs.map((item, i) => (
+              <li key={i} className="relative">
+                <span
+                  className={`absolute -left-[26px] top-1 h-2.5 w-2.5 rounded-full ring-4 ring-[#121214] ${
+                    item.type === "order"
+                      ? "bg-emerald-400"
+                      : item.type === "escrow"
+                        ? "bg-amber-400"
+                        : item.type === "exchange"
+                          ? "bg-cyan-400"
+                          : "bg-indigo-400"
+                  }`}
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-bold uppercase text-zinc-400">
+                    {item.type}
+                  </span>
+                  <p className="text-sm text-zinc-300">{item.label}</p>
+                </div>
+                <p className="mt-0.5 text-xs text-zinc-500">{formatRelativeTime(item.ts)}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }
