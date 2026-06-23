@@ -4,16 +4,20 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   createProduct,
+  createSmmProduct,
   deleteProduct,
+  deleteSmmProduct,
   getFeed,
   getHealth,
   getLtcPrice,
   getProducts,
+  getSmmProducts,
   getStats,
   getWalletInfo,
   transferFunds,
   updateProduct,
   updateProductStock,
+  updateSmmProduct,
 } from "@/lib/api";
 import { formatCurrency, formatEur, formatRelativeTime } from "@/lib/format";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -21,6 +25,7 @@ import type {
   ApiProduct,
   FeedItem,
   LtcResponse,
+  SmmProduct,
   StatsResponse,
   WalletInfo,
 } from "@/lib/types";
@@ -43,10 +48,13 @@ type NavSection =
   | "customers"
   | "tickets"
   | "wallet"
-  | "settings";
+  | "settings"
+  | "smm-products"
+  | "smm-product-edit";
 
 type ModalKind =
   | { kind: "confirm-delete"; product: ApiProduct }
+  | { kind: "confirm-delete-smm"; product: SmmProduct }
   | { kind: "confirm-transfer"; amount: number; toAddress: string };
 
 /* ================================================================== */
@@ -121,6 +129,19 @@ function IconSettings({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+function IconSmm({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      <line x1="19" y1="8" x2="19" y2="14" />
+      <line x1="22" y1="11" x2="16" y2="11" />
     </svg>
   );
 }
@@ -422,6 +443,9 @@ function AdminPanel() {
   const [activeNav, setActiveNav] = useState<NavSection>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ApiProduct | null>(null);
+  const [smmProducts, setSmmProducts] = useState<SmmProduct[]>([]);
+  const [editingSmmProduct, setEditingSmmProduct] = useState<SmmProduct | null>(null);
+  const [smmSearch, setSmmSearch] = useState("");
   const [modal, setModal] = useState<ModalKind | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [productSearch, setProductSearch] = useState("");
@@ -434,7 +458,7 @@ function AdminPanel() {
   /* -- data fetching -- */
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes] =
+    const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes, smmRes] =
       await Promise.all([
         getStats(),
         getProducts(),
@@ -442,9 +466,11 @@ function AdminPanel() {
         getLtcPrice(),
         getHealth(),
         getWalletInfo(),
+        getSmmProducts(),
       ]);
     if (statsRes) setStats(statsRes);
     if (productsRes?.products) setProducts(productsRes.products);
+    if (smmRes?.products) setSmmProducts(smmRes.products);
     if (feedRes?.items) setFeed(feedRes.items);
     if (ltcRes) setLtc(ltcRes);
     if (walletRes) setWallet(walletRes);
@@ -572,6 +598,55 @@ function AdminPanel() {
     setEditingProduct(null);
   }
 
+  /* -- SMM product actions -- */
+  const filteredSmmProducts = smmProducts.filter((p) =>
+    p.name.toLowerCase().includes(smmSearch.toLowerCase())
+  );
+
+  async function handleDeleteSmmProduct(product: SmmProduct) {
+    const ok = await deleteSmmProduct(product.id);
+    if (ok) {
+      setSmmProducts((prev) => prev.filter((p) => p.id !== product.id));
+      showToast(`"${product.name}" deleted`, true);
+    } else {
+      showToast("Error deleting SMM product", false);
+    }
+    setModal(null);
+  }
+
+  async function handleSaveSmmProduct(
+    data: Partial<SmmProduct> & { id?: string }
+  ) {
+    if (data.id) {
+      const { id, ...rest } = data;
+      const updated = await updateSmmProduct(id, rest);
+      if (updated) {
+        setSmmProducts((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, ...updated } : p))
+        );
+        showToast(`"${updated.name}" updated`, true);
+      } else {
+        showToast("Error updating SMM product", false);
+      }
+    } else {
+      const created = await createSmmProduct(data as Omit<SmmProduct, "id" | "createdAt">);
+      if (created) {
+        setSmmProducts((prev) => [...prev, created]);
+        showToast(`"${created.name}" created`, true);
+      } else {
+        showToast("Error creating SMM product", false);
+      }
+    }
+    setActiveNav("smm-products");
+    setEditingSmmProduct(null);
+  }
+
+  function openSmmProductEdit(product: SmmProduct | null) {
+    setEditingSmmProduct(product);
+    setActiveNav("smm-product-edit");
+    setSidebarOpen(false);
+  }
+
   async function handleTransfer(amount: number, toAddress: string) {
     const res = await transferFunds(amount, toAddress);
     if (res) {
@@ -684,6 +759,13 @@ function AdminPanel() {
               onClick={() => navigateTo("products")}
               indent
             />
+            <SidebarItem
+              icon={<IconSmm className="h-4 w-4" />}
+              label="SMM Products"
+              active={activeNav === "smm-products" || activeNav === "smm-product-edit"}
+              onClick={() => navigateTo("smm-products")}
+              indent
+            />
           </SidebarGroup>
 
           <SidebarGroup label="Orders">
@@ -777,21 +859,27 @@ function AdminPanel() {
                 ? editingProduct
                   ? `Edit: ${editingProduct.name}`
                   : "New Product"
-                : activeNav === "dashboard"
-                  ? "Dashboard"
-                  : activeNav === "products"
-                    ? "Products"
-                    : activeNav === "orders"
-                      ? "Invoices"
-                      : activeNav === "customers"
-                        ? "Customers"
-                        : activeNav === "wallet"
-                          ? "Wallet"
-                          : activeNav === "settings"
-                            ? "Settings"
-                            : activeNav === "tickets"
-                              ? "Tickets"
-                              : activeNav}
+                : activeNav === "smm-product-edit"
+                  ? editingSmmProduct
+                    ? `Edit: ${editingSmmProduct.name}`
+                    : "New SMM Product"
+                  : activeNav === "dashboard"
+                    ? "Dashboard"
+                    : activeNav === "products"
+                      ? "Products"
+                      : activeNav === "smm-products"
+                        ? "SMM Products"
+                        : activeNav === "orders"
+                          ? "Invoices"
+                          : activeNav === "customers"
+                            ? "Customers"
+                            : activeNav === "wallet"
+                              ? "Wallet"
+                              : activeNav === "settings"
+                                ? "Settings"
+                                : activeNav === "tickets"
+                                  ? "Tickets"
+                                  : activeNav}
             </h2>
           </div>
 
@@ -884,6 +972,24 @@ function AdminPanel() {
               onDelete={(p) => setModal({ kind: "confirm-delete", product: p })}
             />
           )}
+          {activeNav === "smm-products" && (
+            <SmmProductsView
+              products={filteredSmmProducts}
+              search={smmSearch}
+              onSearchChange={setSmmSearch}
+              onEdit={openSmmProductEdit}
+              onNew={() => openSmmProductEdit(null)}
+              onDelete={(p) => setModal({ kind: "confirm-delete-smm", product: p })}
+            />
+          )}
+          {activeNav === "smm-product-edit" && (
+            <SmmProductEditView
+              product={editingSmmProduct}
+              onSave={handleSaveSmmProduct}
+              onCancel={() => navigateTo("smm-products")}
+              onDelete={(p) => setModal({ kind: "confirm-delete-smm", product: p })}
+            />
+          )}
           {activeNav === "orders" && (
             <OrdersView feed={orderFeed} allFeed={feed} ltc={ltc} />
           )}
@@ -924,6 +1030,16 @@ function AdminPanel() {
           confirmLabel="Elimina"
           confirmClass="bg-rose-500 text-white hover:bg-rose-600"
           onConfirm={() => handleDeleteProduct(modal.product)}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {modal?.kind === "confirm-delete-smm" && (
+        <ConfirmModal
+          title="Delete SMM Product"
+          message={`Are you sure you want to delete "${modal.product.name}"? This action cannot be undone.`}
+          confirmLabel="Delete"
+          confirmClass="bg-rose-500 text-white hover:bg-rose-600"
+          onConfirm={() => handleDeleteSmmProduct(modal.product)}
           onClose={() => setModal(null)}
         />
       )}
@@ -2177,6 +2293,321 @@ function WalletView({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  SMM Products View                                                  */
+/* ================================================================== */
+
+function SmmProductsView({
+  products,
+  search,
+  onSearchChange,
+  onEdit,
+  onNew,
+  onDelete,
+}: {
+  products: SmmProduct[];
+  search: string;
+  onSearchChange: (v: string) => void;
+  onEdit: (p: SmmProduct) => void;
+  onNew: () => void;
+  onDelete: (p: SmmProduct) => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative">
+          <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+            <circle cx="11" cy="11" r="7" />
+            <path strokeLinecap="round" d="M21 21l-3.5-3.5" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search SMM products..."
+            className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-4 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-indigo-500 sm:w-64"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={onNew}
+          className="flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-indigo-600"
+        >
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden>
+            <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+          </svg>
+          New SMM Product
+        </button>
+      </div>
+
+      {products.length === 0 ? (
+        <div className="rounded-xl border border-white/5 p-10 text-center" style={{ backgroundColor: "#121214" }}>
+          <p className="text-sm text-zinc-500">No SMM products found.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className="group rounded-xl border border-white/5 p-5 transition-colors hover:border-indigo-500/30"
+              style={{ backgroundColor: "#121214" }}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  {product.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={product.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-sm font-bold text-indigo-400">
+                      SMM
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="text-sm font-semibold text-white">{product.name}</h4>
+                    {product.category && (
+                      <span className="text-xs text-zinc-500">{product.category}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <button type="button" onClick={() => onEdit(product)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-indigo-400 transition-colors">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden>
+                      <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                    </svg>
+                  </button>
+                  <button type="button" onClick={() => onDelete(product)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-rose-400 transition-colors">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden>
+                      <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.519.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 01.78.72l.5 6.5a.75.75 0 01-1.498.116l-.5-6.5a.75.75 0 01.718-.836zm3.617.72a.75.75 0 00-1.497-.116l-.5 6.5a.75.75 0 001.498.116l.5-6.5z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500">Service ID</span>
+                  <span className="text-white">{product.serviceId}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500">Price / 1K</span>
+                  <span className="font-semibold text-emerald-400">€{product.pricePerThousand.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500">Min / Max</span>
+                  <span className="text-white">{product.minQuantity.toLocaleString()} – {product.maxQuantity.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-zinc-500">Status</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${product.active ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-500/10 text-zinc-500"}`}>
+                    {product.active ? "Active" : "Inactive"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  SMM Product Edit View                                              */
+/* ================================================================== */
+
+function SmmProductEditView({
+  product,
+  onSave,
+  onCancel,
+  onDelete,
+}: {
+  product: SmmProduct | null;
+  onSave: (data: Partial<SmmProduct> & { id?: string }) => void;
+  onCancel: () => void;
+  onDelete: (p: SmmProduct) => void;
+}) {
+  const [name, setName] = useState(product?.name ?? "");
+  const [serviceId, setServiceId] = useState(product?.serviceId?.toString() ?? "");
+  const [pricePerThousand, setPricePerThousand] = useState(product?.pricePerThousand?.toString() ?? "");
+  const [instructions, setInstructions] = useState(product?.instructions ?? "");
+  const [category, setCategory] = useState(product?.category ?? "");
+  const [image, setImage] = useState(product?.image ?? "");
+  const [minQuantity, setMinQuantity] = useState(product?.minQuantity?.toString() ?? "100");
+  const [maxQuantity, setMaxQuantity] = useState(product?.maxQuantity?.toString() ?? "10000");
+  const [active, setActive] = useState(product?.active ?? true);
+  const [saving, setSaving] = useState(false);
+
+  const isValid = name.trim() && serviceId.trim() && pricePerThousand.trim();
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isValid || saving) return;
+    setSaving(true);
+    await onSave({
+      ...(product ? { id: product.id } : {}),
+      name: name.trim(),
+      serviceId: parseInt(serviceId, 10),
+      pricePerThousand: parseFloat(pricePerThousand),
+      instructions: instructions.trim(),
+      category: category.trim() || undefined,
+      image: image.trim() || undefined,
+      minQuantity: parseInt(minQuantity, 10) || 100,
+      maxQuantity: parseInt(maxQuantity, 10) || 10000,
+      active,
+    });
+    setSaving(false);
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
+          <h3 className="mb-5 text-sm font-bold uppercase tracking-wider text-zinc-400">Product Details</h3>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Name *</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Instagram Followers"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Service ID *</label>
+              <input
+                type="number"
+                value={serviceId}
+                onChange={(e) => setServiceId(e.target.value)}
+                placeholder="e.g. 1, 2, 153"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Price per 1000 (EUR) *</label>
+              <input
+                type="number"
+                value={pricePerThousand}
+                onChange={(e) => setPricePerThousand(e.target.value)}
+                step="0.01"
+                min="0"
+                placeholder="e.g. 0.90"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Category</label>
+              <input
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="e.g. Instagram, TikTok, YouTube"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Image URL</label>
+              <input
+                type="url"
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="https://..."
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Min Quantity</label>
+              <input
+                type="number"
+                value={minQuantity}
+                onChange={(e) => setMinQuantity(e.target.value)}
+                min="1"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Max Quantity</label>
+              <input
+                type="number"
+                value={maxQuantity}
+                onChange={(e) => setMaxQuantity(e.target.value)}
+                min="1"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Instructions</label>
+              <textarea
+                value={instructions}
+                onChange={(e) => setInstructions(e.target.value)}
+                rows={3}
+                placeholder="e.g. Insert your Instagram profile link. Profile must be public."
+                className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="sm:col-span-2 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setActive((v) => !v)}
+                className={`relative h-6 w-11 rounded-full transition-colors ${active ? "bg-indigo-500" : "bg-zinc-700"}`}
+              >
+                <span className={`absolute top-0.5 block h-5 w-5 rounded-full bg-white shadow transition-transform ${active ? "left-[22px]" : "left-0.5"}`} />
+              </button>
+              <span className="text-sm text-zinc-400">{active ? "Active" : "Inactive"}</span>
+            </div>
+          </div>
+        </div>
+
+        {image && image.startsWith("https://") && (
+          <div className="rounded-xl border border-white/5 p-4" style={{ backgroundColor: "#121214" }}>
+            <p className="mb-2 text-xs font-semibold text-zinc-400">Image Preview</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={image} alt="" className="h-32 w-full rounded-lg object-cover" />
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-400 transition-all hover:text-white"
+            >
+              Cancel
+            </button>
+            {product && (
+              <button
+                type="button"
+                onClick={() => onDelete(product)}
+                className="rounded-lg border border-rose-500/20 px-4 py-2 text-sm font-semibold text-rose-400 transition-all hover:bg-rose-500/10"
+              >
+                Delete
+              </button>
+            )}
+          </div>
+          <button
+            type="submit"
+            disabled={!isValid || saving}
+            className="rounded-lg bg-indigo-500 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
+          >
+            {saving ? "Saving..." : product ? "Update Product" : "Create Product"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

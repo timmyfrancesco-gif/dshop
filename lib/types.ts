@@ -201,3 +201,51 @@ export interface ReviewResponse {
 export interface ReviewsResponse {
   reviews: Review[];
 }
+
+// ── SMM Products ────────────────────────────────────────────────────
+
+export interface SmmProduct {
+  id: string;
+  name: string;
+  serviceId: number;
+  pricePerThousand: number;
+  instructions: string;
+  category?: string;
+  image?: string;
+  minQuantity: number;
+  maxQuantity: number;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface SmmProductsResponse {
+  products: SmmProduct[];
+}
+
+export interface SmmOrderRequest {
+  smmProductId: string;
+  quantity: number;
+  link: string;
+  discord: string;
+}
+
+export interface SmmOrderResponse {
+  orderId: string;
+  address: string;
+  amountEur: number;
+  amountLtc: number;
+  quantity: number;
+  link: string;
+  serviceName: string;
+}
+
+export interface SmmOrderStatusResponse {
+  status: "pending" | "confirming" | "processing" | "completed" | "cancelled";
+  address?: string;
+  amountEur?: number;
+  confirmations?: number;
+  requiredConfirmations?: number;
+  txHash?: string;
+  smmOrderId?: number;
+  smmStatus?: string;
+}

@@ -4,6 +4,7 @@ import LiveTicker from "@/components/sections/LiveTicker";
 import ServicesGrid from "@/components/sections/ServicesGrid";
 import LiveDashboard from "@/components/sections/LiveDashboard";
 import Shop from "@/components/sections/Shop";
+import SmmShop from "@/components/sections/SmmShop";
 import Pricing from "@/components/sections/Pricing";
 import Fees from "@/components/sections/Fees";
 import Testimonials from "@/components/sections/Testimonials";
@@ -18,6 +19,7 @@ export default function Home() {
       <ServicesGrid />
       <LiveDashboard />
       <Shop />
+      <SmmShop />
       <Pricing />
       <Fees />
       <Testimonials />
