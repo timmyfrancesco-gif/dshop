@@ -4,31 +4,29 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   createProduct,
-  createSmmProduct,
   deleteProduct,
-  deleteSmmProduct,
   getFeed,
   getHealth,
   getLtcPrice,
   getProducts,
-  getSmmProducts,
   getStats,
   getWalletInfo,
   transferFunds,
   updateProduct,
   updateProductStock,
-  updateSmmProduct,
 } from "@/lib/api";
 import { formatCurrency, formatEur, formatRelativeTime } from "@/lib/format";
 import { useAuth } from "@/lib/hooks/useAuth";
+import dynamic from "next/dynamic";
 import type {
   ApiProduct,
   FeedItem,
   LtcResponse,
-  SmmProduct,
   StatsResponse,
   WalletInfo,
 } from "@/lib/types";
+
+const RichTextEditor = dynamic(() => import("@/components/ui/RichTextEditor"), { ssr: false });
 
 /* ================================================================== */
 /*  Constants                                                          */
@@ -41,23 +39,16 @@ const STOREFRONT_CONFIG_KEY = "hm_storefront_config";
 const NAV_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
   products: "Products",
-  "smm-products": "SMM Products",
-  addons: "Addons",
   categories: "Categories",
   coupons: "Coupons",
-  "quantity-deals": "Quantity Deals",
-  "bundle-offers": "Bundle Offers",
   orders: "Invoices",
   customers: "Customers",
   feedbacks: "Feedbacks",
   tickets: "Tickets",
+  transcripts: "Transcripts",
   "abandoned-checkouts": "Abandoned Checkouts",
   wallet: "Wallet",
   "storefront-configure": "Configure Storefront",
-  themes: "Themes",
-  "custom-pages": "Custom Pages",
-  images: "Images",
-  files: "Files",
   "activity-logs": "Activity Logs",
   settings: "Settings",
 };
@@ -70,30 +61,21 @@ type NavSection =
   | "dashboard"
   | "products"
   | "product-edit"
-  | "smm-products"
-  | "smm-product-edit"
-  | "addons"
   | "categories"
   | "coupons"
-  | "quantity-deals"
-  | "bundle-offers"
   | "orders"
   | "customers"
   | "feedbacks"
   | "tickets"
+  | "transcripts"
   | "abandoned-checkouts"
   | "wallet"
   | "storefront-configure"
-  | "themes"
-  | "custom-pages"
-  | "images"
-  | "files"
   | "activity-logs"
   | "settings";
 
 type ModalKind =
   | { kind: "confirm-delete"; product: ApiProduct }
-  | { kind: "confirm-delete-smm"; product: SmmProduct }
   | { kind: "confirm-transfer"; amount: number; toAddress: string };
 
 /* ================================================================== */
@@ -172,18 +154,6 @@ function IconSettings({ className }: { className?: string }) {
   );
 }
 
-function IconSmm({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      <line x1="19" y1="8" x2="19" y2="14" />
-      <line x1="22" y1="11" x2="16" y2="11" />
-    </svg>
-  );
-}
 
 function IconMenu({ className }: { className?: string }) {
   return (
@@ -276,35 +246,8 @@ function IconGrid({ className }: { className?: string }) {
   );
 }
 
-function IconGift({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 12 20 22 4 22 4 12" />
-      <rect x="2" y="7" width="20" height="5" />
-      <line x1="12" y1="22" x2="12" y2="7" />
-      <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
-      <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
-    </svg>
-  );
-}
 
-function IconPercent({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="19" y1="5" x2="5" y2="19" />
-      <circle cx="6.5" cy="6.5" r="2.5" />
-      <circle cx="17.5" cy="17.5" r="2.5" />
-    </svg>
-  );
-}
 
-function IconPuzzle({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 3v2.5a1.5 1.5 0 0 0 3 0V3h4a1 1 0 0 1 1 1v4h-2.5a1.5 1.5 0 0 0 0 3H18v4a1 1 0 0 1-1 1h-4v-2.5a1.5 1.5 0 0 0-3 0V21H6a1 1 0 0 1-1-1v-4H3.5a1.5 1.5 0 0 1 0-3H5V4a1 1 0 0 1 1-1z" />
-    </svg>
-  );
-}
 
 function IconStar({ className }: { className?: string }) {
   return (
@@ -324,44 +267,18 @@ function IconCart({ className }: { className?: string }) {
   );
 }
 
-function IconPalette({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="13.5" cy="6.5" r=".75" fill="currentColor" />
-      <circle cx="17.5" cy="10.5" r=".75" fill="currentColor" />
-      <circle cx="8.5" cy="7.5" r=".75" fill="currentColor" />
-      <circle cx="6.5" cy="12.5" r=".75" fill="currentColor" />
-      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
-    </svg>
-  );
-}
 
-function IconFileText({ className }: { className?: string }) {
+
+
+
+function IconFileTextInline({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14 2 14 8 20 8" />
       <line x1="16" y1="13" x2="8" y2="13" />
       <line x1="16" y1="17" x2="8" y2="17" />
-      <line x1="10" y1="9" x2="8" y2="9" />
-    </svg>
-  );
-}
-
-function IconImage({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <circle cx="8.5" cy="8.5" r="1.5" />
-      <polyline points="21 15 16 10 5 21" />
-    </svg>
-  );
-}
-
-function IconFolder({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      <polyline points="10 9 9 9 8 9" />
     </svg>
   );
 }
@@ -609,9 +526,6 @@ function AdminPanel() {
   const [activeNav, setActiveNav] = useState<NavSection>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ApiProduct | null>(null);
-  const [smmProducts, setSmmProducts] = useState<SmmProduct[]>([]);
-  const [editingSmmProduct, setEditingSmmProduct] = useState<SmmProduct | null>(null);
-  const [smmSearch, setSmmSearch] = useState("");
   const [modal, setModal] = useState<ModalKind | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [productSearch, setProductSearch] = useState("");
@@ -627,7 +541,7 @@ function AdminPanel() {
   /* -- data fetching -- */
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes, smmRes] =
+    const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes] =
       await Promise.all([
         getStats(),
         getProducts(),
@@ -635,11 +549,9 @@ function AdminPanel() {
         getLtcPrice(),
         getHealth(),
         getWalletInfo(),
-        getSmmProducts(),
       ]);
     if (statsRes) setStats(statsRes);
     if (productsRes?.products) setProducts(productsRes.products);
-    if (smmRes?.products) setSmmProducts(smmRes.products);
     if (feedRes?.items) setFeed(feedRes.items);
     if (ltcRes) setLtc(ltcRes);
     if (walletRes) setWallet(walletRes);
@@ -767,55 +679,6 @@ function AdminPanel() {
     setEditingProduct(null);
   }
 
-  /* -- SMM product actions -- */
-  const filteredSmmProducts = smmProducts.filter((p) =>
-    p.name.toLowerCase().includes(smmSearch.toLowerCase())
-  );
-
-  async function handleDeleteSmmProduct(product: SmmProduct) {
-    const ok = await deleteSmmProduct(product.id);
-    if (ok) {
-      setSmmProducts((prev) => prev.filter((p) => p.id !== product.id));
-      showToast(`"${product.name}" deleted`, true);
-    } else {
-      showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato — fai Redeploy su Vercel" : "Error deleting SMM product — check console (F12)", false);
-    }
-    setModal(null);
-  }
-
-  async function handleSaveSmmProduct(
-    data: Partial<SmmProduct> & { id?: string }
-  ) {
-    if (data.id) {
-      const { id, ...rest } = data;
-      const updated = await updateSmmProduct(id, rest);
-      if (updated) {
-        setSmmProducts((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, ...updated } : p))
-        );
-        showToast(`"${updated.name}" updated`, true);
-      } else {
-        showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato — fai Redeploy su Vercel" : "Error updating SMM product — check console (F12)", false);
-      }
-    } else {
-      const created = await createSmmProduct(data as Omit<SmmProduct, "id" | "createdAt">);
-      if (created) {
-        setSmmProducts((prev) => [...prev, created]);
-        showToast(`"${created.name}" created`, true);
-      } else {
-        showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato — fai Redeploy su Vercel" : "Error creating SMM product — check console (F12)", false);
-      }
-    }
-    setActiveNav("smm-products");
-    setEditingSmmProduct(null);
-  }
-
-  function openSmmProductEdit(product: SmmProduct | null) {
-    setEditingSmmProduct(product);
-    setActiveNav("smm-product-edit");
-    setSidebarOpen(false);
-  }
-
   async function handleTransfer(amount: number, toAddress: string) {
     const res = await transferFunds(amount, toAddress);
     if (res) {
@@ -929,20 +792,6 @@ function AdminPanel() {
               indent
             />
             <SidebarItem
-              icon={<IconSmm className="h-4 w-4" />}
-              label="SMM Products"
-              active={activeNav === "smm-products" || activeNav === "smm-product-edit"}
-              onClick={() => navigateTo("smm-products")}
-              indent
-            />
-            <SidebarItem
-              icon={<IconPuzzle className="h-4 w-4" />}
-              label="Addons"
-              active={activeNav === "addons"}
-              onClick={() => navigateTo("addons")}
-              indent
-            />
-            <SidebarItem
               icon={<IconGrid className="h-4 w-4" />}
               label="Categories"
               active={activeNav === "categories"}
@@ -954,20 +803,6 @@ function AdminPanel() {
               label="Coupons"
               active={activeNav === "coupons"}
               onClick={() => navigateTo("coupons")}
-              indent
-            />
-            <SidebarItem
-              icon={<IconPercent className="h-4 w-4" />}
-              label="Quantity Deals"
-              active={activeNav === "quantity-deals"}
-              onClick={() => navigateTo("quantity-deals")}
-              indent
-            />
-            <SidebarItem
-              icon={<IconGift className="h-4 w-4" />}
-              label="Bundle Offers"
-              active={activeNav === "bundle-offers"}
-              onClick={() => navigateTo("bundle-offers")}
               indent
             />
           </SidebarGroup>
@@ -1002,6 +837,13 @@ function AdminPanel() {
               indent
             />
             <SidebarItem
+              icon={<IconFileTextInline className="h-4 w-4" />}
+              label="Transcripts"
+              active={activeNav === "transcripts"}
+              onClick={() => navigateTo("transcripts")}
+              indent
+            />
+            <SidebarItem
               icon={<IconCart className="h-4 w-4" />}
               label="Abandoned Checkouts"
               active={activeNav === "abandoned-checkouts"}
@@ -1026,34 +868,6 @@ function AdminPanel() {
               label="Configure"
               active={activeNav === "storefront-configure"}
               onClick={() => navigateTo("storefront-configure")}
-              indent
-            />
-            <SidebarItem
-              icon={<IconPalette className="h-4 w-4" />}
-              label="Themes"
-              active={activeNav === "themes"}
-              onClick={() => navigateTo("themes")}
-              indent
-            />
-            <SidebarItem
-              icon={<IconFileText className="h-4 w-4" />}
-              label="Custom Pages"
-              active={activeNav === "custom-pages"}
-              onClick={() => navigateTo("custom-pages")}
-              indent
-            />
-            <SidebarItem
-              icon={<IconImage className="h-4 w-4" />}
-              label="Images"
-              active={activeNav === "images"}
-              onClick={() => navigateTo("images")}
-              indent
-            />
-            <SidebarItem
-              icon={<IconFolder className="h-4 w-4" />}
-              label="Files"
-              active={activeNav === "files"}
-              onClick={() => navigateTo("files")}
               indent
             />
             <SidebarItem
@@ -1121,11 +935,7 @@ function AdminPanel() {
                 ? editingProduct
                   ? `Edit: ${editingProduct.name}`
                   : "New Product"
-                : activeNav === "smm-product-edit"
-                  ? editingSmmProduct
-                    ? `Edit: ${editingSmmProduct.name}`
-                    : "New SMM Product"
-                  : NAV_TITLES[activeNav] ?? activeNav}
+                : NAV_TITLES[activeNav] ?? activeNav}
             </h2>
           </div>
 
@@ -1228,24 +1038,6 @@ function AdminPanel() {
               onDelete={(p) => setModal({ kind: "confirm-delete", product: p })}
             />
           )}
-          {activeNav === "smm-products" && (
-            <SmmProductsView
-              products={filteredSmmProducts}
-              search={smmSearch}
-              onSearchChange={setSmmSearch}
-              onEdit={openSmmProductEdit}
-              onNew={() => openSmmProductEdit(null)}
-              onDelete={(p) => setModal({ kind: "confirm-delete-smm", product: p })}
-            />
-          )}
-          {activeNav === "smm-product-edit" && (
-            <SmmProductEditView
-              product={editingSmmProduct}
-              onSave={handleSaveSmmProduct}
-              onCancel={() => navigateTo("smm-products")}
-              onDelete={(p) => setModal({ kind: "confirm-delete-smm", product: p })}
-            />
-          )}
           {activeNav === "orders" && (
             <OrdersView feed={orderFeed} allFeed={feed} ltc={ltc} />
           )}
@@ -1254,6 +1046,9 @@ function AdminPanel() {
           )}
           {activeNav === "tickets" && (
             <TicketsView openTickets={stats?.openTickets ?? 0} />
+          )}
+          {activeNav === "transcripts" && (
+            <TranscriptsView />
           )}
           {activeNav === "wallet" && (
             <WalletView
@@ -1275,20 +1070,13 @@ function AdminPanel() {
               feed={feed}
             />
           )}
-          {activeNav === "addons" && <AddonsView />}
           {activeNav === "categories" && <CategoriesView products={products} />}
           {activeNav === "coupons" && <CouponsView />}
-          {activeNav === "quantity-deals" && <QuantityDealsView />}
-          {activeNav === "bundle-offers" && <BundleOffersView />}
           {activeNav === "feedbacks" && <FeedbacksView feed={feed} />}
           {activeNav === "abandoned-checkouts" && <AbandonedCheckoutsView />}
           {activeNav === "storefront-configure" && (
             <StorefrontConfigureView showToast={showToast} />
           )}
-          {activeNav === "themes" && <ThemesView showToast={showToast} />}
-          {activeNav === "custom-pages" && <CustomPagesView />}
-          {activeNav === "images" && <ImagesView />}
-          {activeNav === "files" && <FilesView />}
           {activeNav === "activity-logs" && <ActivityLogsView feed={feed} />}
         </main>
       </div>
@@ -1301,16 +1089,6 @@ function AdminPanel() {
           confirmLabel="Elimina"
           confirmClass="bg-rose-500 text-white hover:bg-rose-600"
           onConfirm={() => handleDeleteProduct(modal.product)}
-          onClose={() => setModal(null)}
-        />
-      )}
-      {modal?.kind === "confirm-delete-smm" && (
-        <ConfirmModal
-          title="Delete SMM Product"
-          message={`Are you sure you want to delete "${modal.product.name}"? This action cannot be undone.`}
-          confirmLabel="Delete"
-          confirmClass="bg-rose-500 text-white hover:bg-rose-600"
-          onConfirm={() => handleDeleteSmmProduct(modal.product)}
           onClose={() => setModal(null)}
         />
       )}
@@ -1832,6 +1610,10 @@ function ProductsView({
 /*  Product Edit View                                                  */
 /* ================================================================== */
 
+function slugify(str: string): string {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 function ProductEditView({
   product,
   onSave,
@@ -1843,50 +1625,159 @@ function ProductEditView({
   onCancel: () => void;
   onDelete: (product: ApiProduct) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<
-    "general" | "pricing" | "custom-fields" | "visibility" | "discord" | "misc"
-  >("general");
   const [name, setName] = useState(product?.name ?? "");
+  const [urlPath, setUrlPath] = useState(product?.url ?? "");
+  const [urlManuallyEdited, setUrlManuallyEdited] = useState(!!product?.url);
   const [description, setDescription] = useState(product?.description ?? "");
-  const [image, setImage] = useState(product?.image ?? "");
   const [category, setCategory] = useState("");
-  const [price, setPrice] = useState(product?.price?.toString() ?? "");
-  const [currency, setCurrency] = useState(product?.currency ?? "EUR");
-  const [stock, setStock] = useState(product?.stock ?? 0);
-  const [stockItems, setStockItems] = useState("");
+  const [images, setImages] = useState<string[]>(
+    product?.image ? [product.image] : [],
+  );
+  const [instructions, setInstructions] = useState("");
+  const [deliverableType, setDeliverableType] = useState<
+    "serials" | "service" | "dynamic" | "files" | "smm-panels"
+  >("serials");
+  const [smmServiceId, setSmmServiceId] = useState("");
+  const [smmMinQty, setSmmMinQty] = useState("");
+  const [smmMaxQty, setSmmMaxQty] = useState("");
+  const [variants, setVariants] = useState<
+    { id: string; title: string; price: string; stock: number; stockItems: string }[]
+  >(
+    product
+      ? [
+          {
+            id: Math.random().toString(36).slice(2),
+            title: "Default",
+            price: product.price?.toString() ?? "",
+            stock: product.stock ?? 0,
+            stockItems: "",
+          },
+        ]
+      : [
+          {
+            id: Math.random().toString(36).slice(2),
+            title: "Default",
+            price: "",
+            stock: 0,
+            stockItems: "",
+          },
+        ],
+  );
+  const [stockModes, setStockModes] = useState<Record<string, "add" | "edit">>({});
   const [saving, setSaving] = useState(false);
-  // Custom fields tab
-  const [customFields, setCustomFields] = useState("");
-  // Visibility tab
-  const [published, setPublished] = useState(true);
-  const [availableFrom, setAvailableFrom] = useState("");
-  const [availableUntil, setAvailableUntil] = useState("");
-  // Discord tab
-  const [discordRoleId, setDiscordRoleId] = useState("");
-  const [discordServerId, setDiscordServerId] = useState("");
-  // Misc tab
-  const [notes, setNotes] = useState("");
-  const [tags, setTags] = useState("");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleNameChange(val: string) {
+    setName(val);
+    if (!urlManuallyEdited) {
+      setUrlPath(slugify(val));
+    }
+  }
+
+  function handleUrlChange(val: string) {
+    setUrlManuallyEdited(true);
+    setUrlPath(val);
+  }
+
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files;
+    if (!files) return;
+    const remaining = 5 - images.length;
+    const toProcess = Array.from(files).slice(0, remaining);
+    for (const file of toProcess) {
+      if (file.size > 2 * 1024 * 1024) continue;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setImages((prev) => (prev.length < 5 ? [...prev, result] : prev));
+      };
+      reader.readAsDataURL(file);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  function removeImage(idx: number) {
+    setImages((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function updateVariant(id: string, field: string, value: string | number) {
+    setVariants((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, [field]: value } : v)),
+    );
+  }
+
+  function addVariant() {
+    setVariants((prev) => [
+      ...prev,
+      {
+        id: Math.random().toString(36).slice(2),
+        title: "",
+        price: "",
+        stock: 0,
+        stockItems: "",
+      },
+    ]);
+  }
+
+  function removeVariant(id: string) {
+    if (variants.length <= 1) return;
+    setVariants((prev) => prev.filter((v) => v.id !== id));
+  }
+
+  function getStockMode(id: string): "add" | "edit" {
+    return stockModes[id] ?? "add";
+  }
+
+  function toggleStockMode(id: string) {
+    setStockModes((prev) => ({
+      ...prev,
+      [id]: prev[id] === "edit" ? "add" : "edit",
+    }));
+  }
 
   function handleSave() {
-    if (!name.trim() || !price.trim()) return;
-    const trimmedImage = image.trim();
-    if (trimmedImage && !/^https:\/\//i.test(trimmedImage)) return;
+    if (!name.trim()) return;
+    const hasPrice = variants.some((v) => v.price.trim());
+    if (!hasPrice) return;
     setSaving(true);
+    const prices = variants.map((v) => parseFloat(v.price) || 0);
+    const cheapest = Math.min(...prices);
+    const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
     onSave({
       ...(product ? { id: product.id } : {}),
       name: name.trim(),
-      price: parseFloat(price),
-      currency,
-      description: description.trim(),
-      image: trimmedImage || undefined,
-      stock,
+      price: cheapest,
+      currency: "EUR",
+      description,
+      image: images[0] || undefined,
+      url: urlPath || undefined,
+      stock: totalStock,
     });
   }
 
+  function handleSaveAndExit() {
+    handleSave();
+  }
+
+  const deliverableOptions: {
+    value: typeof deliverableType;
+    label: string;
+    desc: string;
+  }[] = [
+    { value: "serials", label: "Serials", desc: "Unique codes delivered one per order" },
+    { value: "service", label: "Service", desc: "Manual fulfillment by seller" },
+    { value: "dynamic", label: "Dynamic", desc: "Generated via webhook or API" },
+    { value: "files", label: "Files", desc: "Downloadable file delivery" },
+    { value: "smm-panels", label: "SMM Panels", desc: "Social media marketing services" },
+  ];
+
+  const inputCls =
+    "w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50";
+
   return (
-    <div className="space-y-5">
-      {/* Top bar */}
+    <div className="space-y-6">
+      {/* Top action bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
@@ -1894,7 +1785,7 @@ function ProductEditView({
           className="flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-white"
         >
           <IconChevronLeft className="h-4 w-4" />
-          Back to Products
+          Cancel
         </button>
         <div className="flex items-center gap-2">
           {product && (
@@ -1908,15 +1799,16 @@ function ProductEditView({
           )}
           <button
             type="button"
-            onClick={onCancel}
-            className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-zinc-400 transition-all hover:text-white"
+            onClick={handleSaveAndExit}
+            disabled={saving || !name.trim()}
+            className="rounded-lg border border-indigo-500/30 px-4 py-2 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10 disabled:opacity-50"
           >
-            Cancel
+            Save &amp; Exit
           </button>
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving || !name.trim() || !price.trim()}
+            disabled={saving || !name.trim()}
             className="rounded-lg bg-indigo-500 px-5 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
@@ -1924,378 +1816,320 @@ function ProductEditView({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-0 border-b border-white/10">
-        <button
-          type="button"
-          onClick={() => setActiveTab("general")}
-          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
-            activeTab === "general"
-              ? "border-indigo-500 text-indigo-400"
-              : "border-transparent text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          General
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("pricing")}
-          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
-            activeTab === "pricing"
-              ? "border-indigo-500 text-indigo-400"
-              : "border-transparent text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          Pricing & Stock
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("custom-fields")}
-          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
-            activeTab === "custom-fields"
-              ? "border-indigo-500 text-indigo-400"
-              : "border-transparent text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          Custom Fields
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("visibility")}
-          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
-            activeTab === "visibility"
-              ? "border-indigo-500 text-indigo-400"
-              : "border-transparent text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          Visibility
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("discord")}
-          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
-            activeTab === "discord"
-              ? "border-indigo-500 text-indigo-400"
-              : "border-transparent text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          Discord
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("misc")}
-          className={`border-b-2 px-5 py-3 text-sm font-semibold transition-all ${
-            activeTab === "misc"
-              ? "border-indigo-500 text-indigo-400"
-              : "border-transparent text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          Miscellaneous
-        </button>
-      </div>
-
-      {/* Tab content */}
-      <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
-        {activeTab === "general" && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-5">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Name *</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
-                  style={{ backgroundColor: "#161619" }}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Description</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 resize-none"
-                  style={{ backgroundColor: "#161619" }}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Category</label>
-                <input
-                  type="text"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="e.g. Digital, Account, etc."
-                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-600"
-                  style={{ backgroundColor: "#161619" }}
-                />
-              </div>
+      {/* Section: General */}
+      <div
+        className="rounded-xl border border-white/5 p-6"
+        style={{ backgroundColor: "#121214" }}
+      >
+        <h3 className="mb-5 text-sm font-semibold text-white">General</h3>
+        <div className="space-y-5">
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Name *</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => handleNameChange(e.target.value)}
+                className={inputCls}
+                style={{ backgroundColor: "#161619" }}
+              />
             </div>
-            <div className="space-y-5">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Image URL</label>
-                <input
-                  type="url"
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  placeholder="https://..."
-                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-600"
-                  style={{ backgroundColor: "#161619" }}
-                />
-              </div>
-              {image.trim() && (
-                <div className="rounded-xl border border-white/5 p-4" style={{ backgroundColor: "#161619" }}>
-                  <p className="mb-3 text-xs font-medium text-zinc-500">Preview</p>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">URL Path</label>
+              <input
+                type="text"
+                value={urlPath}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                placeholder="auto-generated-from-name"
+                className={`${inputCls} placeholder:text-zinc-600`}
+                style={{ backgroundColor: "#161619" }}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-zinc-400">Description</label>
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
+              placeholder="Describe your product..."
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-zinc-400">Category</label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="e.g. Digital, Account, etc."
+              className={`${inputCls} placeholder:text-zinc-600`}
+              style={{ backgroundColor: "#161619" }}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-zinc-400">
+              Images{" "}
+              <span className="font-normal text-zinc-600">
+                ({images.length}/5, max 2MB each)
+              </span>
+            </label>
+            <div className="flex flex-wrap gap-3">
+              {images.map((src, idx) => (
+                <div key={idx} className="group relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={image}
-                    alt="preview"
-                    className="h-32 w-32 rounded-lg object-cover"
+                    src={src}
+                    alt={`Product ${idx + 1}`}
+                    className="h-24 w-24 rounded-lg border border-white/10 object-cover"
                   />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === "pricing" && (
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-5">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Price *</label>
-                <input
-                  type="number"
-                  step="any"
-                  min="0"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
-                  style={{ backgroundColor: "#161619" }}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Currency</label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
-                  style={{ backgroundColor: "#161619" }}
-                >
-                  <option value="EUR">EUR</option>
-                  <option value="USD">USD</option>
-                  <option value="GBP">GBP</option>
-                </select>
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Stock</label>
-                <div className="flex items-center gap-3">
+                  {idx === 0 && (
+                    <span className="absolute left-1 top-1 rounded bg-indigo-500/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      Cover
+                    </span>
+                  )}
                   <button
                     type="button"
-                    onClick={() => setStock((s) => Math.max(0, s - 1))}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-lg font-bold text-rose-400 transition-all hover:border-rose-400/30 hover:bg-rose-500/10"
+                    onClick={() => removeImage(idx)}
+                    className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white opacity-0 transition-opacity group-hover:opacity-100"
                   >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min="0"
-                    value={stock}
-                    onChange={(e) =>
-                      setStock(Math.max(0, parseInt(e.target.value) || 0))
-                    }
-                    className="w-20 rounded-lg border border-white/10 px-3 py-2 text-center text-sm font-semibold text-white outline-none focus:border-indigo-500/50"
-                    style={{ backgroundColor: "#161619" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setStock((s) => s + 1)}
-                    className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-lg font-bold text-emerald-400 transition-all hover:border-emerald-400/30 hover:bg-emerald-500/10"
-                  >
-                    +
+                    X
                   </button>
                 </div>
-              </div>
-            </div>
-            <div className="space-y-5">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Stock Items / Serials</label>
-                <p className="text-[11px] text-zinc-600">
-                  Paste codes/serials, one per line. These are the deliverable items.
-                </p>
-                <textarea
-                  value={stockItems}
-                  onChange={(e) => setStockItems(e.target.value)}
-                  rows={6}
-                  placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
-                  className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
-                  style={{ backgroundColor: "#161619" }}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-500">
-                  {stockItems.trim()
-                    ? `${stockItems.trim().split("\n").length} items`
-                    : "0 items"}
-                </span>
+              ))}
+              {images.length < 5 && (
                 <button
                   type="button"
-                  onClick={() => {
-                    const lines = stockItems
-                      .trim()
-                      .split("\n")
-                      .filter((l) => l.trim());
-                    setStock((s) => s + lines.length);
-                  }}
-                  disabled={!stockItems.trim()}
-                  className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 disabled:opacity-50"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-dashed border-white/10 text-zinc-500 transition-colors hover:border-indigo-500/30 hover:text-indigo-400"
                 >
-                  Add to Stock
+                  <span className="text-2xl leading-none">+</span>
+                  <span className="mt-1 text-[10px]">Upload</span>
                 </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "custom-fields" && (
-          <div className="max-w-2xl space-y-5">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Custom Fields</label>
-              <p className="text-[11px] text-zinc-600">
-                Add custom key-value pairs, one per line in the format{" "}
-                <code className="rounded bg-white/5 px-1 text-zinc-400">key: value</code>.
-                These are shown to the customer at checkout.
-              </p>
-              <textarea
-                value={customFields}
-                onChange={(e) => setCustomFields(e.target.value)}
-                rows={8}
-                placeholder={"region: EU\nwarranty: 30 days\nplatform: PC"}
-                className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
-                style={{ backgroundColor: "#161619" }}
-              />
-              <span className="text-xs text-zinc-500">
-                {customFields.trim()
-                  ? `${customFields.trim().split("\n").filter((l) => l.includes(":")).length} field(s)`
-                  : "0 fields"}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "visibility" && (
-          <div className="max-w-2xl space-y-6">
-            <div className="flex items-center justify-between rounded-lg border border-white/5 px-4 py-3" style={{ backgroundColor: "#161619" }}>
-              <div>
-                <p className="text-sm font-medium text-white">{published ? "Published" : "Hidden"}</p>
-                <p className="text-xs text-zinc-500">
-                  {published
-                    ? "This product is visible in the storefront."
-                    : "This product is hidden from the storefront."}
-                </p>
-              </div>
-              <ToggleSwitch checked={published} onChange={setPublished} />
-            </div>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Available From</label>
-                <input
-                  type="date"
-                  value={availableFrom}
-                  onChange={(e) => setAvailableFrom(e.target.value)}
-                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
-                  style={{ backgroundColor: "#161619" }}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-zinc-400">Available Until</label>
-                <input
-                  type="date"
-                  value={availableUntil}
-                  onChange={(e) => setAvailableUntil(e.target.value)}
-                  className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
-                  style={{ backgroundColor: "#161619" }}
-                />
-              </div>
-            </div>
-            <p className="text-[11px] text-zinc-600">
-              Leave the date range empty to keep the product available indefinitely while published.
-            </p>
-          </div>
-        )}
-
-        {activeTab === "discord" && (
-          <div className="max-w-2xl space-y-5">
-            <p className="text-[11px] text-zinc-600">
-              Optionally grant a Discord role automatically when a customer purchases this product.
-            </p>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Discord Server ID</label>
-              <input
-                type="text"
-                value={discordServerId}
-                onChange={(e) => setDiscordServerId(e.target.value)}
-                placeholder="e.g. 123456789012345678"
-                className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
-                style={{ backgroundColor: "#161619" }}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Discord Role ID (granted on purchase)</label>
-              <input
-                type="text"
-                value={discordRoleId}
-                onChange={(e) => setDiscordRoleId(e.target.value)}
-                placeholder="e.g. 987654321098765432"
-                className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
-                style={{ backgroundColor: "#161619" }}
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === "misc" && (
-          <div className="max-w-2xl space-y-5">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Internal Notes</label>
-              <p className="text-[11px] text-zinc-600">Only visible to admins. Not shown to customers.</p>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={5}
-                placeholder="Add any internal notes about this product..."
-                className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
-                style={{ backgroundColor: "#161619" }}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Tags</label>
-              <input
-                type="text"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="Comma separated, e.g. featured, new, sale"
-                className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
-                style={{ backgroundColor: "#161619" }}
-              />
-              {tags.trim() && (
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {tags
-                    .split(",")
-                    .map((t) => t.trim())
-                    .filter(Boolean)
-                    .map((t, i) => (
-                      <span
-                        key={i}
-                        className="rounded-md bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-400"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                </div>
               )}
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleImageUpload}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-zinc-400">Instructions</label>
+            <RichTextEditor
+              content={instructions}
+              onChange={setInstructions}
+              placeholder="Post-purchase instructions for the buyer..."
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Section: Deliverable Type */}
+      <div
+        className="rounded-xl border border-white/5 p-6"
+        style={{ backgroundColor: "#121214" }}
+      >
+        <h3 className="mb-5 text-sm font-semibold text-white">Deliverable Type</h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {deliverableOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setDeliverableType(opt.value)}
+              className={`rounded-lg border p-4 text-left transition-all ${
+                deliverableType === opt.value
+                  ? "border-indigo-500 bg-indigo-500/5"
+                  : "border-white/10 hover:border-white/20"
+              }`}
+              style={{ backgroundColor: deliverableType === opt.value ? undefined : "#161619" }}
+            >
+              <p
+                className={`text-sm font-semibold ${
+                  deliverableType === opt.value ? "text-indigo-400" : "text-white"
+                }`}
+              >
+                {opt.label}
+              </p>
+              <p className="mt-1 text-xs text-zinc-500">{opt.desc}</p>
+            </button>
+          ))}
+        </div>
+
+        {deliverableType === "smm-panels" && (
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Service ID</label>
+              <input
+                type="number"
+                value={smmServiceId}
+                onChange={(e) => setSmmServiceId(e.target.value)}
+                className={inputCls}
+                style={{ backgroundColor: "#161619" }}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Min Quantity</label>
+              <input
+                type="number"
+                value={smmMinQty}
+                onChange={(e) => setSmmMinQty(e.target.value)}
+                className={inputCls}
+                style={{ backgroundColor: "#161619" }}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Max Quantity</label>
+              <input
+                type="number"
+                value={smmMaxQty}
+                onChange={(e) => setSmmMaxQty(e.target.value)}
+                className={inputCls}
+                style={{ backgroundColor: "#161619" }}
+              />
+            </div>
           </div>
         )}
+      </div>
+
+      {/* Section: Pricing & Stock */}
+      <div
+        className="rounded-xl border border-white/5 p-6"
+        style={{ backgroundColor: "#121214" }}
+      >
+        <h3 className="mb-5 text-sm font-semibold text-white">Pricing &amp; Stock</h3>
+        <div className="space-y-4">
+          {variants.map((variant) => (
+            <div
+              key={variant.id}
+              className="rounded-lg border border-white/5 p-4"
+              style={{ backgroundColor: "#161619" }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="grid flex-1 gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-semibold text-zinc-400">Variant Title</label>
+                    <input
+                      type="text"
+                      value={variant.title}
+                      onChange={(e) => updateVariant(variant.id, "title", e.target.value)}
+                      placeholder="e.g. Standard, Premium"
+                      className={`${inputCls} placeholder:text-zinc-600`}
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-semibold text-zinc-400">Price (EUR)</label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={variant.price}
+                      onChange={(e) => updateVariant(variant.id, "price", e.target.value)}
+                      className={inputCls}
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                  </div>
+                </div>
+                {variants.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeVariant(variant.id)}
+                    className="mt-6 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-rose-500/20 text-rose-400 transition-all hover:bg-rose-500/10"
+                    title="Remove variant"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-4">
+                {deliverableType === "serials" ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-zinc-400">
+                        Stock Items{" "}
+                        <span className="font-normal text-zinc-600">
+                          (
+                          {variant.stockItems.trim()
+                            ? variant.stockItems.trim().split("\n").filter((l) => l.trim()).length
+                            : 0}{" "}
+                          items)
+                        </span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => toggleStockMode(variant.id)}
+                        className="text-xs font-medium text-indigo-400 transition-colors hover:text-indigo-300"
+                      >
+                        {getStockMode(variant.id) === "add" ? "Edit Stock" : "Add to Stock"}
+                      </button>
+                    </div>
+                    <textarea
+                      value={variant.stockItems}
+                      onChange={(e) => {
+                        updateVariant(variant.id, "stockItems", e.target.value);
+                        if (getStockMode(variant.id) === "edit") {
+                          const lines = e.target.value.trim().split("\n").filter((l) => l.trim());
+                          updateVariant(variant.id, "stock", lines.length);
+                        }
+                      }}
+                      rows={4}
+                      placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
+                      className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                    {getStockMode(variant.id) === "add" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const lines = variant.stockItems
+                            .trim()
+                            .split("\n")
+                            .filter((l) => l.trim());
+                          updateVariant(variant.id, "stock", variant.stock + lines.length);
+                        }}
+                        disabled={!variant.stockItems.trim()}
+                        className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 disabled:opacity-50"
+                      >
+                        Add to Stock ({variant.stock} current)
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-semibold text-zinc-400">Stock</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={variant.stock}
+                      onChange={(e) =>
+                        updateVariant(variant.id, "stock", Math.max(0, parseInt(e.target.value) || 0))
+                      }
+                      className="w-32 rounded-lg border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/50"
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addVariant}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/10 py-3 text-xs font-semibold text-zinc-500 transition-all hover:border-indigo-500/30 hover:text-indigo-400"
+          >
+            <span className="text-base leading-none">+</span> Create a New Variant
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2495,108 +2329,6 @@ function CouponsView() {
     </div>
   );
 }
-
-function AddonsView() {
-  const addons: { id: string; name: string; price: number }[] = [];
-  return (
-    <div className="space-y-5">
-      <ViewHeader
-        title="Addons"
-        subtitle={`Optional extras customers can add to their order (${addons.length} total)`}
-        action={<PrimaryButton label="+ New Addon" />}
-      />
-      {addons.length === 0 ? (
-        <EmptyState
-          icon={<IconPuzzle className="h-6 w-6" />}
-          message="No addons available."
-          hint="Addons let customers upgrade their purchase at checkout."
-        />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {addons.map((a) => (
-            <div key={a.id} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
-              <h4 className="text-sm font-semibold text-white">{a.name}</h4>
-              <p className="mt-2 text-xs font-bold text-indigo-400">{formatCurrency(a.price, "EUR")}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function QuantityDealsView() {
-  const deals: { min: number; discount: number }[] = [];
-  return (
-    <div className="space-y-5">
-      <ViewHeader
-        title="Quantity Deals"
-        subtitle={`Reward customers for buying in bulk (${deals.length} total)`}
-        action={<PrimaryButton label="+ New Deal" />}
-      />
-      {deals.length === 0 ? (
-        <EmptyState
-          icon={<IconPercent className="h-6 w-6" />}
-          message="No quantity deals configured."
-          hint="Offer a percentage discount when customers reach a quantity threshold."
-        />
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/5">
-                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Min. Quantity</th>
-                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Discount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {deals.map((d, i) => (
-                <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 text-white">{d.min}+</td>
-                  <td className="px-4 py-3 text-emerald-400 font-semibold">{d.discount}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BundleOffersView() {
-  const bundles: { id: string; name: string; price: number; items: number }[] = [];
-  return (
-    <div className="space-y-5">
-      <ViewHeader
-        title="Bundle Offers"
-        subtitle={`Sell multiple products together at a special price (${bundles.length} total)`}
-        action={<PrimaryButton label="+ New Bundle" />}
-      />
-      {bundles.length === 0 ? (
-        <EmptyState
-          icon={<IconGift className="h-6 w-6" />}
-          message="No bundle offers created."
-          hint="Combine products into a discounted bundle to increase order value."
-        />
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {bundles.map((b) => (
-            <div key={b.id} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
-              <h4 className="text-sm font-semibold text-white">{b.name}</h4>
-              <p className="mt-1 text-xs text-zinc-500">{b.items} products</p>
-              <p className="mt-2 text-sm font-bold text-indigo-400">{formatCurrency(b.price, "EUR")}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ================================================================== */
-/*  Orders: Feedbacks / Abandoned Checkouts                           */
-/* ================================================================== */
 
 function FeedbacksView({ feed }: { feed: FeedItem[] }) {
   const orderCount = feed.filter((f) => f.type === "order").length;
@@ -2990,168 +2722,6 @@ function StorefrontConfigureView({
     </div>
   );
 }
-
-function ThemesView({ showToast }: { showToast: (msg: string, ok: boolean) => void }) {
-  const themes = [
-    { id: "dark", name: "Dark", swatches: ["#09090b", "#121214", "#6366f1"] },
-    { id: "light", name: "Light", swatches: ["#fafafa", "#ffffff", "#6366f1"] },
-    { id: "midnight", name: "Midnight", swatches: ["#020617", "#0f172a", "#818cf8"] },
-    { id: "ocean", name: "Ocean", swatches: ["#082f49", "#0c4a6e", "#38bdf8"] },
-  ];
-  const [active, setActive] = useState("dark");
-  return (
-    <div className="space-y-5">
-      <ViewHeader title="Themes" subtitle="Choose a look for your storefront" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {themes.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => {
-              setActive(t.id);
-              showToast(`"${t.name}" theme applied`, true);
-            }}
-            className={`overflow-hidden rounded-xl border text-left transition-all ${
-              active === t.id ? "border-indigo-500 ring-1 ring-indigo-500/30" : "border-white/5 hover:border-white/10"
-            }`}
-            style={{ backgroundColor: "#121214" }}
-          >
-            <div className="flex h-24">
-              {t.swatches.map((s, i) => (
-                <span key={i} className="flex-1" style={{ backgroundColor: s }} />
-              ))}
-            </div>
-            <div className="flex items-center justify-between p-4">
-              <span className="text-sm font-semibold text-white">{t.name}</span>
-              {active === t.id && (
-                <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400">
-                  Active
-                </span>
-              )}
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CustomPagesView() {
-  const pages: { title: string; slug: string; edited: string }[] = [];
-  return (
-    <div className="space-y-5">
-      <ViewHeader
-        title="Custom Pages"
-        subtitle={`Add static pages like FAQ or Terms (${pages.length} total)`}
-        action={<PrimaryButton label="+ New Page" />}
-      />
-      {pages.length === 0 ? (
-        <EmptyState
-          icon={<IconFileText className="h-6 w-6" />}
-          message="No custom pages."
-          hint="Create pages such as Terms of Service, FAQ, or About."
-        />
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/5">
-                {["Title", "Slug", "Last Edited"].map((h) => (
-                  <th key={h} className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {pages.map((p) => (
-                <tr key={p.slug} className="border-b border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-medium text-white">{p.title}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-zinc-500">/{p.slug}</td>
-                  <td className="px-4 py-3 text-xs text-zinc-500">{p.edited}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ImagesView() {
-  const images: { id: string; url: string }[] = [];
-  return (
-    <div className="space-y-5">
-      <ViewHeader
-        title="Images"
-        subtitle={`Manage uploaded images (${images.length} total)`}
-        action={<PrimaryButton label="Upload Image" />}
-      />
-      {images.length === 0 ? (
-        <EmptyState
-          icon={<IconImage className="h-6 w-6" />}
-          message="No images uploaded."
-          hint="Upload images to use across your products and pages."
-        />
-      ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-          {images.map((img) => (
-            <div key={img.id} className="overflow-hidden rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.url} alt="" className="h-28 w-full object-cover" />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FilesView() {
-  const files: { name: string; size: string; type: string; date: string }[] = [];
-  return (
-    <div className="space-y-5">
-      <ViewHeader
-        title="Files"
-        subtitle={`Deliverable files for your products (${files.length} total)`}
-        action={<PrimaryButton label="Upload File" />}
-      />
-      {files.length === 0 ? (
-        <EmptyState
-          icon={<IconFolder className="h-6 w-6" />}
-          message="No files uploaded."
-          hint="Upload files that can be delivered to customers on purchase."
-        />
-      ) : (
-        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-white/5">
-                {["Name", "Size", "Type", "Uploaded"].map((h) => (
-                  <th key={h} className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {files.map((f, i) => (
-                <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-medium text-white">{f.name}</td>
-                  <td className="px-4 py-3 text-zinc-300">{f.size}</td>
-                  <td className="px-4 py-3 text-xs text-zinc-500">{f.type}</td>
-                  <td className="px-4 py-3 text-xs text-zinc-500">{f.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ActivityLogsView({ feed }: { feed: FeedItem[] }) {
   const logs = feed.slice(0, 50);
   return (
@@ -3450,6 +3020,161 @@ function TicketsView({ openTickets }: { openTickets: number }) {
 }
 
 /* ================================================================== */
+/*  Transcripts View                                                   */
+/* ================================================================== */
+
+interface TranscriptMeta {
+  id: string;
+  ticketId: string;
+  ticketName: string;
+  category: string;
+  ownerId: string;
+  ownerName: string;
+  createdAt: string;
+}
+
+function TranscriptsView() {
+  const [transcripts, setTranscripts] = useState<TranscriptMeta[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+
+  useEffect(() => {
+    const token = process.env.NEXT_PUBLIC_ADMIN_TOKEN;
+    if (!token) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+    fetch("/api/transcripts", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => setTranscripts(data.transcripts || []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const categories = ["All", ...Array.from(new Set(transcripts.map((t) => t.category).filter(Boolean)))];
+
+  const filtered = transcripts.filter((t) => {
+    if (categoryFilter !== "All" && t.category !== categoryFilter) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return (
+        t.ticketName.toLowerCase().includes(q) ||
+        t.ownerName.toLowerCase().includes(q) ||
+        t.ticketId.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Transcripts"
+        subtitle={`Ticket transcript archive (${transcripts.length} total)`}
+      />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by ticket name, owner, or ID..."
+            className="w-full rounded-lg border border-white/10 py-2.5 pl-9 pr-4 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
+            style={{ backgroundColor: "#161619" }}
+          />
+        </div>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none"
+          style={{ backgroundColor: "#161619" }}
+        >
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c === "All" ? "All Categories" : c}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? (
+        <p className="py-12 text-center text-sm text-zinc-500">Loading transcripts...</p>
+      ) : error ? (
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-400">
+          Failed to load transcripts. Make sure <code className="font-mono text-xs">BLOB_READ_WRITE_TOKEN</code> is set on Vercel.
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<IconFileTextInline className="h-6 w-6" />}
+          message="No transcripts found."
+          hint={transcripts.length > 0 ? "Try adjusting your search or filters." : "Transcripts will appear here when the bot saves ticket logs."}
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/5">
+                {["Ticket", "Category", "Owner", "Date", ""].map((h) => (
+                  <th key={h} className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((t) => (
+                <tr key={t.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-white">{t.ticketName}</span>
+                    <span className="ml-2 font-mono text-[10px] text-zinc-600">{t.ticketId}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {t.category ? (
+                      <span className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-400">
+                        {t.category}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-600">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-300">{t.ownerName}</td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">
+                    {new Date(t.createdAt).toLocaleDateString("it-IT", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <a
+                      href={`/transcript/${t.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-all hover:border-indigo-500/30 hover:text-indigo-400"
+                    >
+                      View
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================== */
 /*  Wallet View                                                        */
 /* ================================================================== */
 
@@ -3663,325 +3388,6 @@ function WalletView({
     </div>
   );
 }
-
-/* ================================================================== */
-/*  SMM Products View                                                  */
-/* ================================================================== */
-
-function SmmProductsView({
-  products,
-  search,
-  onSearchChange,
-  onEdit,
-  onNew,
-  onDelete,
-}: {
-  products: SmmProduct[];
-  search: string;
-  onSearchChange: (v: string) => void;
-  onEdit: (p: SmmProduct) => void;
-  onNew: () => void;
-  onDelete: (p: SmmProduct) => void;
-}) {
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative">
-          <svg viewBox="0 0 24 24" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-            <circle cx="11" cy="11" r="7" />
-            <path strokeLinecap="round" d="M21 21l-3.5-3.5" />
-          </svg>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search SMM products..."
-            className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-4 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-indigo-500 sm:w-64"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={onNew}
-          className="flex items-center gap-2 rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-indigo-600"
-        >
-          <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden>
-            <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-          </svg>
-          New SMM Product
-        </button>
-      </div>
-
-      {products.length === 0 ? (
-        <div className="rounded-xl border border-white/5 p-10 text-center" style={{ backgroundColor: "#121214" }}>
-          <p className="text-sm text-zinc-500">No SMM products found.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="group rounded-xl border border-white/5 p-5 transition-colors hover:border-indigo-500/30"
-              style={{ backgroundColor: "#121214" }}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  {product.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={product.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                  ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-sm font-bold text-indigo-400">
-                      SMM
-                    </div>
-                  )}
-                  <div>
-                    <h4 className="text-sm font-semibold text-white">{product.name}</h4>
-                    {product.category && (
-                      <span className="text-xs text-zinc-500">{product.category}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <button type="button" onClick={() => onEdit(product)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-indigo-400 transition-colors">
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden>
-                      <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
-                    </svg>
-                  </button>
-                  <button type="button" onClick={() => onDelete(product)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-white/5 hover:text-rose-400 transition-colors">
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden>
-                      <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.519.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 01.78.72l.5 6.5a.75.75 0 01-1.498.116l-.5-6.5a.75.75 0 01.718-.836zm3.617.72a.75.75 0 00-1.497-.116l-.5 6.5a.75.75 0 001.498.116l.5-6.5z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span className="text-zinc-500">Service ID</span>
-                  <span className="text-white">{product.serviceId}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-zinc-500">Price / 1K</span>
-                  <span className="font-semibold text-emerald-400">€{product.pricePerThousand.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-zinc-500">Min / Max</span>
-                  <span className="text-white">{product.minQuantity.toLocaleString()} – {product.maxQuantity.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-zinc-500">Status</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${product.active ? "bg-emerald-500/10 text-emerald-400" : "bg-zinc-500/10 text-zinc-500"}`}>
-                    {product.active ? "Active" : "Inactive"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ================================================================== */
-/*  SMM Product Edit View                                              */
-/* ================================================================== */
-
-function SmmProductEditView({
-  product,
-  onSave,
-  onCancel,
-  onDelete,
-}: {
-  product: SmmProduct | null;
-  onSave: (data: Partial<SmmProduct> & { id?: string }) => void;
-  onCancel: () => void;
-  onDelete: (p: SmmProduct) => void;
-}) {
-  const [name, setName] = useState(product?.name ?? "");
-  const [serviceId, setServiceId] = useState(product?.serviceId?.toString() ?? "");
-  const [pricePerThousand, setPricePerThousand] = useState(product?.pricePerThousand?.toString() ?? "");
-  const [instructions, setInstructions] = useState(product?.instructions ?? "");
-  const [category, setCategory] = useState(product?.category ?? "");
-  const [image, setImage] = useState(product?.image ?? "");
-  const [minQuantity, setMinQuantity] = useState(product?.minQuantity?.toString() ?? "100");
-  const [maxQuantity, setMaxQuantity] = useState(product?.maxQuantity?.toString() ?? "10000");
-  const [active, setActive] = useState(product?.active ?? true);
-  const [saving, setSaving] = useState(false);
-
-  const isValid = name.trim() && serviceId.trim() && pricePerThousand.trim();
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!isValid || saving) return;
-    setSaving(true);
-    await onSave({
-      ...(product ? { id: product.id } : {}),
-      name: name.trim(),
-      serviceId: parseInt(serviceId, 10),
-      pricePerThousand: parseFloat(pricePerThousand),
-      instructions: instructions.trim(),
-      category: category.trim() || undefined,
-      image: image.trim() || undefined,
-      minQuantity: parseInt(minQuantity, 10) || 100,
-      maxQuantity: parseInt(maxQuantity, 10) || 10000,
-      active,
-    });
-    setSaving(false);
-  }
-
-  return (
-    <div className="mx-auto max-w-2xl">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
-          <h3 className="mb-5 text-sm font-bold uppercase tracking-wider text-zinc-400">Product Details</h3>
-
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Name *</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Instagram Followers"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Service ID *</label>
-              <input
-                type="number"
-                value={serviceId}
-                onChange={(e) => setServiceId(e.target.value)}
-                placeholder="e.g. 1, 2, 153"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Price per 1000 (EUR) *</label>
-              <input
-                type="number"
-                value={pricePerThousand}
-                onChange={(e) => setPricePerThousand(e.target.value)}
-                step="0.01"
-                min="0"
-                placeholder="e.g. 0.90"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Category</label>
-              <input
-                type="text"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="e.g. Instagram, TikTok, YouTube"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Image URL</label>
-              <input
-                type="url"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="https://..."
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Min Quantity</label>
-              <input
-                type="number"
-                value={minQuantity}
-                onChange={(e) => setMinQuantity(e.target.value)}
-                min="1"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Max Quantity</label>
-              <input
-                type="number"
-                value={maxQuantity}
-                onChange={(e) => setMaxQuantity(e.target.value)}
-                min="1"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="mb-1.5 block text-xs font-semibold text-zinc-400">Instructions</label>
-              <textarea
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                rows={3}
-                placeholder="e.g. Insert your Instagram profile link. Profile must be public."
-                className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-indigo-500"
-              />
-            </div>
-
-            <div className="sm:col-span-2 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setActive((v) => !v)}
-                className={`relative h-6 w-11 rounded-full transition-colors ${active ? "bg-indigo-500" : "bg-zinc-700"}`}
-              >
-                <span className={`absolute top-0.5 block h-5 w-5 rounded-full bg-white shadow transition-transform ${active ? "left-[22px]" : "left-0.5"}`} />
-              </button>
-              <span className="text-sm text-zinc-400">{active ? "Active" : "Inactive"}</span>
-            </div>
-          </div>
-        </div>
-
-        {image && image.startsWith("https://") && (
-          <div className="rounded-xl border border-white/5 p-4" style={{ backgroundColor: "#121214" }}>
-            <p className="mb-2 text-xs font-semibold text-zinc-400">Image Preview</p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={image} alt="" className="h-32 w-full rounded-lg object-cover" />
-          </div>
-        )}
-
-        <div className="flex items-center justify-between">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-400 transition-all hover:text-white"
-            >
-              Cancel
-            </button>
-            {product && (
-              <button
-                type="button"
-                onClick={() => onDelete(product)}
-                className="rounded-lg border border-rose-500/20 px-4 py-2 text-sm font-semibold text-rose-400 transition-all hover:bg-rose-500/10"
-              >
-                Delete
-              </button>
-            )}
-          </div>
-          <button
-            type="submit"
-            disabled={!isValid || saving}
-            className="rounded-lg bg-indigo-500 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
-          >
-            {saving ? "Saving..." : product ? "Update Product" : "Create Product"}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-/* ================================================================== */
-/*  Settings View                                                      */
-/* ================================================================== */
 
 function SettingsView({
   autoRefresh,

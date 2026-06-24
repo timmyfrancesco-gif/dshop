@@ -192,7 +192,14 @@ export default function Shop() {
                   )}
 
                   <span className="absolute left-3 top-3 rounded-full bg-gradient-to-r from-casino-from to-casino-to px-3 py-1 text-xs font-bold text-white shadow-lg">
-                    {formatPrice(item.price)}
+                    {item.variants && item.variants.length > 1
+                      ? (() => {
+                          const prices = item.variants.map((v) => v.price);
+                          const min = Math.min(...prices);
+                          const max = Math.max(...prices);
+                          return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`;
+                        })()
+                      : formatPrice(item.price)}
                   </span>
 
                   <span className="absolute bottom-3 left-3 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">

@@ -89,7 +89,21 @@ export interface ShopItem {
   icon: string;
   image?: string;
   url?: string;
+  images?: string[];
+  instructions?: string;
+  variants?: ProductVariant[];
+  deliverableType?: DeliverableType;
 }
+
+export interface ProductVariant {
+  id: string;
+  title: string;
+  price: number;
+  stock: number;
+  stockItems?: string;
+}
+
+export type DeliverableType = "serials" | "service" | "dynamic" | "files" | "smm-panels";
 
 export interface ApiProduct {
   id: string;
@@ -100,6 +114,15 @@ export interface ApiProduct {
   image?: string;
   description: string;
   url?: string;
+  urlPath?: string;
+  category?: string;
+  images?: string[];
+  instructions?: string;
+  deliverableType?: DeliverableType;
+  smmServiceId?: number;
+  smmMinQty?: number;
+  smmMaxQty?: number;
+  variants?: ProductVariant[];
 }
 
 export interface ProductsResponse {
