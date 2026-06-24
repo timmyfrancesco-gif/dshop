@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
+import SafeHtml from "@/components/ui/SafeHtml";
 import { createSmmOrder, getSmmOrder, getSmmProducts } from "@/lib/api";
 import { formatEur } from "@/lib/format";
 import { useLocale } from "@/lib/hooks/useLocale";
@@ -276,9 +277,9 @@ function SmmPaymentView({ order, status }: { order: SmmOrderResponse; status: Sm
         <p className="text-xs text-muted">({formatEur(order.amountEur)})</p>
 
         {qrSvg && (
-          <div
+          <SafeHtml
+            html={qrSvg}
             className="mt-2 rounded-xl bg-white p-3"
-            dangerouslySetInnerHTML={{ __html: qrSvg }}
           />
         )}
 

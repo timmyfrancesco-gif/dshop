@@ -12,8 +12,8 @@ interface CartDrawerProps {
   total: number;
   currency: string;
   onClose: () => void;
-  onUpdateQuantity: (id: string, quantity: number) => void;
-  onRemove: (id: string) => void;
+  onUpdateQuantity: (id: string, quantity: number, variantId?: string) => void;
+  onRemove: (id: string, variantId?: string) => void;
   onClear: () => void;
 }
 
@@ -71,65 +71,71 @@ export default function CartDrawer({
               ) : (
                 <>
                   <div className="mt-6 flex flex-1 flex-col gap-4 overflow-y-auto">
-                    {lines.map((line) => (
-                      <div
-                        key={line.item.id}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-background/60 p-3"
-                      >
-                        {line.item.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={line.item.image}
-                            alt={line.item.name}
-                            className="h-12 w-12 rounded-lg border border-border object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border text-accent">
-                            <ServiceIcon name={line.item.icon} className="h-6 w-6" />
-                          </div>
-                        )}
-
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-foreground">{line.item.name}</p>
-                          <p className="text-xs text-muted">
-                            {formatPrice(line.item.price)}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2 rounded-full border border-border px-2 py-1">
-                          <button
-                            type="button"
-                            onClick={() => onUpdateQuantity(line.item.id, line.quantity - 1)}
-                            className="text-sm font-bold text-muted transition-colors hover:text-foreground"
-                            aria-label="Decrease quantity"
-                          >
-                            −
-                          </button>
-                          <span className="w-5 text-center text-sm font-semibold text-foreground">
-                            {line.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => onUpdateQuantity(line.item.id, line.quantity + 1)}
-                            className="text-sm font-bold text-muted transition-colors hover:text-foreground"
-                            aria-label="Increase quantity"
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => onRemove(line.item.id)}
-                          aria-label={`Remove ${line.item.name}`}
-                          className="text-muted transition-colors hover:text-rose-400"
+                    {lines.map((line) => {
+                      const displayPrice = line.variantPrice ?? line.item.price;
+                      return (
+                        <div
+                          key={`${line.item.id}-${line.variantId ?? ""}`}
+                          className="flex items-center gap-3 rounded-xl border border-border bg-background/60 p-3"
                         >
-                          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M6 18L18 6" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+                          {line.item.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={line.item.image}
+                              alt={line.item.name}
+                              className="h-12 w-12 rounded-lg border border-border object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-border text-accent">
+                              <ServiceIcon name={line.item.icon} className="h-6 w-6" />
+                            </div>
+                          )}
+
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-foreground">{line.item.name}</p>
+                            {line.variantTitle && (
+                              <p className="text-[11px] text-accent">{line.variantTitle}</p>
+                            )}
+                            <p className="text-xs text-muted">
+                              {formatPrice(displayPrice)}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 rounded-full border border-border px-2 py-1">
+                            <button
+                              type="button"
+                              onClick={() => onUpdateQuantity(line.item.id, line.quantity - 1, line.variantId)}
+                              className="text-sm font-bold text-muted transition-colors hover:text-foreground"
+                              aria-label="Decrease quantity"
+                            >
+                              −
+                            </button>
+                            <span className="w-5 text-center text-sm font-semibold text-foreground">
+                              {line.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateQuantity(line.item.id, line.quantity + 1, line.variantId)}
+                              className="text-sm font-bold text-muted transition-colors hover:text-foreground"
+                              aria-label="Increase quantity"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => onRemove(line.item.id, line.variantId)}
+                            aria-label={`Remove ${line.item.name}`}
+                            className="text-muted transition-colors hover:text-rose-400"
+                          >
+                            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M6 18L18 6" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <div className="mt-6 border-t border-border pt-4">

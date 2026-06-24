@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
+import SafeHtml from "@/components/ui/SafeHtml";
 import ServiceIcon from "@/components/ui/ServiceIcon";
 import { useCart } from "@/lib/hooks/useCart";
 import { useLocale } from "@/lib/hooks/useLocale";
@@ -76,13 +77,24 @@ export default function ProductPage() {
   const allImages = product.images?.length ? product.images : product.image ? [product.image] : [];
 
   function handleAddToCart() {
-    cart.addItem(product!, quantity);
+    if (variant) {
+      cart.addItem(product!, quantity, variant.id, variant.title, variant.price);
+    } else {
+      cart.addItem(product!, quantity);
+    }
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }
 
   function handlePurchaseNow() {
-    router.push(`/checkout?productId=${encodeURIComponent(product!.id)}&qty=${quantity}`);
+    const params = new URLSearchParams({
+      productId: product!.id,
+      qty: String(quantity),
+    });
+    if (variant) {
+      params.set("variantId", variant.id);
+    }
+    router.push(`/checkout?${params.toString()}`);
   }
 
   return (
@@ -167,9 +179,9 @@ export default function ProductPage() {
               {product.description ? (
                 <div className="mt-6">
                   {product.description.includes("<") ? (
-                    <div
+                    <SafeHtml
+                      html={product.description}
                       className="prose prose-sm prose-invert max-w-none text-muted"
-                      dangerouslySetInnerHTML={{ __html: product.description }}
                     />
                   ) : (
                     <p className="text-sm leading-relaxed text-muted">{product.description}</p>
@@ -290,9 +302,9 @@ export default function ProductPage() {
                   <h3 className="text-sm font-semibold text-foreground">
                     {t("product.instructions") || "Instructions"}
                   </h3>
-                  <div
+                  <SafeHtml
+                    html={product.instructions}
                     className="prose prose-sm prose-invert mt-3 max-w-none text-muted"
-                    dangerouslySetInnerHTML={{ __html: product.instructions }}
                   />
                 </div>
               )}

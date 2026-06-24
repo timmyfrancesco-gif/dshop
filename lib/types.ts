@@ -132,6 +132,7 @@ export interface ProductsResponse {
 export interface ProductOrderRequest {
   productId: string;
   discord: string;
+  variantId?: string;
 }
 
 export interface ProductOrderResponse {

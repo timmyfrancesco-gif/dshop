@@ -81,6 +81,7 @@ function CheckoutContent() {
   const { t, formatPrice } = useLocale();
   const searchParams = useSearchParams();
   const productId = searchParams.get("productId");
+  const variantId = searchParams.get("variantId");
   const qty = Math.max(1, Number(searchParams.get("qty") ?? "1") || 1);
 
   const { items, loaded, refetch: refetchProducts } = useProducts();
@@ -93,6 +94,9 @@ function CheckoutContent() {
   ], [t]);
 
   const buyNowProduct = productId ? items.find((item) => String(item.id) === productId) : null;
+  const buyNowVariant = buyNowProduct && variantId
+    ? buyNowProduct.variants?.find((v) => v.id === variantId) ?? null
+    : null;
 
   const queue = useMemo(() => {
     if (buyNowProduct) {
@@ -196,7 +200,16 @@ function CheckoutContent() {
 
   const currentItem = queue[index] as ShopItem | undefined;
   const isLast = index === queue.length - 1;
-  const queueTotal = queue.reduce((sum, item) => sum + item.price, 0);
+  const queueTotal = useMemo(() => {
+    if (buyNowProduct) {
+      const unitPrice = buyNowVariant?.price ?? buyNowProduct.price;
+      return unitPrice * qty;
+    }
+    return cart.lines.reduce((sum, line) => {
+      const price = line.variantPrice ?? line.item.price;
+      return sum + price * line.quantity;
+    }, 0);
+  }, [buyNowProduct, buyNowVariant, qty, cart.lines]);
 
   const displayName = currentItem?.name ?? restoredFinished?.productName ?? "";
   const displayIcon = currentItem?.icon ?? restoredFinished?.productIcon;
@@ -225,6 +238,7 @@ function CheckoutContent() {
     const res = await createProductOrder({
       productId: currentItem.id,
       discord: email.trim(),
+      ...(variantId ? { variantId } : {}),
     });
     setLoading(false);
 
@@ -316,7 +330,7 @@ function CheckoutContent() {
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
-            <p className="text-xs text-muted">Default</p>
+            <p className="text-xs text-muted">{buyNowVariant?.title ?? "Default"}</p>
           </div>
           <div className="text-right shrink-0">
             <p className="text-xs text-muted">{displayQueueLen}x</p>
