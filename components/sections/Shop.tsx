@@ -202,8 +202,14 @@ export default function Shop() {
                       : formatPrice(item.price)}
                   </span>
 
-                  <span className="absolute bottom-3 left-3 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
-                    {t("shop.inStock")}
+                  <span
+                    className={`absolute bottom-3 left-3 rounded-full border px-3 py-1 text-xs font-semibold ${
+                      item.stock > 0
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                        : "border-rose-500/30 bg-rose-500/10 text-rose-400"
+                    }`}
+                  >
+                    {item.stock > 0 ? t("shop.inStock") : t("shop.outOfStock") || "Out of Stock"}
                   </span>
                 </Link>
 
