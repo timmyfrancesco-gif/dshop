@@ -117,6 +117,7 @@ export async function getStats(): Promise<StatsResponse | null> {
 }
 
 async function fetchInternalStats(): Promise<{ activeTickets?: number } | null> {
+  if (typeof window !== "undefined") return null;
   const base = getInternalBase();
   if (!base) return null;
   try {
