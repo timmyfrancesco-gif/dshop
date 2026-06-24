@@ -45,6 +45,7 @@ const NAV_TITLES: Record<string, string> = {
   customers: "Customers",
   feedbacks: "Feedbacks",
   tickets: "Tickets",
+  transcripts: "Transcripts",
   "abandoned-checkouts": "Abandoned Checkouts",
   wallet: "Wallet",
   "storefront-configure": "Configure Storefront",
@@ -66,6 +67,7 @@ type NavSection =
   | "customers"
   | "feedbacks"
   | "tickets"
+  | "transcripts"
   | "abandoned-checkouts"
   | "wallet"
   | "storefront-configure"
@@ -268,6 +270,18 @@ function IconCart({ className }: { className?: string }) {
 
 
 
+
+function IconFileTextInline({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
+  );
+}
 
 function IconActivity({ className }: { className?: string }) {
   return (
@@ -823,6 +837,13 @@ function AdminPanel() {
               indent
             />
             <SidebarItem
+              icon={<IconFileTextInline className="h-4 w-4" />}
+              label="Transcripts"
+              active={activeNav === "transcripts"}
+              onClick={() => navigateTo("transcripts")}
+              indent
+            />
+            <SidebarItem
               icon={<IconCart className="h-4 w-4" />}
               label="Abandoned Checkouts"
               active={activeNav === "abandoned-checkouts"}
@@ -1025,6 +1046,9 @@ function AdminPanel() {
           )}
           {activeNav === "tickets" && (
             <TicketsView openTickets={stats?.openTickets ?? 0} />
+          )}
+          {activeNav === "transcripts" && (
+            <TranscriptsView />
           )}
           {activeNav === "wallet" && (
             <WalletView
@@ -2991,6 +3015,161 @@ function TicketsView({ openTickets }: { openTickets: number }) {
           Tickets are managed through Discord. You can view aggregated statistics here.
         </p>
       </div>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Transcripts View                                                   */
+/* ================================================================== */
+
+interface TranscriptMeta {
+  id: string;
+  ticketId: string;
+  ticketName: string;
+  category: string;
+  ownerId: string;
+  ownerName: string;
+  createdAt: string;
+}
+
+function TranscriptsView() {
+  const [transcripts, setTranscripts] = useState<TranscriptMeta[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+
+  useEffect(() => {
+    const token = process.env.NEXT_PUBLIC_ADMIN_TOKEN;
+    if (!token) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+    fetch("/api/transcripts", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => setTranscripts(data.transcripts || []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const categories = ["All", ...Array.from(new Set(transcripts.map((t) => t.category).filter(Boolean)))];
+
+  const filtered = transcripts.filter((t) => {
+    if (categoryFilter !== "All" && t.category !== categoryFilter) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      return (
+        t.ticketName.toLowerCase().includes(q) ||
+        t.ownerName.toLowerCase().includes(q) ||
+        t.ticketId.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Transcripts"
+        subtitle={`Ticket transcript archive (${transcripts.length} total)`}
+      />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by ticket name, owner, or ID..."
+            className="w-full rounded-lg border border-white/10 py-2.5 pl-9 pr-4 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
+            style={{ backgroundColor: "#161619" }}
+          />
+        </div>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none"
+          style={{ backgroundColor: "#161619" }}
+        >
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c === "All" ? "All Categories" : c}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? (
+        <p className="py-12 text-center text-sm text-zinc-500">Loading transcripts...</p>
+      ) : error ? (
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-400">
+          Failed to load transcripts. Make sure <code className="font-mono text-xs">BLOB_READ_WRITE_TOKEN</code> is set on Vercel.
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={<IconFileTextInline className="h-6 w-6" />}
+          message="No transcripts found."
+          hint={transcripts.length > 0 ? "Try adjusting your search or filters." : "Transcripts will appear here when the bot saves ticket logs."}
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/5">
+                {["Ticket", "Category", "Owner", "Date", ""].map((h) => (
+                  <th key={h} className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((t) => (
+                <tr key={t.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                  <td className="px-4 py-3">
+                    <span className="font-medium text-white">{t.ticketName}</span>
+                    <span className="ml-2 font-mono text-[10px] text-zinc-600">{t.ticketId}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {t.category ? (
+                      <span className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-400">
+                        {t.category}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-600">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-zinc-300">{t.ownerName}</td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">
+                    {new Date(t.createdAt).toLocaleDateString("it-IT", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <a
+                      href={`/transcript/${t.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-all hover:border-indigo-500/30 hover:text-indigo-400"
+                    >
+                      View
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
