@@ -179,28 +179,51 @@ export default function ProductPage() {
 
               {/* Variant selector */}
               {hasVariants && product.variants!.length > 1 && (
-                <div className="mt-6">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-                    {t("product.selectVariant") || "Select variant"}
-                  </span>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {product.variants!.map((v, i) => (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedVariant(i);
-                          setQuantity(1);
-                        }}
-                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all ${
-                          selectedVariant === i
-                            ? "border-accent bg-accent text-background"
-                            : "border-border bg-background/60 text-muted hover:border-accent/50 hover:text-foreground"
-                        }`}
-                      >
-                        {v.title} — {formatPrice(v.price)}
-                      </button>
-                    ))}
+                <div className="mt-6 rounded-2xl border border-border bg-background-elevated/40 overflow-hidden">
+                  <div className="border-b border-border/60 px-4 py-3">
+                    <span className="text-sm font-semibold text-foreground">Variant</span>
+                  </div>
+                  <div className="divide-y divide-border/40">
+                    {product.variants!.map((v, i) => {
+                      const isSelected = selectedVariant === i;
+                      const isOutOfStock = v.stock === 0;
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedVariant(i);
+                            setQuantity(1);
+                          }}
+                          className={`flex w-full items-center justify-between px-4 py-3.5 text-left transition-all ${
+                            isSelected
+                              ? "bg-accent/5 border-l-2 border-l-accent"
+                              : "hover:bg-background-elevated/60 border-l-2 border-l-transparent"
+                          }`}
+                        >
+                          <div className="flex flex-col gap-0.5">
+                            <span className={`text-sm font-semibold ${isSelected ? "text-foreground" : "text-muted"}`}>
+                              {v.title}
+                            </span>
+                            {isOutOfStock && (
+                              <span className="text-xs text-rose-400">Out of Stock</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm font-bold ${isSelected ? "text-accent" : "text-foreground"}`}>
+                              {formatPrice(v.price)}
+                            </span>
+                            {isSelected && (
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-background">
+                                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={3}>
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}

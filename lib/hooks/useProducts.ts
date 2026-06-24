@@ -18,7 +18,6 @@ export function useProducts() {
         p.variants?.length ? Math.min(...p.variants.map((v) => v.price)) : p.price;
       setItems(
         res.products
-          .filter((p) => totalStock(p) > 0)
           .map((p) => ({
             id: String(p.id),
             name: p.name,
