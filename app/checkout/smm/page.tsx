@@ -16,13 +16,18 @@ export default function SmmCheckoutPage() {
     <PageShell>
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-lg">
-          <Suspense fallback={<p className="mt-10 text-sm text-muted">Loading...</p>}>
+          <Suspense fallback={<SmmLoadingFallback />}>
             <SmmCheckoutContent />
           </Suspense>
         </div>
       </section>
     </PageShell>
   );
+}
+
+function SmmLoadingFallback() {
+  const { t } = useLocale();
+  return <p className="mt-10 text-sm text-muted">{t("smm.loading")}</p>;
 }
 
 type Phase = "loading" | "confirm" | "paying" | "processing" | "completed" | "error";
@@ -46,13 +51,13 @@ function SmmCheckoutContent() {
   const totalEur = product ? (quantity / 1000) * product.pricePerThousand : 0;
 
   useEffect(() => {
-    if (!productId) { setPhase("error"); setError("Missing product ID."); return; }
-    if (!link) { setPhase("error"); setError("Missing link."); return; }
-    if (!discord) { setPhase("error"); setError("Missing Discord username."); return; }
+    if (!productId) { setPhase("error"); setError(t("smm.missingProductId")); return; }
+    if (!link) { setPhase("error"); setError(t("smm.missingLink")); return; }
+    if (!discord) { setPhase("error"); setError(t("smm.missingDiscord")); return; }
 
     getSmmProducts().then((res) => {
       const p = res?.products?.find((x) => x.id === productId);
-      if (!p) { setPhase("error"); setError("Product not found."); return; }
+      if (!p) { setPhase("error"); setError(t("smm.productNotFound")); return; }
       setProduct(p);
       setPhase("confirm");
     });
@@ -61,7 +66,7 @@ function SmmCheckoutContent() {
   async function handleConfirm() {
     setPhase("loading");
     const res = await createSmmOrder({ smmProductId: productId, quantity, link, discord });
-    if (!res) { setPhase("error"); setError("Failed to create order. Please try again."); return; }
+    if (!res) { setPhase("error"); setError(t("smm.createOrderFailed")); return; }
     setOrder(res);
     setPhase("paying");
     startPolling(res.orderId);
@@ -84,7 +89,7 @@ function SmmCheckoutContent() {
             setStatus(s2);
             if (s2.status === "completed" || s2.status === "cancelled") {
               setPhase(s2.status === "completed" ? "completed" : "error");
-              if (s2.status === "cancelled") setError("Order was cancelled.");
+              if (s2.status === "cancelled") setError(t("smm.orderCancelled"));
               if (pollRef.current) clearInterval(pollRef.current);
             }
           }, 5000);
@@ -296,15 +301,15 @@ function SmmPaymentView({ order, status }: { order: SmmOrderResponse; status: Sm
 
         <div className="w-full space-y-2 rounded-xl border border-border bg-background-elevated p-3">
           <div className="flex justify-between text-xs">
-            <span className="text-muted">Service</span>
+            <span className="text-muted">{t("smm.service")}</span>
             <span className="text-foreground">{order.serviceName}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-muted">Quantity</span>
+            <span className="text-muted">{t("smm.quantity")}</span>
             <span className="text-foreground">{order.quantity.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-muted">Link</span>
+            <span className="text-muted">{t("smm.link")}</span>
             <span className="max-w-[180px] truncate text-foreground">{order.link}</span>
           </div>
         </div>
@@ -315,7 +320,7 @@ function SmmPaymentView({ order, status }: { order: SmmOrderResponse; status: Sm
               <circle cx="12" cy="12" r="10" />
               <path d="M12 6v6l4 2" />
             </svg>
-            Waiting for payment...
+            {t("smm.waitingForPayment")}
           </div>
         )}
       </div>

@@ -2133,6 +2133,7 @@ function ProductEditView({
                             .split("\n")
                             .filter((l) => l.trim());
                           updateVariant(variant.id, "stock", variant.stock + lines.length);
+                          updateVariant(variant.id, "stockItems", "");
                         }}
                         disabled={!variant.stockItems.trim()}
                         className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 disabled:opacity-50"
@@ -3574,6 +3575,17 @@ function ConfirmModal({
 }) {
   const [busy, setBusy] = useState(false);
 
+  async function handleConfirm() {
+    setBusy(true);
+    try {
+      await onConfirm();
+    } catch {
+      // allow retry on failure
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <ModalOverlay onClose={onClose}>
       <h3 className="mb-2 text-base font-bold text-white">{title}</h3>
@@ -3589,10 +3601,7 @@ function ConfirmModal({
         <button
           type="button"
           disabled={busy}
-          onClick={() => {
-            setBusy(true);
-            onConfirm();
-          }}
+          onClick={handleConfirm}
           className={`rounded-lg px-4 py-2 text-sm font-bold transition-all disabled:opacity-50 ${confirmClass}`}
         >
           {busy ? "..." : confirmLabel}
