@@ -1764,6 +1764,19 @@ function ProductEditView({
   );
   const [stockModes, setStockModes] = useState<Record<string, "add" | "edit">>({});
   const [saving, setSaving] = useState(false);
+  const [editTab, setEditTab] = useState<"general" | "pricing">("general");
+  const [expandedVariants, setExpandedVariants] = useState<Set<string>>(
+    () => new Set(variants.map((v) => v.id)),
+  );
+
+  function toggleVariantExpanded(id: string) {
+    setExpandedVariants((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1807,16 +1820,18 @@ function ProductEditView({
   }
 
   function addVariant() {
+    const id = Math.random().toString(36).slice(2);
     setVariants((prev) => [
       ...prev,
       {
-        id: Math.random().toString(36).slice(2),
+        id,
         title: "",
         price: "",
         stock: 0,
         stockItems: "",
       },
     ]);
+    setExpandedVariants((prev) => new Set(prev).add(id));
   }
 
   function removeVariant(id: string) {
@@ -1893,8 +1908,71 @@ function ProductEditView({
   const inputCls =
     "w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50";
 
+  async function handleSaveAndExit() {
+    await handleSave();
+    onCancel();
+  }
+
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-white">
+            {product ? "Edit Product" : "Create Product"}
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500">Edit the product details below.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-zinc-300 transition-all hover:bg-white/5"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAndExit}
+            disabled={saving || !name.trim()}
+            className="rounded-lg border border-indigo-500/30 px-4 py-2 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10 disabled:opacity-50"
+          >
+            Save &amp; Exit
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !name.trim()}
+            className="rounded-lg bg-indigo-500 px-5 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </div>
+
+      {/* Tab navigation */}
+      <div className="flex flex-wrap gap-1 border-b border-white/5">
+        {([
+          { key: "general", label: "General" },
+          { key: "pricing", label: "Pricing & Stock" },
+        ] as const).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setEditTab(tab.key)}
+            className={`px-4 py-3 text-sm transition-colors ${
+              editTab === tab.key
+                ? "border-b-2 border-indigo-500 font-semibold text-indigo-400"
+                : "border-b-2 border-transparent text-zinc-400 hover:text-white"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {editTab === "general" && (
+        <div className="space-y-6">
       {/* Top action bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
@@ -1939,34 +2017,37 @@ function ProductEditView({
         className="rounded-xl border border-white/5 p-6"
         style={{ backgroundColor: "#121214" }}
       >
-        <h3 className="mb-5 text-sm font-semibold text-white">General</h3>
+        <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-white">
+          <IconFileTextInline className="h-4 w-4 text-indigo-400" />
+          General
+        </h3>
         <div className="space-y-5">
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Name *</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                className={inputCls}
-                style={{ backgroundColor: "#161619" }}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">URL Path</label>
-              <input
-                type="text"
-                value={urlPath}
-                onChange={(e) => handleUrlChange(e.target.value)}
-                placeholder="auto-generated-from-name"
-                className={`${inputCls} placeholder:text-zinc-600`}
-                style={{ backgroundColor: "#161619" }}
-              />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-white">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className={inputCls}
+              style={{ backgroundColor: "#161619" }}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-white">
+              URL Path <span className="font-normal text-zinc-500">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={urlPath}
+              onChange={(e) => handleUrlChange(e.target.value)}
+              placeholder="auto-generated-from-name"
+              className={`${inputCls} placeholder:text-zinc-600`}
+              style={{ backgroundColor: "#161619" }}
+            />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-zinc-400">Description</label>
+            <label className="text-sm font-semibold text-white">Description</label>
             <RichTextEditor
               content={description}
               onChange={setDescription}
@@ -1975,7 +2056,7 @@ function ProductEditView({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-zinc-400">Category</label>
+            <label className="text-sm font-semibold text-white">Category</label>
             <input
               type="text"
               value={category}
@@ -1987,9 +2068,9 @@ function ProductEditView({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-zinc-400">
+            <label className="text-sm font-semibold text-white">
               Images{" "}
-              <span className="font-normal text-zinc-600">
+              <span className="font-normal text-zinc-500">
                 ({images.length}/5, max 2MB each)
               </span>
             </label>
@@ -2038,7 +2119,7 @@ function ProductEditView({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-zinc-400">Instructions</label>
+            <label className="text-sm font-semibold text-white">Instructions</label>
             <RichTextEditor
               content={instructions}
               onChange={setInstructions}
@@ -2082,7 +2163,7 @@ function ProductEditView({
         {deliverableType === "smm-panels" && (
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Service ID</label>
+              <label className="text-sm font-semibold text-white">Service ID</label>
               <input
                 type="number"
                 value={smmServiceId}
@@ -2092,7 +2173,7 @@ function ProductEditView({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Min Quantity</label>
+              <label className="text-sm font-semibold text-white">Min Quantity</label>
               <input
                 type="number"
                 value={smmMinQty}
@@ -2102,7 +2183,7 @@ function ProductEditView({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Max Quantity</label>
+              <label className="text-sm font-semibold text-white">Max Quantity</label>
               <input
                 type="number"
                 value={smmMaxQty}
@@ -2114,35 +2195,102 @@ function ProductEditView({
           </div>
         )}
       </div>
+        </div>
+      )}
 
-      {/* Section: Pricing & Stock */}
+      {editTab === "pricing" && (
       <div
         className="rounded-xl border border-white/5 p-6"
         style={{ backgroundColor: "#121214" }}
       >
-        <h3 className="mb-5 text-sm font-semibold text-white">Pricing &amp; Stock</h3>
-        <div className="space-y-4">
-          {variants.map((variant) => (
+        <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-white">
+          <IconTag className="h-4 w-4 text-indigo-400" />
+          Pricing &amp; Stock
+        </h3>
+        <div className="space-y-3">
+          {variants.map((variant) => {
+            const expanded = expandedVariants.has(variant.id);
+            const stockCount = variant.stockItems.trim()
+              ? variant.stockItems.trim().split("\n").filter((l) => l.trim()).length
+              : 0;
+            return (
             <div
               key={variant.id}
-              className="rounded-lg border border-white/5 p-4"
+              className="rounded-lg border border-white/5"
               style={{ backgroundColor: "#161619" }}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="grid flex-1 gap-4 sm:grid-cols-2">
+              {/* Accordion header */}
+              <div className="flex items-center gap-3 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => toggleVariantExpanded(variant.id)}
+                  className="flex flex-1 items-center gap-3 text-left"
+                >
+                  <IconChevronDown
+                    className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${
+                      expanded ? "" : "-rotate-90"
+                    }`}
+                  />
+                  <svg
+                    className="h-4 w-4 shrink-0 text-zinc-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 16h16" />
+                  </svg>
+                  <span
+                    className={`text-sm font-semibold ${
+                      expanded ? "text-indigo-400" : "text-white"
+                    }`}
+                  >
+                    {variant.title || "Untitled Variant"}
+                  </span>
+                </button>
+                {variants.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeVariant(variant.id)}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-rose-500/20 text-rose-400 transition-all hover:bg-rose-500/10"
+                    title="Remove variant"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {expanded && (
+              <div className="space-y-5 border-t border-white/5 p-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-white">Variant Name</label>
+                  <input
+                    type="text"
+                    value={variant.title}
+                    onChange={(e) => updateVariant(variant.id, "title", e.target.value)}
+                    placeholder="e.g. Standard, Premium"
+                    className={`${inputCls} placeholder:text-zinc-600`}
+                    style={{ backgroundColor: "#1e1e22" }}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-white">
+                    Description <span className="font-normal text-zinc-500">(optional)</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Variant Description"
+                    className={`${inputCls} resize-none placeholder:text-zinc-600`}
+                    style={{ backgroundColor: "#1e1e22" }}
+                  />
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-semibold text-zinc-400">Variant Title</label>
-                    <input
-                      type="text"
-                      value={variant.title}
-                      onChange={(e) => updateVariant(variant.id, "title", e.target.value)}
-                      placeholder="e.g. Standard, Premium"
-                      className={`${inputCls} placeholder:text-zinc-600`}
-                      style={{ backgroundColor: "#1e1e22" }}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-semibold text-zinc-400">Price (EUR)</label>
+                    <label className="text-sm font-semibold text-white">Price</label>
                     <input
                       type="number"
                       step="any"
@@ -2153,78 +2301,63 @@ function ProductEditView({
                       style={{ backgroundColor: "#1e1e22" }}
                     />
                   </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-white">
+                      Slashed Price <span className="font-normal text-zinc-500">(optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      disabled
+                      placeholder="—"
+                      className={`${inputCls} placeholder:text-zinc-600 disabled:opacity-50`}
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                  </div>
                 </div>
-                {variants.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeVariant(variant.id)}
-                    className="mt-6 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-rose-500/20 text-rose-400 transition-all hover:bg-rose-500/10"
-                    title="Remove variant"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
-              </div>
 
-              <div className="mt-4">
+                {/* Stock */}
                 {deliverableType === "serials" ? (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-zinc-400">
-                        Stock Items{" "}
-                        <span className="font-normal text-zinc-600">
-                          (
-                          {variant.stockItems.trim()
-                            ? variant.stockItems.trim().split("\n").filter((l) => l.trim()).length
-                            : 0}{" "}
-                          items)
-                        </span>
-                      </label>
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/5 px-3 py-2.5" style={{ backgroundColor: "#1e1e22" }}>
+                      <span className="text-sm text-zinc-400">
+                        {variant.stock} items in stock - Click to manage deliverables
+                      </span>
                       <button
                         type="button"
                         onClick={() => toggleStockMode(variant.id)}
-                        className="text-xs font-medium text-indigo-400 transition-colors hover:text-indigo-300"
+                        className="shrink-0 rounded-lg border border-indigo-500/30 px-3 py-1.5 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10"
                       >
-                        {getStockMode(variant.id) === "add" ? "Edit Stock" : "Add to Stock"}
+                        Manage Stock
                       </button>
                     </div>
-                    <textarea
-                      value={variant.stockItems}
-                      onChange={(e) => {
-                        updateVariant(variant.id, "stockItems", e.target.value);
-                        if (getStockMode(variant.id) === "edit") {
-                          const lines = e.target.value.trim().split("\n").filter((l) => l.trim());
-                          updateVariant(variant.id, "stock", lines.length);
-                        }
-                      }}
-                      rows={4}
-                      placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
-                      className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
-                      style={{ backgroundColor: "#1e1e22" }}
-                    />
-                    {getStockMode(variant.id) === "add" && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const lines = variant.stockItems
-                            .trim()
-                            .split("\n")
-                            .filter((l) => l.trim());
-                          updateVariant(variant.id, "stock", variant.stock + lines.length);
-                          updateVariant(variant.id, "stockItems", "");
-                        }}
-                        disabled={!variant.stockItems.trim()}
-                        className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 disabled:opacity-50"
-                      >
-                        Add to Stock ({variant.stock} current)
-                      </button>
+                    {getStockMode(variant.id) === "edit" && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-semibold text-white">
+                            Stock Items{" "}
+                            <span className="font-normal text-zinc-500">({stockCount} items)</span>
+                          </label>
+                        </div>
+                        <textarea
+                          value={variant.stockItems}
+                          onChange={(e) => {
+                            updateVariant(variant.id, "stockItems", e.target.value);
+                            const lines = e.target.value.trim().split("\n").filter((l) => l.trim());
+                            updateVariant(variant.id, "stock", lines.length);
+                          }}
+                          rows={4}
+                          placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
+                          className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
+                          style={{ backgroundColor: "#1e1e22" }}
+                        />
+                      </>
                     )}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-semibold text-zinc-400">Stock</label>
+                    <label className="text-sm font-semibold text-white">Stock</label>
                     <input
                       type="number"
                       min="0"
@@ -2237,9 +2370,38 @@ function ProductEditView({
                     />
                   </div>
                 )}
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-white">
+                      Min Quantity <span className="font-normal text-zinc-500">(optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="1"
+                      className={`${inputCls} placeholder:text-zinc-600`}
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-white">
+                      Max Quantity <span className="font-normal text-zinc-500">(optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="—"
+                      className={`${inputCls} placeholder:text-zinc-600`}
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                  </div>
+                </div>
               </div>
+              )}
             </div>
-          ))}
+            );
+          })}
 
           <button
             type="button"
@@ -2250,6 +2412,7 @@ function ProductEditView({
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
