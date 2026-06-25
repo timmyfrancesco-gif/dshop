@@ -51,13 +51,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (item: ShopItem, quantity = 1, variantId?: string, variantTitle?: string, variantPrice?: number) => {
+      if (item.stock <= 0) return;
       setLines((prev) => {
         const key = variantId ? `${item.id}::${variantId}` : item.id;
         const existing = prev.find((line) => lineKey(line) === key);
         if (existing) {
           return prev.map((line) =>
             lineKey(line) === key
-              ? { ...line, quantity: Math.min(line.quantity + quantity, item.stock || line.quantity + quantity) }
+              ? { ...line, quantity: Math.min(line.quantity + quantity, item.stock > 0 ? item.stock : line.quantity + quantity) }
               : line
           );
         }

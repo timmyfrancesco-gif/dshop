@@ -27,11 +27,17 @@ export async function GET(
   const res = await fetch(blob.url);
   const html = await res.text();
 
+  const headers = new Headers({
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "public, max-age=3600",
+  });
+  headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline';"
+  );
+
   return new NextResponse(html, {
     status: 200,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
-    },
+    headers,
   });
 }

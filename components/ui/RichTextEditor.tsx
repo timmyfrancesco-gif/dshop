@@ -6,7 +6,7 @@ import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import LinkExtension from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 interface RichTextEditorProps {
   content: string;
@@ -68,6 +68,12 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
       },
     },
   });
+
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [editor, content]);
 
   const setLink = useCallback(() => {
     if (!editor) return;

@@ -544,7 +544,7 @@ function SuccessScreen({
       {/* Success banner */}
       <div className="border border-accent/30 bg-accent/5 rounded-xl p-4">
         <p className="text-sm text-accent">
-          Your order has been completed <strong>successfully</strong>!
+          {t("checkout.orderComplete")}
         </p>
       </div>
 

@@ -127,7 +127,7 @@ function UserMenu() {
 export default function Header() {
   const [open, setOpen] = useState(false);
   const { t } = useLocale();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
@@ -207,17 +207,35 @@ export default function Header() {
             </div>
             {/* Mobile auth */}
             {user ? (
-              <div className="flex items-center justify-center gap-2 py-2">
-                {user.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={user.avatar} alt="" className="h-6 w-6 rounded-full" />
-                ) : (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">
-                    {user.username.charAt(0).toUpperCase()}
-                  </div>
+              <>
+                <div className="flex items-center justify-center gap-2 py-2">
+                  {user.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.avatar} alt="" className="h-6 w-6 rounded-full" />
+                  ) : (
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/20 text-xs font-bold text-accent">
+                      {user.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-foreground">{user.username}</span>
+                </div>
+                {user.role === "admin" && (
+                  <Link
+                    href="/dashboard-hm2025"
+                    onClick={() => setOpen(false)}
+                    className="rounded-full border border-border px-4 py-2 text-center text-sm font-semibold text-accent"
+                  >
+                    Dashboard
+                  </Link>
                 )}
-                <span className="text-sm font-medium text-foreground">{user.username}</span>
-              </div>
+                <button
+                  type="button"
+                  onClick={() => { logout(); setOpen(false); }}
+                  className="rounded-full border border-border px-4 py-2 text-center text-sm font-semibold text-rose-400"
+                >
+                  {t("auth.logout")}
+                </button>
+              </>
             ) : (
               <Link
                 href="/login"

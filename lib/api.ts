@@ -28,7 +28,6 @@ import type {
 } from "./types";
 
 const API_BASE = (process.env.NEXT_PUBLIC_ASTRO_API_URL ?? "").replace(/\/+$/, "");
-const ADMIN_TOKEN = process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
 const DEFAULT_TIMEOUT_MS = 10_000;
 
 function getInternalBase(): string {
@@ -81,19 +80,18 @@ async function apiFetch<T>(
   }
 }
 
-function adminHeaders(): Record<string, string> {
-  return ADMIN_TOKEN ? { Authorization: `Bearer ${ADMIN_TOKEN}` } : {};
-}
-
-function adminApiFetch<T>(
-  path: string,
-  init?: RequestInit,
-  timeoutMs = DEFAULT_TIMEOUT_MS,
-): Promise<T | null> {
-  return apiFetch<T>(path, {
-    ...init,
-    headers: { ...adminHeaders(), ...init?.headers },
-  }, timeoutMs);
+async function adminFetch<T>(method: string, path: string, body?: unknown): Promise<T | null> {
+  try {
+    const res = await fetch("/api/admin/proxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ method, path, body }),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 export function isApiConfigured(): boolean {
@@ -188,37 +186,29 @@ export function updateProduct(
   id: string,
   data: Partial<ApiProduct>
 ): Promise<ApiProduct | null> {
-  return adminApiFetch<ApiProduct>(`/api/products/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
+  return adminFetch<ApiProduct>("PUT", `/api/products/${encodeURIComponent(id)}`, data);
 }
 
 export function deleteProduct(id: string): Promise<boolean> {
-  return adminApiFetch<{ ok: boolean }>(`/api/products/${encodeURIComponent(id)}`, {
-    method: "DELETE",
-  }).then((res) => res !== null);
+  return adminFetch<{ ok: boolean }>("DELETE", `/api/products/${encodeURIComponent(id)}`).then(
+    (res) => res !== null
+  );
 }
 
 export function createProduct(
   data: Omit<ApiProduct, "id">
 ): Promise<ApiProduct | null> {
-  return adminApiFetch<ApiProduct>("/api/products", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
+  return adminFetch<ApiProduct>("POST", "/api/products", data);
 }
 
 export function updateProductStock(
   id: string,
-  stock: number
+  stockItems: number
 ): Promise<boolean> {
-  return adminApiFetch<{ ok: boolean }>(
+  return adminFetch<{ ok: boolean }>(
+    "PUT",
     `/api/products/${encodeURIComponent(id)}/stock`,
-    {
-      method: "PUT",
-      body: JSON.stringify({ stock }),
-    }
+    { stockItems }
   ).then((res) => res !== null);
 }
 
@@ -275,17 +265,17 @@ export function getReviews(): Promise<ReviewsResponse | null> {
 // ── Wallet ────────────────────────────────────────────────────────────
 
 export function getWalletInfo(): Promise<WalletInfo | null> {
-  return adminApiFetch<WalletInfo>("/api/wallet/balance");
+  return adminFetch<WalletInfo>("GET", "/api/wallet");
 }
 
 export function transferFunds(
   amount: number,
   toAddress: string
 ): Promise<TransferResponse | null> {
-  return adminApiFetch<TransferResponse>("/api/wallet/transfer", {
-    method: "POST",
-    body: JSON.stringify({ amount, toAddress }),
-  }, 30_000);
+  return adminFetch<TransferResponse>("POST", "/api/transfer", {
+    to: toAddress,
+    amount,
+  });
 }
 
 // ── Auth ─────────────────────────────────────────────────────────────
@@ -315,9 +305,10 @@ export async function registerUser(
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const body = await res.json();
-    if (!res.ok) return { data: null, error: body.error ?? "Registration failed" };
-    return { data: body as AuthResponse };
+    let data;
+    try { data = await res.json(); } catch { data = null; }
+    if (!res.ok) return { data: null, error: data?.error ?? "Registration failed" };
+    return { data: data as AuthResponse };
   } catch {
     return { data: null, error: "Network error" };
   }
@@ -334,9 +325,10 @@ export async function loginUser(
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const body = await res.json();
-    if (!res.ok) return { data: null, error: body.error ?? "Login failed" };
-    return { data: body as AuthResponse };
+    let data;
+    try { data = await res.json(); } catch { data = null; }
+    if (!res.ok) return { data: null, error: data?.error ?? "Login failed" };
+    return { data: data as AuthResponse };
   } catch {
     return { data: null, error: "Network error" };
   }
@@ -353,9 +345,10 @@ export async function loginWithDiscord(
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify({ code }),
     });
-    const body = await res.json();
-    if (!res.ok) return { data: null, error: body.error ?? "Discord login failed" };
-    return { data: body as AuthResponse };
+    let data;
+    try { data = await res.json(); } catch { data = null; }
+    if (!res.ok) return { data: null, error: data?.error ?? "Discord login failed" };
+    return { data: data as AuthResponse };
   } catch {
     return { data: null, error: "Network error" };
   }

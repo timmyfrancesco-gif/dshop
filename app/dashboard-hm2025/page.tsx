@@ -9,6 +9,7 @@ import {
   getHealth,
   getLtcPrice,
   getProducts,
+  getReviews,
   getStats,
   getWalletInfo,
   transferFunds,
@@ -22,6 +23,7 @@ import type {
   ApiProduct,
   FeedItem,
   LtcResponse,
+  Review,
   StatsResponse,
   WalletInfo,
 } from "@/lib/types";
@@ -516,6 +518,7 @@ function AdminPanel() {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [ltc, setLtc] = useState<LtcResponse | null>(null);
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [botOnline, setBotOnline] = useState<boolean | null>(null);
@@ -542,7 +545,7 @@ function AdminPanel() {
   /* -- data fetching -- */
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes] =
+    const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes, reviewsRes] =
       await Promise.all([
         getStats(),
         getProducts(),
@@ -550,10 +553,12 @@ function AdminPanel() {
         getLtcPrice(),
         getHealth(),
         getWalletInfo(),
+        getReviews(),
       ]);
     if (statsRes) setStats(statsRes);
     if (productsRes?.products) setProducts(productsRes.products);
     if (feedRes?.items) setFeed(feedRes.items);
+    if (reviewsRes?.reviews) setReviews(reviewsRes.reviews);
     if (ltcRes) setLtc(ltcRes);
     if (walletRes) setWallet(walletRes);
     setBotOnline(healthRes?.ok ?? false);
@@ -1095,7 +1100,7 @@ function AdminPanel() {
           )}
           {activeNav === "categories" && <CategoriesView products={products} />}
           {activeNav === "coupons" && <CouponsView />}
-          {activeNav === "feedbacks" && <FeedbacksView feed={feed} />}
+          {activeNav === "feedbacks" && <FeedbacksView feed={feed} reviews={reviews} />}
           {activeNav === "abandoned-checkouts" && <AbandonedCheckoutsView />}
           {activeNav === "storefront-configure" && (
             <StorefrontConfigureView showToast={showToast} />
@@ -1251,27 +1256,20 @@ function DashboardView({
         <StatCard
           label="Revenue"
           value={formatCurrency(revenueTotal, "EUR")}
-          change="+12.5%"
-          positive
           sparkData={dailyRevenue}
         />
         <StatCard
           label="Orders"
           value={orderCount.toString()}
-          change="+8.2%"
-          positive
           sparkData={dailyOrders}
         />
         <StatCard
           label="Customers"
           value={customerCount.toString()}
-          change="+3.1%"
-          positive
         />
         <StatCard
           label="Avg Order"
           value={formatCurrency(avgOrderValue, "EUR")}
-          change=""
         />
       </div>
 
@@ -1672,7 +1670,7 @@ function ProductEditView({
           title: v.title,
           price: v.price?.toString() ?? "",
           stock: v.stock ?? 0,
-          stockItems: v.stockItems ?? "",
+          stockItems: v.stockItems?.join("\n") ?? "",
         }))
       : [
           {
@@ -1771,7 +1769,9 @@ function ProductEditView({
         title: v.title,
         price: parseFloat(v.price) || 0,
         stock: v.stock,
-        stockItems: v.stockItems || undefined,
+        stockItems: v.stockItems.trim()
+          ? v.stockItems.split("\n").map((l) => l.trim()).filter(Boolean)
+          : undefined,
       }));
       await onSave({
         ...(product ? { id: product.id } : {}),
@@ -2368,26 +2368,32 @@ function CouponsView() {
   );
 }
 
-function FeedbacksView({ feed }: { feed: FeedItem[] }) {
+function FeedbacksView({ feed, reviews }: { feed: FeedItem[]; reviews: Review[] }) {
   const orderCount = feed.filter((f) => f.type === "order").length;
-  // Resolve "now" once on mount to keep render pure.
-  const [now, setNow] = useState(0);
-  useEffect(() => {
-    Promise.resolve().then(() => setNow(Math.floor(Date.now() / 1000)));
-  }, []);
-  const sampleFeedbacks = [
-    { name: "Marco R.", rating: 5, comment: "Fast delivery and exactly as described. Will buy again!", ts: now - 3600 },
-    { name: "Luca B.", rating: 5, comment: "Great service, the bot delivered instantly. Highly recommended.", ts: now - 86400 },
-    { name: "Sara T.", rating: 4, comment: "Good product, took a little while but support was helpful.", ts: now - 172800 },
-    { name: "Alex M.", rating: 5, comment: "Smooth transaction, escrow worked perfectly.", ts: now - 259200 },
-  ];
-  const avg = (sampleFeedbacks.reduce((s, f) => s + f.rating, 0) / sampleFeedbacks.length).toFixed(1);
+
+  if (reviews.length === 0) {
+    return (
+      <div className="space-y-5">
+        <ViewHeader
+          title="Feedbacks"
+          subtitle={`Customer reviews and ratings (0 reviews · ${orderCount} orders)`}
+        />
+        <EmptyState
+          icon={<IconStar className="h-6 w-6" />}
+          message="No reviews yet"
+          hint="Customer reviews submitted after their orders will appear here."
+        />
+      </div>
+    );
+  }
+
+  const avg = (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1);
 
   return (
     <div className="space-y-5">
       <ViewHeader
         title="Feedbacks"
-        subtitle={`Customer reviews and ratings (${sampleFeedbacks.length} reviews · ${orderCount} orders)`}
+        subtitle={`Customer reviews and ratings (${reviews.length} reviews · ${orderCount} orders)`}
       />
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
@@ -2406,37 +2412,40 @@ function FeedbacksView({ feed }: { feed: FeedItem[] }) {
         </div>
         <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Total Reviews</p>
-          <p className="mt-2 text-3xl font-bold text-white">{sampleFeedbacks.length}</p>
+          <p className="mt-2 text-3xl font-bold text-white">{reviews.length}</p>
         </div>
         <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">5-Star Reviews</p>
           <p className="mt-2 text-3xl font-bold text-emerald-400">
-            {sampleFeedbacks.filter((f) => f.rating === 5).length}
+            {reviews.filter((r) => r.rating === 5).length}
           </p>
         </div>
       </div>
       <div className="space-y-3">
-        {sampleFeedbacks.map((f, i) => (
-          <div key={i} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-400">
-                  {f.name.charAt(0)}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-white">{f.name}</p>
-                  <div className="mt-0.5 flex">
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <IconStar key={j} className={`h-3.5 w-3.5 ${j < f.rating ? "text-amber-400" : "text-zinc-700"}`} />
-                    ))}
+        {reviews.map((r, i) => {
+          const ts = Math.floor(new Date(r.createdAt).getTime() / 1000);
+          return (
+            <div key={i} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-400">
+                    {r.orderId.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">Order {r.orderId}</p>
+                    <div className="mt-0.5 flex">
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <IconStar key={j} className={`h-3.5 w-3.5 ${j < r.rating ? "text-amber-400" : "text-zinc-700"}`} />
+                      ))}
+                    </div>
                   </div>
                 </div>
+                <span className="text-xs text-zinc-500">{formatRelativeTime(ts)}</span>
               </div>
-              <span className="text-xs text-zinc-500">{formatRelativeTime(f.ts)}</span>
+              {r.comment && <p className="mt-3 text-sm text-zinc-300">{r.comment}</p>}
             </div>
-            <p className="mt-3 text-sm text-zinc-300">{f.comment}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -3455,7 +3464,7 @@ function SettingsView({
             <div>
               <p className="text-sm text-white">Auto-refresh</p>
               <p className="text-xs text-zinc-500">
-                Automatically refresh data every 15 seconds
+                Automatically refresh data every 60 seconds
               </p>
             </div>
             <label className="relative inline-flex cursor-pointer items-center">

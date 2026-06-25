@@ -100,7 +100,7 @@ export interface ProductVariant {
   title: string;
   price: number;
   stock: number;
-  stockItems?: string;
+  stockItems?: string[];
 }
 
 export type DeliverableType = "serials" | "service" | "dynamic" | "files" | "smm-panels";

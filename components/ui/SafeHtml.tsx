@@ -9,10 +9,8 @@ interface SafeHtmlProps {
 
 export default function SafeHtml({ html, className }: SafeHtmlProps) {
   const clean = DOMPurify.sanitize(html, {
-    ADD_TAGS: ["iframe"],
-    ADD_ATTR: ["target", "rel"],
-    FORBID_TAGS: ["script", "style"],
-    FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover"],
+    ALLOWED_TAGS: ["p", "br", "strong", "em", "b", "i", "u", "a", "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "code", "pre", "span", "div", "hr", "sub", "sup", "table", "thead", "tbody", "tr", "th", "td"],
+    ALLOWED_ATTR: ["href", "target", "rel", "class", "id"],
   });
 
   return (

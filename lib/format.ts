@@ -1,6 +1,6 @@
 export function formatRelativeTime(timestamp: number): string {
   const ts = timestamp > 1e12 ? timestamp : timestamp * 1000;
-  const diffMs = Date.now() - ts;
+  const diffMs = Math.max(0, Date.now() - ts);
   const diffSec = Math.floor(diffMs / 1000);
 
   if (diffSec < 10) return "just now";
@@ -35,6 +35,7 @@ export function formatEur(value: number, fractionDigits?: number): string {
 }
 
 export function formatUsd(value: number): string {
+  if (value == null || !Number.isFinite(value)) return "$0.00";
   const digits = smartDecimals(value);
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -65,5 +66,6 @@ export function formatNumber(value: number): string {
 }
 
 export function formatCrypto(value: number, decimals = 6): string {
+  if (value == null || !Number.isFinite(value)) return (0).toFixed(decimals);
   return value.toFixed(decimals);
 }

@@ -271,7 +271,6 @@ export default function Shop() {
         open={cartOpen}
         lines={cart.lines}
         total={cart.total}
-        currency={cart.currency}
         onClose={() => setCartOpen(false)}
         onUpdateQuantity={cart.updateQuantity}
         onRemove={cart.removeItem}
