@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   createProduct,
@@ -32,7 +32,7 @@ const RichTextEditor = dynamic(() => import("@/components/ui/RichTextEditor"), {
 /*  Constants                                                          */
 /* ================================================================== */
 
-const AUTO_REFRESH_MS = 15_000;
+const AUTO_REFRESH_MS = 60_000;
 
 const STOREFRONT_CONFIG_KEY = "hm_storefront_config";
 
@@ -568,63 +568,84 @@ function AdminPanel() {
   }, [refresh]);
 
   useEffect(() => {
-    if (autoRefresh) {
-      intervalRef.current = setInterval(refresh, AUTO_REFRESH_MS);
+    function startPolling() {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (autoRefresh && !document.hidden) {
+        intervalRef.current = setInterval(refresh, AUTO_REFRESH_MS);
+      }
     }
+    function onVisibility() {
+      if (document.hidden) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      } else {
+        startPolling();
+      }
+    }
+    startPolling();
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [autoRefresh, refresh]);
 
-  /* -- computed -- */
-  const filteredProducts = productSearch.trim()
-    ? products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-          p.id.toString().includes(productSearch)
-      )
-    : products;
+  /* -- computed (memoized) -- */
+  const filteredProducts = useMemo(
+    () =>
+      productSearch.trim()
+        ? products.filter(
+            (p) =>
+              p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+              p.id.toString().includes(productSearch)
+          )
+        : products,
+    [products, productSearch]
+  );
 
-  const orderFeed = feed.filter((f) => f.type === "order");
-  const revenueTotal =
-    stats?.totalVolumeEur ?? orderFeed.reduce((s, f) => s + (f.amount ?? 0), 0);
+  const orderFeed = useMemo(() => feed.filter((f) => f.type === "order"), [feed]);
+  const revenueTotal = useMemo(
+    () => stats?.totalVolumeEur ?? orderFeed.reduce((s, f) => s + (f.amount ?? 0), 0),
+    [stats, orderFeed]
+  );
   const orderCount = stats?.totalOrders ?? orderFeed.length;
   const customerCount = stats?.totalCustomers ?? 0;
   const avgOrderValue = orderCount > 0 ? revenueTotal / orderCount : 0;
 
-  /* -- daily aggregations for charts -- */
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return d;
-  });
-  const dayLabels = last7Days.map((d) =>
-    d.toLocaleDateString("en", { weekday: "short" })
-  );
-
-  const dailyRevenue = last7Days.map((day) => {
-    const dayStart = new Date(day);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(day);
-    dayEnd.setHours(23, 59, 59, 999);
-    return orderFeed
-      .filter((f) => {
+  /* -- daily aggregations for charts (memoized) -- */
+  const { dayLabels, dailyRevenue, dailyOrders } = useMemo(() => {
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d;
+    });
+    const labels = days.map((d) =>
+      d.toLocaleDateString("en", { weekday: "short" })
+    );
+    const revenue = days.map((day) => {
+      const dayStart = new Date(day);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(day);
+      dayEnd.setHours(23, 59, 59, 999);
+      return orderFeed
+        .filter((f) => {
+          const ts = f.ts > 1e12 ? f.ts : f.ts * 1000;
+          return ts >= dayStart.getTime() && ts <= dayEnd.getTime();
+        })
+        .reduce((s, f) => s + (f.amount ?? 0), 0);
+    });
+    const orders = days.map((day) => {
+      const dayStart = new Date(day);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(day);
+      dayEnd.setHours(23, 59, 59, 999);
+      return orderFeed.filter((f) => {
         const ts = f.ts > 1e12 ? f.ts : f.ts * 1000;
         return ts >= dayStart.getTime() && ts <= dayEnd.getTime();
-      })
-      .reduce((s, f) => s + (f.amount ?? 0), 0);
-  });
-
-  const dailyOrders = last7Days.map((day) => {
-    const dayStart = new Date(day);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(day);
-    dayEnd.setHours(23, 59, 59, 999);
-    return orderFeed.filter((f) => {
-      const ts = f.ts > 1e12 ? f.ts : f.ts * 1000;
-      return ts >= dayStart.getTime() && ts <= dayEnd.getTime();
-    }).length;
-  });
+      }).length;
+    });
+    return { dayLabels: labels, dailyRevenue: revenue, dailyOrders: orders };
+  }, [orderFeed]);
 
   /* -- product actions -- */
   async function handleStockChange(product: ApiProduct, delta: number) {

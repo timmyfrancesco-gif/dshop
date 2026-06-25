@@ -1,15 +1,17 @@
+import dynamic from "next/dynamic";
 import PageShell from "@/components/layout/PageShell";
 import Hero from "@/components/sections/Hero";
 import LiveTicker from "@/components/sections/LiveTicker";
 import ServicesGrid from "@/components/sections/ServicesGrid";
 import LiveDashboard from "@/components/sections/LiveDashboard";
 import Shop from "@/components/sections/Shop";
-import SmmShop from "@/components/sections/SmmShop";
-import Pricing from "@/components/sections/Pricing";
-import Fees from "@/components/sections/Fees";
-import Testimonials from "@/components/sections/Testimonials";
-import Faq from "@/components/sections/Faq";
-import CtaSection from "@/components/sections/CtaSection";
+
+const SmmShop = dynamic(() => import("@/components/sections/SmmShop"));
+const Pricing = dynamic(() => import("@/components/sections/Pricing"));
+const Fees = dynamic(() => import("@/components/sections/Fees"));
+const Testimonials = dynamic(() => import("@/components/sections/Testimonials"));
+const Faq = dynamic(() => import("@/components/sections/Faq"));
+const CtaSection = dynamic(() => import("@/components/sections/CtaSection"));
 
 export default function Home() {
   return (

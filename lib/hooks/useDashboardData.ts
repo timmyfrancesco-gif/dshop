@@ -41,11 +41,20 @@ export function useDashboardData(): DashboardData {
     }
 
     load();
-    const interval = setInterval(load, POLL_INTERVAL_MS);
+    let interval: ReturnType<typeof setInterval> | null = setInterval(load, POLL_INTERVAL_MS);
+    function onVisibility() {
+      if (document.hidden) {
+        if (interval) { clearInterval(interval); interval = null; }
+      } else if (!interval) {
+        interval = setInterval(load, POLL_INTERVAL_MS);
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
