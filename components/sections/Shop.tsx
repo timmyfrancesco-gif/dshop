@@ -227,16 +227,35 @@ export default function Shop() {
                     >
                       {t("shop.viewDetails")}
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => cart.addItem(item, 1)}
-                      aria-label={`${t("shop.addToCart")} ${item.name}`}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-accent hover:text-accent"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
-                      </svg>
-                    </button>
+                    {item.variants && item.variants.length > 1 ? (
+                      <Link
+                        href={`/products/${item.id}`}
+                        aria-label={`${t("shop.addToCart")} ${item.name}`}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-accent hover:text-accent"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                        </svg>
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const v = item.variants?.[0];
+                          if (v) {
+                            cart.addItem(item, 1, v.id, v.title, v.price);
+                          } else {
+                            cart.addItem(item, 1);
+                          }
+                        }}
+                        aria-label={`${t("shop.addToCart")} ${item.name}`}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-accent hover:text-accent"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>

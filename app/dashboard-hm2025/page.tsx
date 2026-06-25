@@ -1033,6 +1033,7 @@ function AdminPanel() {
           )}
           {activeNav === "product-edit" && (
             <ProductEditView
+              key={editingProduct?.id ?? "new"}
               product={editingProduct}
               onSave={handleSaveProduct}
               onCancel={() => navigateTo("products")}
@@ -1622,7 +1623,7 @@ function ProductEditView({
   onDelete,
 }: {
   product: ApiProduct | null;
-  onSave: (data: Partial<ApiProduct> & { id?: string }) => void;
+  onSave: (data: Partial<ApiProduct> & { id?: string }) => Promise<void> | void;
   onCancel: () => void;
   onDelete: (product: ApiProduct) => void;
 }) {
@@ -1630,36 +1631,34 @@ function ProductEditView({
   const [urlPath, setUrlPath] = useState(product?.url ?? "");
   const [urlManuallyEdited, setUrlManuallyEdited] = useState(!!product?.url);
   const [description, setDescription] = useState(product?.description ?? "");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(product?.category ?? "");
   const [images, setImages] = useState<string[]>(
-    product?.image ? [product.image] : [],
+    product?.images?.length ? product.images : product?.image ? [product.image] : [],
   );
-  const [instructions, setInstructions] = useState("");
+  const [instructions, setInstructions] = useState(product?.instructions ?? "");
   const [deliverableType, setDeliverableType] = useState<
     "serials" | "service" | "dynamic" | "files" | "smm-panels"
-  >("serials");
-  const [smmServiceId, setSmmServiceId] = useState("");
-  const [smmMinQty, setSmmMinQty] = useState("");
-  const [smmMaxQty, setSmmMaxQty] = useState("");
+  >((product?.deliverableType as "serials" | "service" | "dynamic" | "files" | "smm-panels") ?? "serials");
+  const [smmServiceId, setSmmServiceId] = useState(product?.smmServiceId?.toString() ?? "");
+  const [smmMinQty, setSmmMinQty] = useState(product?.smmMinQty?.toString() ?? "");
+  const [smmMaxQty, setSmmMaxQty] = useState(product?.smmMaxQty?.toString() ?? "");
   const [variants, setVariants] = useState<
     { id: string; title: string; price: string; stock: number; stockItems: string }[]
   >(
-    product
-      ? [
-          {
-            id: Math.random().toString(36).slice(2),
-            title: "Default",
-            price: product.price?.toString() ?? "",
-            stock: product.stock ?? 0,
-            stockItems: "",
-          },
-        ]
+    product?.variants?.length
+      ? product.variants.map((v) => ({
+          id: v.id,
+          title: v.title,
+          price: v.price?.toString() ?? "",
+          stock: v.stock ?? 0,
+          stockItems: v.stockItems ?? "",
+        }))
       : [
           {
             id: Math.random().toString(36).slice(2),
             title: "Default",
-            price: "",
-            stock: 0,
+            price: product?.price?.toString() ?? "",
+            stock: product?.stock ?? 0,
             stockItems: "",
           },
         ],
@@ -1737,28 +1736,45 @@ function ProductEditView({
     }));
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!name.trim()) return;
     const hasPrice = variants.some((v) => v.price.trim());
     if (!hasPrice) return;
     setSaving(true);
-    const prices = variants.map((v) => parseFloat(v.price) || 0);
-    const cheapest = Math.min(...prices);
-    const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
-    onSave({
-      ...(product ? { id: product.id } : {}),
-      name: name.trim(),
-      price: cheapest,
-      currency: "EUR",
-      description,
-      image: images[0] || undefined,
-      url: urlPath || undefined,
-      stock: totalStock,
-    });
-  }
-
-  function handleSaveAndExit() {
-    handleSave();
+    try {
+      const prices = variants.map((v) => parseFloat(v.price) || 0);
+      const cheapest = Math.min(...prices);
+      const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
+      const builtVariants = variants.map((v) => ({
+        id: v.id,
+        title: v.title,
+        price: parseFloat(v.price) || 0,
+        stock: v.stock,
+        stockItems: v.stockItems || undefined,
+      }));
+      await onSave({
+        ...(product ? { id: product.id } : {}),
+        name: name.trim(),
+        price: cheapest,
+        currency: "EUR",
+        description,
+        image: images[0] || undefined,
+        images: images.length > 0 ? images : undefined,
+        url: urlPath || undefined,
+        stock: totalStock,
+        category: category.trim() || undefined,
+        instructions: instructions || undefined,
+        deliverableType: deliverableType || undefined,
+        variants: builtVariants,
+        ...(deliverableType === "smm-panels" ? {
+          smmServiceId: smmServiceId ? parseInt(smmServiceId, 10) : undefined,
+          smmMinQty: smmMinQty ? parseInt(smmMinQty, 10) : undefined,
+          smmMaxQty: smmMaxQty ? parseInt(smmMaxQty, 10) : undefined,
+        } : {}),
+      });
+    } finally {
+      setSaving(false);
+    }
   }
 
   const deliverableOptions: {
@@ -1800,7 +1816,7 @@ function ProductEditView({
           )}
           <button
             type="button"
-            onClick={handleSaveAndExit}
+            onClick={handleSave}
             disabled={saving || !name.trim()}
             className="rounded-lg border border-indigo-500/30 px-4 py-2 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10 disabled:opacity-50"
           >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getLtcPrice, getProductOrder } from "@/lib/api";
 import { formatEur, formatUsd } from "@/lib/format";
 import { useLocale } from "@/lib/hooks/useLocale";
@@ -112,6 +112,10 @@ export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelle
   const [confirmations, setConfirmations] = useState(0);
   const [requiredConfirmations, setRequiredConfirmations] = useState(1);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const onPaidRef = useRef(onPaid);
+  const onCancelledRef = useRef(onCancelled);
+  onPaidRef.current = onPaid;
+  onCancelledRef.current = onCancelled;
   const [createdAt] = useState(() => new Date().toLocaleString());
 
   useEffect(() => {
@@ -148,10 +152,10 @@ export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelle
       } else if (statusRes.status === "paid") {
         setPhase("done");
         clearInterval(interval);
-        onPaid(statusRes.deliveredItem);
+        onPaidRef.current(statusRes.deliveredItem);
       } else if (statusRes.status === "cancelled") {
         clearInterval(interval);
-        onCancelled();
+        onCancelledRef.current();
       }
     }, POLL_INTERVAL_MS);
 
@@ -159,7 +163,7 @@ export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelle
       cancelled = true;
       clearInterval(interval);
     };
-  }, [order, onPaid, onCancelled]);
+  }, [order.orderId]);
 
   const confirmPct = requiredConfirmations > 0
     ? Math.min(100, Math.round((confirmations / requiredConfirmations) * 100))

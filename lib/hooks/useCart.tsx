@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { ShopItem } from "@/lib/types";
 
 export interface CartLine {
@@ -17,25 +17,31 @@ function lineKey(line: { item: { id: string }; variantId?: string }): string {
   return line.variantId ? `${line.item.id}::${line.variantId}` : line.item.id;
 }
 
-export function useCart() {
+interface CartContextValue {
+  lines: CartLine[];
+  addItem: (item: ShopItem, quantity?: number, variantId?: string, variantTitle?: string, variantPrice?: number) => void;
+  removeItem: (id: string, variantId?: string) => void;
+  updateQuantity: (id: string, quantity: number, variantId?: string) => void;
+  clear: () => void;
+  count: number;
+  total: number;
+  currency: string;
+}
+
+const CartContext = createContext<CartContextValue | null>(null);
+
+export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.resolve().then(() => {
-      if (cancelled) return;
-      try {
-        const raw = window.localStorage.getItem(STORAGE_KEY);
-        if (raw) setLines(JSON.parse(raw));
-      } catch {
-        // ignore corrupted storage
-      }
-      setHydrated(true);
-    });
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) setLines(JSON.parse(raw));
+    } catch {
+      // ignore corrupted storage
+    }
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -84,5 +90,15 @@ export function useCart() {
   );
   const currency = lines[0]?.item.currency ?? "EUR";
 
-  return { lines, addItem, removeItem, updateQuantity, clear, count, total, currency };
+  return (
+    <CartContext value={{ lines, addItem, removeItem, updateQuantity, clear, count, total, currency }}>
+      {children}
+    </CartContext>
+  );
+}
+
+export function useCart(): CartContextValue {
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error("useCart must be used within a CartProvider");
+  return ctx;
 }

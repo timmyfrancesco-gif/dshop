@@ -11,6 +11,13 @@ import { useLocale } from "@/lib/hooks/useLocale";
 import { useProducts } from "@/lib/hooks/useProducts";
 import type { ProductOrderResponse, ShopItem } from "@/lib/types";
 
+interface QueueItem {
+  item: ShopItem;
+  variantId?: string;
+  variantTitle?: string;
+  variantPrice?: number;
+}
+
 interface FinishedData {
   productId: string;
   productName: string;
@@ -98,16 +105,28 @@ function CheckoutContent() {
     ? buyNowProduct.variants?.find((v) => v.id === variantId) ?? null
     : null;
 
-  const queue = useMemo(() => {
+  const queue = useMemo((): QueueItem[] => {
     if (buyNowProduct) {
-      return Array.from({ length: qty }, () => buyNowProduct);
+      return Array.from({ length: qty }, () => ({
+        item: buyNowProduct,
+        variantId: buyNowVariant?.id,
+        variantTitle: buyNowVariant?.title,
+        variantPrice: buyNowVariant?.price,
+      }));
     }
-    const result: ShopItem[] = [];
+    const result: QueueItem[] = [];
     for (const line of cart.lines) {
-      for (let i = 0; i < line.quantity; i++) result.push(line.item);
+      for (let i = 0; i < line.quantity; i++) {
+        result.push({
+          item: line.item,
+          variantId: line.variantId,
+          variantTitle: line.variantTitle,
+          variantPrice: line.variantPrice,
+        });
+      }
     }
     return result;
-  }, [buyNowProduct, qty, cart.lines]);
+  }, [buyNowProduct, buyNowVariant, qty, cart.lines]);
 
   const [paymentMethod, setPaymentMethod] = useState("ltc");
   const [email, setEmail] = useState("");
@@ -198,7 +217,8 @@ function CheckoutContent() {
     );
   }
 
-  const currentItem = queue[index] as ShopItem | undefined;
+  const currentEntry = queue[index] as QueueItem | undefined;
+  const currentItem = currentEntry?.item;
   const isLast = index === queue.length - 1;
   const queueTotal = useMemo(() => {
     if (buyNowProduct) {
@@ -233,12 +253,12 @@ function CheckoutContent() {
       return;
     }
 
-    if (!currentItem) return;
+    if (!currentItem || !currentEntry) return;
     setLoading(true);
     const res = await createProductOrder({
       productId: currentItem.id,
       discord: email.trim(),
-      ...(variantId ? { variantId } : {}),
+      ...(currentEntry.variantId ? { variantId: currentEntry.variantId } : {}),
     });
     setLoading(false);
 
@@ -330,7 +350,7 @@ function CheckoutContent() {
           )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
-            <p className="text-xs text-muted">{buyNowVariant?.title ?? "Default"}</p>
+            <p className="text-xs text-muted">{currentEntry?.variantTitle ?? "Default"}</p>
           </div>
           <div className="text-right shrink-0">
             <p className="text-xs text-muted">{displayQueueLen}x</p>

@@ -10,6 +10,7 @@ export function useProducts() {
   const [error, setError] = useState(false);
 
   const fetchProducts = useCallback(async () => {
+    setError(false);
     const res = await getProducts();
     if (res?.products) {
       const totalStock = (p: typeof res.products[0]) =>
