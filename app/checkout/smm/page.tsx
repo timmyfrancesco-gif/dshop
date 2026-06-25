@@ -97,7 +97,7 @@ function SmmCheckoutContent() {
       }
       if (s.status === "cancelled") {
         setPhase("error");
-        setError("Order was cancelled.");
+        setError(t("smm.orderCancelled"));
         if (pollRef.current) clearInterval(pollRef.current);
       }
     }, 3000);
