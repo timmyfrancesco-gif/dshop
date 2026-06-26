@@ -17,10 +17,20 @@ function DiscordCallbackContent() {
 
   useEffect(() => {
     const code = searchParams.get("code");
+    const returnedState = searchParams.get("state");
     if (!code) {
       setError(t("auth.discordNoCode"));
       return;
     }
+    // Validate the CSRF state set before redirecting to Discord.
+    const savedState = sessionStorage.getItem("hm_discord_state");
+    sessionStorage.removeItem("hm_discord_state");
+    if (savedState && returnedState !== savedState) {
+      setError(t("auth.discordFailed"));
+      return;
+    }
+    // Strip the consumed code/state so a refresh doesn't re-exchange it.
+    window.history.replaceState(null, "", "/auth/discord");
     loginWithDiscord(code).then(({ data, error: err }) => {
       if (data) {
         login(data.token, data.user);

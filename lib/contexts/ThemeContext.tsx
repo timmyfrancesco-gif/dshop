@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type ThemeId = "heaven" | "hyper";
 
@@ -77,30 +77,35 @@ function applyTheme(id: ThemeId) {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeId>("heaven");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) as ThemeId | null;
-    if (saved && saved in THEMES) {
-      setThemeState(saved);
-      applyTheme(saved);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY) as ThemeId | null;
+      if (saved && saved in THEMES) {
+        setThemeState(saved);
+        applyTheme(saved);
+      }
+    } catch {
+      // localStorage unavailable (private mode) — keep default theme
     }
-    setMounted(true);
   }, []);
 
-  function setTheme(id: ThemeId) {
+  const setTheme = useCallback((id: ThemeId) => {
     setThemeState(id);
-    localStorage.setItem(STORAGE_KEY, id);
     applyTheme(id);
-  }
+    try {
+      localStorage.setItem(STORAGE_KEY, id);
+    } catch {
+      // ignore persistence failures
+    }
+  }, []);
 
-  if (!mounted) return <>{children}</>;
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme, themes: THEMES }}>
-      {children}
-    </ThemeContext.Provider>
+  const value = useMemo(
+    () => ({ theme, setTheme, themes: THEMES }),
+    [theme, setTheme],
   );
+
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

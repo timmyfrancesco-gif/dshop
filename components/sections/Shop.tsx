@@ -164,6 +164,11 @@ export default function Shop() {
         ) : (
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {visibleItems.map((item, i) => {
+              const isRange = (() => {
+                if (!item.variants || item.variants.length <= 1) return false;
+                const prices = item.variants.map((v) => v.price);
+                return Math.min(...prices) !== Math.max(...prices);
+              })();
               const displayPrice = item.variants && item.variants.length > 1
                 ? (() => {
                     const prices = item.variants.map((v) => v.price);
@@ -213,7 +218,7 @@ export default function Shop() {
                         <span className="text-lg font-extrabold text-foreground">
                           {displayPrice}
                         </span>
-                        {item.comparePrice && item.comparePrice > item.price ? (
+                        {!isRange && item.comparePrice && item.comparePrice > item.price ? (
                           <span className="text-sm font-medium text-muted line-through">
                             {formatPrice(item.comparePrice)}
                           </span>

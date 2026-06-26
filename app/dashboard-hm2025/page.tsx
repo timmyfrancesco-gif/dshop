@@ -412,24 +412,47 @@ function SparkLine({
 /*  Auth Gate                                                          */
 /* ================================================================== */
 
-const DASH_PASSWORD = process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD ?? "";
-
 export default function SecretDashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, token, loading } = useAuth();
   const [pwUnlocked, setPwUnlocked] = useState(false);
   const [pwInput, setPwInput] = useState("");
   const [pwError, setPwError] = useState(false);
+  const [pwBusy, setPwBusy] = useState(false);
 
   const isAdmin = user?.role === "admin";
   const hasAccess = isAdmin || pwUnlocked;
 
-  function handlePasswordSubmit(e: React.FormEvent) {
+  // Admin-role users: establish the httpOnly admin session cookie so that
+  // privileged proxy/transcript calls are authorized server-side.
+  useEffect(() => {
+    if (!isAdmin || !token) return;
+    fetch("/api/admin/unlock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    }).catch(() => {});
+  }, [isAdmin, token]);
+
+  async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (DASH_PASSWORD && pwInput === DASH_PASSWORD) {
-      setPwUnlocked(true);
-      setPwError(false);
-    } else {
+    if (!pwInput) return;
+    setPwBusy(true);
+    setPwError(false);
+    try {
+      const res = await fetch("/api/admin/unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pwInput }),
+      });
+      if (res.ok) {
+        setPwUnlocked(true);
+      } else {
+        setPwError(true);
+      }
+    } catch {
       setPwError(true);
+    } finally {
+      setPwBusy(false);
     }
   }
 
@@ -496,9 +519,10 @@ export default function SecretDashboardPage() {
             )}
             <button
               type="submit"
-              className="rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-600"
+              disabled={pwBusy}
+              className="rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
             >
-              Enter Dashboard
+              {pwBusy ? "Checking..." : "Enter Dashboard"}
             </button>
           </form>
         </div>
@@ -536,7 +560,14 @@ function AdminPanel() {
   const [productSearch, setProductSearch] = useState("");
 
   const apiConfigured = Boolean(process.env.NEXT_PUBLIC_ASTRO_API_URL);
-  const tokenConfigured = Boolean(process.env.NEXT_PUBLIC_ADMIN_TOKEN);
+  const [tokenConfigured, setTokenConfigured] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/status")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setTokenConfigured(Boolean(d.configured)); })
+      .catch(() => {});
+  }, []);
 
   const showToast = useCallback((msg: string, ok: boolean) => {
     setToast({ msg, ok });
@@ -546,25 +577,28 @@ function AdminPanel() {
   /* -- data fetching -- */
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes, reviewsRes] =
-      await Promise.all([
-        getStats(),
-        getProducts(),
-        getFeed(100),
-        getLtcPrice(),
-        getHealth(),
-        getWalletInfo(),
-        getReviews(),
-      ]);
-    if (statsRes) setStats(statsRes);
-    if (productsRes?.products) setProducts(productsRes.products);
-    if (feedRes?.items) setFeed(feedRes.items);
-    if (reviewsRes?.reviews) setReviews(reviewsRes.reviews);
-    if (ltcRes) setLtc(ltcRes);
-    if (walletRes) setWallet(walletRes);
-    setBotOnline(healthRes?.ok ?? false);
-    setLastUpdated(Date.now());
-    setLoading(false);
+    try {
+      const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes, reviewsRes] =
+        await Promise.all([
+          getStats(),
+          getProducts(),
+          getFeed(100),
+          getLtcPrice(),
+          getHealth(),
+          getWalletInfo(),
+          getReviews(),
+        ]);
+      if (statsRes) setStats(statsRes);
+      if (productsRes?.products) setProducts(productsRes.products);
+      if (feedRes?.items) setFeed(feedRes.items);
+      if (reviewsRes?.reviews) setReviews(reviewsRes.reviews);
+      if (ltcRes) setLtc(ltcRes);
+      if (walletRes) setWallet(walletRes);
+      setBotOnline(healthRes?.ok ?? false);
+      setLastUpdated(Date.now());
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -732,26 +766,26 @@ function AdminPanel() {
   }
 
   /* -- best selling products -- */
-  const productSales = new Map<string, number>();
-  orderFeed.forEach((f) => {
-    const name = f.label.replace(/^Ordine\s*/i, "").replace(/^Order\s*/i, "").trim();
-    if (name) {
-      productSales.set(name, (productSales.get(name) ?? 0) + 1);
-    }
-  });
-  const bestSelling = [...productSales.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  const bestSelling = useMemo(() => {
+    const productSales = new Map<string, number>();
+    orderFeed.forEach((f) => {
+      const name = f.label.replace(/^Ordine\s*/i, "").replace(/^Order\s*/i, "").trim();
+      if (name) {
+        productSales.set(name, (productSales.get(name) ?? 0) + 1);
+      }
+    });
+    return [...productSales.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [orderFeed]);
 
-  /* -- top spenders -- */
-  const spenderMap = new Map<string, number>();
-  orderFeed.forEach((f) => {
-    const method = f.method ?? "Unknown";
-    spenderMap.set(method, (spenderMap.get(method) ?? 0) + (f.amount ?? 0));
-  });
-  const topSpenders = [...spenderMap.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  /* -- revenue by payment method -- */
+  const revenueByMethod = useMemo(() => {
+    const map = new Map<string, number>();
+    orderFeed.forEach((f) => {
+      const method = f.method ?? "Unknown";
+      map.set(method, (map.get(method) ?? 0) + (f.amount ?? 0));
+    });
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  }, [orderFeed]);
 
   /* -- render -- */
   return (
@@ -1039,7 +1073,7 @@ function AdminPanel() {
               <h4 className="text-sm font-bold text-amber-400">Configuration Warning</h4>
               <div className="mt-1 space-y-1 text-xs text-amber-400/80">
                 {!apiConfigured && <p>• NEXT_PUBLIC_ASTRO_API_URL is not set — API calls will fail.</p>}
-                {!tokenConfigured && <p>• NEXT_PUBLIC_ADMIN_TOKEN is not set — admin actions (create/edit/delete products) will fail.</p>}
+                {!tokenConfigured && <p>• ADMIN_TOKEN is not set — admin actions (create/edit/delete products) will fail.</p>}
                 <p className="text-zinc-500">Add the missing variables on Vercel, then <strong>Redeploy</strong> (env vars are baked at build time).</p>
               </div>
             </div>
@@ -1056,7 +1090,7 @@ function AdminPanel() {
               dayLabels={dayLabels}
               orderFeed={orderFeed}
               bestSelling={bestSelling}
-              topSpenders={topSpenders}
+              topSpenders={revenueByMethod}
               ltc={ltc}
             />
           )}
@@ -1388,9 +1422,9 @@ function DashboardView({
           )}
         </div>
 
-        {/* Top Spenders (Payment Methods) */}
+        {/* Revenue by payment method */}
         <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
-          <h3 className="mb-4 text-sm font-semibold text-white">Top Spenders</h3>
+          <h3 className="mb-4 text-sm font-semibold text-white">Revenue by Method</h3>
           {topSpenders.length === 0 ? (
             <p className="text-xs text-zinc-500">No data available.</p>
           ) : (
@@ -3401,15 +3435,8 @@ function TranscriptsView() {
   const [categoryFilter, setCategoryFilter] = useState("All");
 
   useEffect(() => {
-    const token = process.env.NEXT_PUBLIC_ADMIN_TOKEN;
-    if (!token) {
-      setError(true);
-      setLoading(false);
-      return;
-    }
-    fetch("/api/transcripts", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    // Authorized via the httpOnly admin session cookie (same-origin).
+    fetch("/api/transcripts")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((data) => setTranscripts(data.transcripts || []))
       .catch(() => setError(true))

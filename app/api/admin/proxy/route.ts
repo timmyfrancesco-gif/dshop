@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hasAdminSession } from "@/lib/adminSession";
 
 const API_BASE = (process.env.NEXT_PUBLIC_ASTRO_API_URL ?? "").replace(/\/+$/, "");
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
@@ -8,6 +9,12 @@ const ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 export async function POST(req: NextRequest) {
   if (!ADMIN_TOKEN) {
     return NextResponse.json({ error: "Not configured" }, { status: 500 });
+  }
+
+  // Require a valid admin session — the privileged upstream token must never
+  // be attached on behalf of an unauthenticated caller.
+  if (!hasAdminSession(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   let parsed: { method?: string; path?: string; body?: unknown };

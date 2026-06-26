@@ -14,14 +14,23 @@ const DISCORD_REDIRECT_URI =
     ? `${window.location.origin}/auth/discord`
     : "";
 
-function getDiscordOAuthUrl() {
+const DISCORD_STATE_KEY = "hm_discord_state";
+
+function startDiscordOAuth(e: React.MouseEvent) {
+  e.preventDefault();
+  const state =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : String(Math.random()).slice(2);
+  sessionStorage.setItem(DISCORD_STATE_KEY, state);
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
     redirect_uri: DISCORD_REDIRECT_URI,
     response_type: "code",
     scope: "identify email",
+    state,
   });
-  return `https://discord.com/api/oauth2/authorize?${params}`;
+  window.location.href = `https://discord.com/api/oauth2/authorize?${params}`;
 }
 
 export default function RegisterPage() {
@@ -74,7 +83,8 @@ export default function RegisterPage() {
             {DISCORD_CLIENT_ID && (
               <>
                 <a
-                  href={getDiscordOAuthUrl()}
+                  href="#"
+                  onClick={startDiscordOAuth}
                   className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#5865F2] py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
                 >
                   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>

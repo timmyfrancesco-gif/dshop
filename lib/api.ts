@@ -377,6 +377,10 @@ export async function loginWithDiscord(
   }
 }
 
-export function getMe(): Promise<AuthUser | null> {
-  return authApiFetch<AuthUser>("/api/auth/me");
+export async function getMe(): Promise<AuthUser | null> {
+  const data = await authApiFetch<AuthUser | { user: AuthUser }>("/api/auth/me");
+  if (!data) return null;
+  // Accept either a bare user object or a { user } wrapper.
+  const u = "user" in data ? data.user : data;
+  return u && typeof u === "object" && "id" in u ? (u as AuthUser) : null;
 }

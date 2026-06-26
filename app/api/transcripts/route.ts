@@ -1,25 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { put, list } from "@vercel/blob";
+import { constantTimeEqual, hasAdminSession } from "@/lib/adminSession";
+
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN ?? process.env.NEXT_PUBLIC_ADMIN_TOKEN ?? "";
 
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
+// The bot posts transcripts with the bearer token (server-to-server); the
+// dashboard reads them with the admin session cookie.
 function validateToken(req: NextRequest): boolean {
+  if (hasAdminSession(req)) return true;
   const auth = req.headers.get("authorization");
-  if (!auth) return false;
+  if (!auth || !ADMIN_TOKEN) return false;
   const token = auth.replace(/^Bearer\s+/i, "");
-  const expected = process.env.NEXT_PUBLIC_ADMIN_TOKEN;
-  return Boolean(expected && token === expected);
+  return constantTimeEqual(token, ADMIN_TOKEN);
 }
 
 function generateId(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let id = "";
-  for (let i = 0; i < 10; i++) {
-    id += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return id;
+  return randomUUID().replace(/-/g, "");
 }
 
 export async function POST(req: NextRequest) {
@@ -60,18 +61,22 @@ export async function POST(req: NextRequest) {
     createdAt,
   };
 
-  await Promise.all([
-    put(`transcripts/${id}.html`, body.html, {
-      access: "public",
-      addRandomSuffix: false,
-      contentType: "text/html; charset=utf-8",
-    }),
-    put(`transcripts/${id}.json`, JSON.stringify(meta), {
-      access: "public",
-      addRandomSuffix: false,
-      contentType: "application/json",
-    }),
-  ]);
+  try {
+    await Promise.all([
+      put(`transcripts/${id}.html`, body.html, {
+        access: "public",
+        addRandomSuffix: false,
+        contentType: "text/html; charset=utf-8",
+      }),
+      put(`transcripts/${id}.json`, JSON.stringify(meta), {
+        access: "public",
+        addRandomSuffix: false,
+        contentType: "application/json",
+      }),
+    ]);
+  } catch {
+    return NextResponse.json({ error: "Failed to store transcript" }, { status: 502 });
+  }
 
   return NextResponse.json({
     id,
@@ -82,9 +87,16 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   if (!validateToken(req)) return unauthorized();
 
-  const result = await list({ prefix: "transcripts/" });
+  // Page through all blobs — list() returns at most ~1000 per call.
+  const allBlobs: Awaited<ReturnType<typeof list>>["blobs"] = [];
+  let cursor: string | undefined;
+  do {
+    const result = await list({ prefix: "transcripts/", cursor, limit: 1000 });
+    allBlobs.push(...result.blobs);
+    cursor = result.hasMore ? result.cursor : undefined;
+  } while (cursor);
 
-  const jsonBlobs = result.blobs.filter((b) => b.pathname.endsWith(".json"));
+  const jsonBlobs = allBlobs.filter((b) => b.pathname.endsWith(".json"));
 
   const transcripts = await Promise.all(
     jsonBlobs.map(async (b) => {

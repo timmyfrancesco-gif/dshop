@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type {
   FeedItem,
   LtcResponse,
@@ -102,16 +102,13 @@ export function HomepageDataProvider({
       }
     }
 
-    // If we have initial data, delay first poll; otherwise fetch immediately
+    // If we have initial data, delay the first poll; otherwise fetch now.
     const firstDelay = initialData ? POLL_INTERVAL_MS : 0;
+    let interval: ReturnType<typeof setInterval> | null = null;
+
     const firstTimer = setTimeout(() => {
       if (cancelled) return;
       load();
-    }, firstDelay);
-
-    let interval: ReturnType<typeof setInterval> | null = null;
-    const startInterval = setTimeout(() => {
-      if (cancelled) return;
       interval = setInterval(load, POLL_INTERVAL_MS);
     }, firstDelay);
 
@@ -128,18 +125,18 @@ export function HomepageDataProvider({
     return () => {
       cancelled = true;
       clearTimeout(firstTimer);
-      clearTimeout(startInterval);
       if (interval) clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <HomepageContext value={{ stats, ltc, feed, products, shopItems, reviews, smmProducts, loaded }}>
-      {children}
-    </HomepageContext>
+  const value = useMemo(
+    () => ({ stats, ltc, feed, products, shopItems, reviews, smmProducts, loaded }),
+    [stats, ltc, feed, products, shopItems, reviews, smmProducts, loaded],
   );
+
+  return <HomepageContext value={value}>{children}</HomepageContext>;
 }
 
 export function useHomepageData() {
