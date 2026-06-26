@@ -53,16 +53,24 @@ export async function GET() {
     });
   }
 
-  try {
-    cache = await fetchAll();
-  } catch {
-    if (cache) {
-      return NextResponse.json(cache, {
-        headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
-      });
-    }
-    return NextResponse.json({ error: "API unavailable" }, { status: 503 });
+  const fresh = await fetchAll();
+  // If every upstream fetch failed, keep serving the previous good cache
+  // instead of caching an all-null payload for the full TTL.
+  const allNull =
+    fresh.stats === null &&
+    fresh.products === null &&
+    fresh.feed === null &&
+    fresh.ltc === null &&
+    fresh.reviews === null &&
+    fresh.smmProducts === null;
+
+  if (allNull && cache) {
+    return NextResponse.json(cache, {
+      headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },
+    });
   }
+
+  cache = fresh;
 
   return NextResponse.json(cache, {
     headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" },

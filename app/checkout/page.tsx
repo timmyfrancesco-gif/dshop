@@ -139,6 +139,17 @@ function CheckoutContent() {
   const [deliveredItems, setDeliveredItems] = useState<(string | null | undefined)[]>([]);
   const [restoredFinished, setRestoredFinished] = useState<FinishedData | null>(null);
 
+  const queueTotal = useMemo(() => {
+    if (buyNowProduct) {
+      const unitPrice = buyNowVariant?.price ?? buyNowProduct.price;
+      return unitPrice * qty;
+    }
+    return cart.lines.reduce((sum, line) => {
+      const price = line.variantPrice ?? line.item.price;
+      return sum + price * line.quantity;
+    }, 0);
+  }, [buyNowProduct, buyNowVariant, qty, cart.lines]);
+
   // Restore order or finished state from sessionStorage on mount
   useEffect(() => {
     if (!loaded) return;
@@ -220,16 +231,6 @@ function CheckoutContent() {
   const currentEntry = queue[index] as QueueItem | undefined;
   const currentItem = currentEntry?.item;
   const isLast = index === queue.length - 1;
-  const queueTotal = useMemo(() => {
-    if (buyNowProduct) {
-      const unitPrice = buyNowVariant?.price ?? buyNowProduct.price;
-      return unitPrice * qty;
-    }
-    return cart.lines.reduce((sum, line) => {
-      const price = line.variantPrice ?? line.item.price;
-      return sum + price * line.quantity;
-    }, 0);
-  }, [buyNowProduct, buyNowVariant, qty, cart.lines]);
 
   const displayName = currentItem?.name ?? restoredFinished?.productName ?? "";
   const displayIcon = currentItem?.icon ?? restoredFinished?.productIcon;
