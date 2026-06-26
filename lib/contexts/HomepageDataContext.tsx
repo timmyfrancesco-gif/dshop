@@ -50,6 +50,7 @@ function mapProducts(res: ProductsResponse | null): ShopItem[] {
       instructions: p.instructions,
       variants: p.variants,
       deliverableType: p.deliverableType,
+      totalSold: p.totalSold,
     };
   });
 }

@@ -24,6 +24,7 @@ interface ApiProduct {
     stockItems?: string[];
   }>;
   deliverableType?: string;
+  totalSold?: number;
 }
 
 interface ProductsApiResponse {
@@ -64,6 +65,7 @@ export function useProducts() {
             instructions: p.instructions,
             variants: p.variants,
             deliverableType: p.deliverableType as string,
+            totalSold: p.totalSold,
           })) as ShopItem[]
         );
       } else {

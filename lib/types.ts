@@ -94,6 +94,7 @@ export interface ShopItem {
   instructions?: string;
   variants?: ProductVariant[];
   deliverableType?: DeliverableType;
+  totalSold?: number;
 }
 
 export interface ProductVariant {
@@ -125,6 +126,7 @@ export interface ApiProduct {
   smmMinQty?: number;
   smmMaxQty?: number;
   variants?: ProductVariant[];
+  totalSold?: number;
 }
 
 export interface ProductsResponse {

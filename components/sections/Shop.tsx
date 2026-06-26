@@ -13,7 +13,7 @@ import { useHomepageData } from "@/lib/contexts/HomepageDataContext";
 type SortOption = "default" | "price-asc" | "price-desc" | "name";
 
 export default function Shop() {
-  const { shopItems: items, loaded, products: productsRes } = useHomepageData();
+  const { shopItems: items, loaded, products: productsRes, feed } = useHomepageData();
   const error = loaded && !productsRes;
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -65,6 +65,38 @@ export default function Shop() {
 
     return sorted;
   }, [items, category, search, sort]);
+
+  // Find best-selling product: prefer totalSold from API, fall back to feed order count.
+  const bestSellerId = useMemo(() => {
+    if (items.length === 0) return null;
+
+    // If any product has totalSold from the API, use that.
+    const withSold = items.filter((it) => (it.totalSold ?? 0) > 0);
+    if (withSold.length > 0) {
+      const top = withSold.reduce((best, it) => (it.totalSold! > best.totalSold! ? it : best));
+      return top.id;
+    }
+
+    // Fall back to counting order events in the feed.
+    if (feed.length === 0) return null;
+    const counts = new Map<string, number>();
+    for (const f of feed) {
+      if (f.type !== "order") continue;
+      const label = f.label.toLowerCase();
+      for (const it of items) {
+        if (label.includes(it.name.toLowerCase())) {
+          counts.set(it.id, (counts.get(it.id) ?? 0) + 1);
+        }
+      }
+    }
+    if (counts.size === 0) return null;
+    let topId = "";
+    let topCount = 0;
+    for (const [id, c] of counts) {
+      if (c > topCount) { topId = id; topCount = c; }
+    }
+    return topId || null;
+  }, [items, feed]);
 
   return (
     <section id="shop" className="section-glow relative px-4 py-28 sm:px-6 lg:px-8">
@@ -164,6 +196,7 @@ export default function Shop() {
         ) : (
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {visibleItems.map((item, i) => {
+              const isBestSeller = item.id === bestSellerId;
               const isRange = (() => {
                 if (!item.variants || item.variants.length <= 1) return false;
                 const prices = item.variants.map((v) => v.price);
@@ -178,14 +211,18 @@ export default function Shop() {
                   })()
                 : formatPrice(item.price);
 
-              return (
+              const cardInner = (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 40, scale: 0.95 }}
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ duration: 0.6, delay: (i % 4) * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] transition-all duration-300 hover:border-accent/30 hover:shadow-[0_8px_40px_-12px_var(--accent)]"
+                  className={`group relative flex flex-col overflow-hidden bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] transition-all duration-300 hover:shadow-[0_8px_40px_-12px_var(--accent)] ${
+                    isBestSeller
+                      ? "rounded-[calc(1rem-1px)] border-0"
+                      : "rounded-2xl border border-border/60 hover:border-accent/30"
+                  }`}
                 >
                   <Link
                     href={`/products/${item.id}`}
@@ -239,8 +276,31 @@ export default function Shop() {
                     </div>
                     <h3 className="mt-2 text-base font-bold text-foreground">{item.name}</h3>
                   </div>
+
+                  {/* Best seller badge */}
+                  {isBestSeller && (
+                    <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-accent to-casino-from px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg">
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+                        <path d="M10 1.5l3 5.5h6l-4.5 4 1.5 6-5-3.5-5 3.5 1.5-6L3 7h6l1-5.5z" />
+                      </svg>
+                      Best Seller
+                    </div>
+                  )}
                 </motion.div>
               );
+
+              // Wrap best-seller in a gradient border container (same effect as Pricing MOST VISIBILITY).
+              if (isBestSeller) {
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl bg-gradient-to-br from-accent via-casino-from to-casino-to p-[1px] shadow-[0_0_40px_-10px_var(--accent)] transition-shadow duration-300 hover:shadow-[0_0_60px_-10px_var(--accent)]"
+                  >
+                    {cardInner}
+                  </div>
+                );
+              }
+              return cardInner;
             })}
           </div>
         )}

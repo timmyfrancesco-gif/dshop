@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
@@ -10,20 +10,67 @@ import { useCart } from "@/lib/hooks/useCart";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { useProducts } from "@/lib/hooks/useProducts";
 
-function useViewerCount() {
-  const [count] = useState(() => Math.floor(Math.random() * 3) + 1);
+function useViewerCount(productId: string) {
+  const [count, setCount] = useState(0);
+  const sessionId = useRef("");
+
+  useEffect(() => {
+    if (!productId) return;
+    if (!sessionId.current) {
+      sessionId.current =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : String(Math.random()).slice(2);
+    }
+
+    let cancelled = false;
+
+    async function ping() {
+      try {
+        const res = await fetch(`/api/products/${productId}/views`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: sessionId.current }),
+        });
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setCount(data.viewers ?? 0);
+        }
+      } catch { /* ignore */ }
+    }
+
+    ping();
+    const interval = setInterval(ping, 30_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [productId]);
+
   return count;
 }
 
-function usePurchaseCount(productId: string) {
-  const count = useMemo(() => {
-    let hash = 0;
-    for (let i = 0; i < productId.length; i++) {
-      hash = ((hash << 5) - hash) + productId.charCodeAt(i);
-      hash |= 0;
+function usePurchaseCount(productId: string, totalSold?: number) {
+  const [count, setCount] = useState(totalSold ?? 0);
+
+  const fetchCount = useCallback(async () => {
+    if (totalSold !== undefined && totalSold > 0) {
+      setCount(totalSold);
+      return;
     }
-    return 50 + Math.abs(hash % 200);
-  }, [productId]);
+    try {
+      const res = await fetch("/api/cache/homepage");
+      if (!res.ok) return;
+      const data = await res.json();
+      const items = data?.feed?.items;
+      if (!Array.isArray(items)) return;
+      const orderCount = items.filter(
+        (f: { type: string; label: string }) =>
+          f.type === "order" && f.label.toLowerCase().includes(productId.toLowerCase()),
+      ).length;
+      setCount(orderCount);
+    } catch { /* ignore */ }
+  }, [productId, totalSold]);
+
+  useEffect(() => { fetchCount(); }, [fetchCount]);
+
   return count;
 }
 
@@ -39,8 +86,8 @@ export default function ProductPage() {
   const [activeImage, setActiveImage] = useState(0);
 
   const product = items.find((item) => String(item.id) === params.id);
-  const viewers = useViewerCount();
-  const purchases = usePurchaseCount(params.id ?? "");
+  const viewers = useViewerCount(params.id ?? "");
+  const purchases = usePurchaseCount(params.id ?? "", product?.totalSold);
 
   useEffect(() => {
     if (product?.variants && product.variants.length > 0) {
@@ -175,21 +222,27 @@ export default function ProductPage() {
               <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">{product.name}</h1>
 
               {/* Social proof */}
-              <div className="mt-3 flex flex-col gap-1.5">
-                <p className="flex items-center gap-2 text-sm text-muted">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <circle cx="12" cy="12" r="3" />
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
-                  </svg>
-                  <span><strong className="text-foreground">{viewers}</strong> {viewers === 1 ? "person is viewing" : "people are viewing"}</span>
-                </p>
-                <p className="flex items-center gap-2 text-sm text-muted">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-casino-from" fill="none" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                  <span><strong className="text-foreground">{purchases}</strong> people have purchased.</span>
-                </p>
-              </div>
+              {(viewers > 0 || purchases > 0) && (
+                <div className="mt-3 flex flex-col gap-1.5">
+                  {viewers > 0 && (
+                    <p className="flex items-center gap-2 text-sm text-muted">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                      </svg>
+                      <span><strong className="text-foreground">{viewers}</strong> {viewers === 1 ? "person is viewing" : "people are viewing"}</span>
+                    </p>
+                  )}
+                  {purchases > 0 && (
+                    <p className="flex items-center gap-2 text-sm text-muted">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 text-casino-from" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                      </svg>
+                      <span><strong className="text-foreground">{purchases}</strong> people have purchased.</span>
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Price + Stock */}
               <div className="mt-6 flex flex-wrap items-center gap-3">
