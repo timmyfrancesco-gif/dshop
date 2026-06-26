@@ -23,20 +23,23 @@ function slugify(name: string): string {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, username, password, shopName, shopSlug } = body as {
+    const { email, username, password, shopName, shopSlug, shopLogo } = body as {
       email?: string;
       username?: string;
       password?: string;
       shopName?: string;
       shopSlug?: string;
+      shopLogo?: string;
     };
 
-    if (!email || !username || !password || !shopName) {
+    if (!email || !password || !shopName) {
       return NextResponse.json(
-        { error: "email, username, password, and shopName are required" },
+        { error: "email, password, and shopName are required" },
         { status: 400 }
       );
     }
+
+    const resolvedUsername = username || email.split("@")[0];
 
     if (password.length < 8) {
       return NextResponse.json(
@@ -73,7 +76,7 @@ export async function POST(req: Request) {
       .insert(users)
       .values({
         email: email.toLowerCase(),
-        username,
+        username: resolvedUsername,
         passwordHash: hashPassword(password),
       })
       .returning();
@@ -84,6 +87,7 @@ export async function POST(req: Request) {
         slug,
         name: shopName,
         ownerId: user.id,
+        logo: shopLogo || null,
       })
       .returning();
 
