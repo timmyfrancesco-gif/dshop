@@ -20,7 +20,7 @@ export default function Testimonials() {
   if (liveReviews.length === 0) return null;
 
   return (
-    <section id="vouches" className="px-4 py-24 sm:px-6 lg:px-8">
+    <section id="vouches" className="section-glow relative px-4 py-28 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
           eyebrow={t("reviews.eyebrow")}
@@ -28,42 +28,47 @@ export default function Testimonials() {
           description={t("reviews.description")}
         />
 
-        <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Live reviews from API */}
+        <div className="mt-16 columns-1 gap-6 sm:columns-2 lg:columns-4">
           {liveReviews.map((review, i) => (
             <motion.figure
               key={review.orderId}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 30, scale: 0.95 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: (i % 4) * 0.08 }}
-              className="glass-panel flex flex-col rounded-2xl p-6"
+              transition={{ duration: 0.5, delay: (i % 4) * 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="mb-6 break-inside-avoid group gradient-border overflow-hidden rounded-2xl bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] p-6 transition-all duration-300"
             >
               <div className="mb-3 flex gap-1" aria-hidden>
                 {Array.from({ length: 5 }).map((_, starIndex) => (
-                  <svg
+                  <motion.svg
                     key={starIndex}
+                    initial={{ opacity: 0, scale: 0 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.3, delay: 0.3 + starIndex * 0.06, type: "spring", stiffness: 300 }}
                     viewBox="0 0 20 20"
-                    className={`h-4 w-4 ${starIndex < review.rating ? "text-yellow-400" : "text-border"}`}
+                    className={`h-4 w-4 ${starIndex < review.rating ? "text-yellow-400 drop-shadow-[0_0_4px_rgba(250,204,21,0.4)]" : "text-border"}`}
                     fill="currentColor"
                   >
                     <path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.9l-5.2 2.6.99-5.78-4.21-4.1 5.82-.85L10 1.5z" />
-                  </svg>
+                  </motion.svg>
                 ))}
               </div>
               {review.comment ? (
-                <blockquote className="flex-1 text-sm text-foreground">
+                <blockquote className="text-sm leading-relaxed text-foreground">
                   &ldquo;{review.comment}&rdquo;
                 </blockquote>
               ) : (
-                <blockquote className="flex-1 text-sm text-muted italic">
+                <blockquote className="text-sm italic text-muted">
                   {review.rating >= 4 ? t("reviews.greatExperience") : t("reviews.leftRating")}
                 </blockquote>
               )}
-              <figcaption className="mt-4 flex items-center justify-between text-xs text-muted">
-                <span>
+              <figcaption className="mt-4 flex items-center justify-between border-t border-border/40 pt-4 text-xs text-muted">
+                <span className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/10 text-[10px] font-bold text-accent">
+                    ✓
+                  </span>
                   <span className="font-semibold text-foreground">{t("reviews.verifiedBuyer")}</span>
-                  {" — "}{t("reviews.shopCustomer")}
                 </span>
                 {review.createdAt && (
                   <span>{formatRelativeTime(new Date(review.createdAt).getTime())}</span>
@@ -71,7 +76,6 @@ export default function Testimonials() {
               </figcaption>
             </motion.figure>
           ))}
-
         </div>
       </div>
     </section>

@@ -18,7 +18,7 @@ export default function Faq() {
   const { t } = useLocale();
 
   return (
-    <section id="faq" className="px-4 py-24 sm:px-6 lg:px-8">
+    <section id="faq" className="section-glow relative px-4 py-28 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
         <SectionHeading
           eyebrow={t("faq.eyebrow")}
@@ -26,34 +26,49 @@ export default function Faq() {
           description={t("faq.description")}
         />
 
-        <div className="mt-12 flex flex-col gap-3">
+        <div className="mt-14 flex flex-col gap-3">
           {FAQ_KEYS.map((faq, i) => {
             const isOpen = open === i;
             return (
               <motion.div
                 key={faq.q}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.4, delay: (i % 5) * 0.05 }}
-                className="glass-panel overflow-hidden rounded-2xl"
+                transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                className={`overflow-hidden rounded-2xl border transition-all duration-300 ${
+                  isOpen
+                    ? "border-accent/30 bg-[color-mix(in_srgb,var(--background-elevated)_90%,transparent)] shadow-[0_0_30px_-10px_var(--accent)]"
+                    : "border-border bg-[color-mix(in_srgb,var(--background-elevated)_60%,transparent)] hover:border-accent/20"
+                }`}
               >
                 <button
                   type="button"
                   onClick={() => setOpen(isOpen ? null : i)}
                   aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+                  className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
                 >
-                  <span className="text-sm font-semibold text-foreground">{t(faq.q)}</span>
-                  <svg
+                  <span className="flex items-center gap-3">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-colors ${
+                      isOpen ? "bg-accent text-background" : "bg-accent/10 text-accent"
+                    }`}>
+                      {i + 1}
+                    </span>
+                    <span className={`text-sm font-semibold transition-colors ${isOpen ? "text-accent" : "text-foreground"}`}>
+                      {t(faq.q)}
+                    </span>
+                  </span>
+                  <motion.svg
+                    animate={{ rotate: isOpen ? 45 : 0 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                     viewBox="0 0 24 24"
-                    className={`h-5 w-5 shrink-0 text-accent transition-transform ${isOpen ? "rotate-45" : ""}`}
+                    className="h-5 w-5 shrink-0 text-accent"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={2}
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-                  </svg>
+                  </motion.svg>
                 </button>
                 <AnimatePresence initial={false}>
                   {isOpen ? (
@@ -61,10 +76,12 @@ export default function Faq() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                       className="overflow-hidden"
                     >
-                      <p className="px-5 pb-4 text-sm leading-relaxed text-muted">{t(faq.a)}</p>
+                      <div className="mx-6 mb-5 border-t border-border/40 pt-4">
+                        <p className="text-sm leading-relaxed text-muted">{t(faq.a)}</p>
+                      </div>
                     </motion.div>
                   ) : null}
                 </AnimatePresence>

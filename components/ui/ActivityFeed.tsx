@@ -37,11 +37,11 @@ export default function ActivityFeed({ items }: { items: FeedItem[] }) {
         {items.map((item, index) => (
           <motion.li
             key={`${item.type}-${item.ts}-${item.label}-${index}`}
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/40 px-4 py-3"
+            initial={{ opacity: 0, x: -20, scale: 0.97 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 20, scale: 0.97 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="group flex items-center gap-3 rounded-xl border border-border/40 bg-background/30 px-4 py-3 transition-all duration-200 hover:border-accent/20 hover:bg-accent/5"
           >
             <FeedIcon type={item.type} />
 
@@ -54,7 +54,7 @@ export default function ActivityFeed({ items }: { items: FeedItem[] }) {
                   {TYPE_LABELS[item.type] ?? item.type}
                 </span>
                 {item.method ? (
-                  <span className="rounded-full border border-accent/30 bg-accent-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
+                  <span className="rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent">
                     {item.method}
                   </span>
                 ) : null}
@@ -63,7 +63,7 @@ export default function ActivityFeed({ items }: { items: FeedItem[] }) {
 
             <div className="flex shrink-0 flex-col items-end gap-0.5">
               {item.amount !== undefined && item.amount !== null && isFinite(item.amount) ? (
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-bold text-foreground">
                   {formatEur(item.amount)}
                 </span>
               ) : null}
