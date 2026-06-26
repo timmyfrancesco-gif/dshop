@@ -33,12 +33,14 @@ export async function POST(req: Request) {
       shopDescription?: string;
     };
 
-    if (!email || !username || !password || !shopName) {
+    if (!email || !password || !shopName) {
       return NextResponse.json(
-        { error: "email, username, password, and shopName are required" },
+        { error: "email, password, and shopName are required" },
         { status: 400 }
       );
     }
+
+    const resolvedUsername = username || email.split("@")[0];
 
     if (password.length < 8) {
       return NextResponse.json(
@@ -75,7 +77,7 @@ export async function POST(req: Request) {
       .insert(users)
       .values({
         email: email.toLowerCase(),
-        username,
+        username: resolvedUsername,
         passwordHash: hashPassword(password),
       })
       .returning();

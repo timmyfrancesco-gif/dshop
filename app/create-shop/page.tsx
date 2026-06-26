@@ -1,31 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
 export default function CreateShopPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<{
     tenant: { slug: string; name: string };
   } | null>(null);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
     email: "",
-    username: "",
     password: "",
+    confirmPassword: "",
     shopName: "",
-    shopSlug: "",
     shopLogo: "",
-    shopDescription: "",
   });
 
   const baseDomain =
     typeof window !== "undefined"
       ? window.location.hostname.replace(/^www\./, "")
-      : "heavenmarket.com";
+      : "hvnmarket.com";
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -40,8 +41,34 @@ export default function CreateShopPage() {
       .slice(0, 48);
   }
 
+  async function handleUploadLogo(file: File) {
+    setUploading(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Upload failed");
+        return;
+      }
+
+      setForm((prev) => ({ ...prev, shopLogo: data.url }));
+    } catch {
+      setError("Upload failed. Try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleSubmit() {
-    if (!form.email || !form.username || !form.password || !form.shopName) {
+    if (!form.email || !form.password || !form.shopName) {
       setError("All fields are required");
       return;
     }
@@ -63,12 +90,11 @@ export default function CreateShopPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: form.email,
-          username: form.username,
+          username: form.email.split("@")[0],
           password: form.password,
           shopName: form.shopName,
-          shopSlug: form.shopSlug || slugify(form.shopName),
+          shopSlug: slugify(form.shopName),
           shopLogo: form.shopLogo,
-          shopDescription: form.shopDescription,
         }),
       });
 
@@ -79,7 +105,7 @@ export default function CreateShopPage() {
       }
 
       setResult(data);
-      setStep(4);
+      setStep(3);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -94,12 +120,6 @@ export default function CreateShopPage() {
           <Link href="/" className="text-xl font-bold">
             Heaven Market
           </Link>
-          <Link
-            href="/login"
-            className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium transition-colors hover:border-white/40"
-          >
-            Sign In
-          </Link>
         </div>
       </header>
 
@@ -110,10 +130,12 @@ export default function CreateShopPage() {
           transition={{ duration: 0.5 }}
           className="w-full max-w-lg"
         >
-          {step === 4 && result ? (
+          {step === 3 && result ? (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-3xl">
-                ✓
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20">
+                <svg viewBox="0 0 24 24" className="h-8 w-8 text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
               </div>
               <h2 className="mt-6 text-2xl font-extrabold">
                 Shop Created!
@@ -137,12 +159,6 @@ export default function CreateShopPage() {
                 >
                   Go to Dashboard
                 </Link>
-                <Link
-                  href="/"
-                  className="text-sm text-white/40 transition-colors hover:text-white/60"
-                >
-                  ← Back to Home
-                </Link>
               </div>
             </div>
           ) : (
@@ -151,12 +167,12 @@ export default function CreateShopPage() {
                 Create Your Shop
               </h2>
               <p className="mt-2 text-sm text-white/60">
-                Launch your own digital store in seconds. No coding required.
+                Launch your own digital store in seconds.
               </p>
 
               {/* Progress */}
               <div className="mt-6 flex items-center gap-2">
-                {[1, 2, 3].map((s) => (
+                {[1, 2].map((s) => (
                   <div
                     key={s}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -166,6 +182,7 @@ export default function CreateShopPage() {
                 ))}
               </div>
 
+              {/* Step 1: Account */}
               {step === 1 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
@@ -173,7 +190,7 @@ export default function CreateShopPage() {
                   className="mt-6 space-y-4"
                 >
                   <h3 className="text-sm font-semibold text-white/80">
-                    Account Details
+                    Account
                   </h3>
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-white/50">
@@ -189,18 +206,6 @@ export default function CreateShopPage() {
                   </div>
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-white/50">
-                      Username
-                    </label>
-                    <input
-                      type="text"
-                      value={form.username}
-                      onChange={(e) => updateField("username", e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition-colors placeholder:text-white/30 focus:border-white/30"
-                      placeholder="yourname"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-white/50">
                       Password
                     </label>
                     <input
@@ -211,15 +216,31 @@ export default function CreateShopPage() {
                       placeholder="Min 8 characters"
                     />
                   </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-white/50">
+                      Confirm Password
+                    </label>
+                    <input
+                      type="password"
+                      value={form.confirmPassword}
+                      onChange={(e) => updateField("confirmPassword", e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition-colors placeholder:text-white/30 focus:border-white/30"
+                      placeholder="Repeat password"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
-                      if (!form.email || !form.username || !form.password) {
+                      if (!form.email || !form.password) {
                         setError("Fill in all fields");
                         return;
                       }
                       if (form.password.length < 8) {
                         setError("Password must be at least 8 characters");
+                        return;
+                      }
+                      if (form.password !== form.confirmPassword) {
+                        setError("Passwords don't match");
                         return;
                       }
                       setError("");
@@ -232,6 +253,7 @@ export default function CreateShopPage() {
                 </motion.div>
               )}
 
+              {/* Step 2: Shop Name + Logo */}
               {step === 2 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
@@ -239,7 +261,7 @@ export default function CreateShopPage() {
                   className="mt-6 space-y-4"
                 >
                   <h3 className="text-sm font-semibold text-white/80">
-                    Shop Details
+                    Your Shop
                   </h3>
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-white/50">
@@ -252,39 +274,78 @@ export default function CreateShopPage() {
                       className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition-colors placeholder:text-white/30 focus:border-white/30"
                       placeholder="My Awesome Shop"
                     />
+                    {form.shopName && (
+                      <p className="mt-1.5 text-xs text-white/30">
+                        URL: <span className="font-mono">{slugify(form.shopName)}.{baseDomain}</span>
+                      </p>
+                    )}
                   </div>
+
+                  {/* Logo upload */}
                   <div>
                     <label className="mb-1.5 block text-xs font-medium text-white/50">
-                      Shop URL (optional)
+                      Shop Logo
                     </label>
-                    <div className="flex items-center gap-0 rounded-xl border border-white/10 bg-white/5">
-                      <input
-                        type="text"
-                        value={form.shopSlug}
-                        onChange={(e) =>
-                          updateField("shopSlug", slugify(e.target.value))
-                        }
-                        className="flex-1 bg-transparent px-4 py-3 text-sm outline-none placeholder:text-white/30"
-                        placeholder={slugify(form.shopName || "my-shop")}
-                      />
-                      <span className="pr-4 text-xs text-white/40">
-                        .{baseDomain}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-white/50">
-                      Description (optional)
-                    </label>
-                    <textarea
-                      value={form.shopDescription}
-                      onChange={(e) => updateField("shopDescription", e.target.value)}
-                      rows={3}
-                      className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition-colors placeholder:text-white/30 focus:border-white/30"
-                      placeholder="Describe your shop in a few words..."
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadLogo(file);
+                      }}
                     />
+
+                    {form.shopLogo ? (
+                      <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={form.shopLogo}
+                          alt="Logo"
+                          className="h-16 w-16 rounded-full object-cover ring-2 ring-purple-500/50"
+                        />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-white/80">
+                            Logo uploaded
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setForm((f) => ({ ...f, shopLogo: "" }));
+                              if (fileInputRef.current) fileInputRef.current.value = "";
+                            }}
+                            className="mt-1 text-xs text-rose-400 transition-colors hover:text-rose-300"
+                          >
+                            Remove and re-upload
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-dashed border-white/20 bg-white/5 px-4 py-8 text-sm text-white/50 transition-all hover:border-purple-500/50 hover:text-white/70 disabled:opacity-50"
+                      >
+                        {uploading ? (
+                          <span>Uploading...</span>
+                        ) : (
+                          <>
+                            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            </svg>
+                            <span>Click to upload your logo</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                    <p className="mt-1.5 text-xs text-white/30">
+                      PNG, JPG, WebP or GIF — max 2MB
+                    </p>
                   </div>
-                  <div className="flex gap-3">
+
+                  <div className="flex gap-3 pt-2">
                     <button
                       type="button"
                       onClick={() => setStep(1)}
@@ -294,75 +355,8 @@ export default function CreateShopPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        if (!form.shopName) {
-                          setError("Shop name is required");
-                          return;
-                        }
-                        setError("");
-                        setStep(3);
-                      }}
-                      className="flex-1 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 py-3 text-sm font-bold transition-all hover:opacity-90"
-                    >
-                      Continue
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {step === 3 && (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="mt-6 space-y-4"
-                >
-                  <h3 className="text-sm font-semibold text-white/80">
-                    Shop Logo
-                  </h3>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-white/50">
-                      Logo URL
-                    </label>
-                    <input
-                      type="url"
-                      value={form.shopLogo}
-                      onChange={(e) => updateField("shopLogo", e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition-colors placeholder:text-white/30 focus:border-white/30"
-                      placeholder="https://example.com/logo.png"
-                    />
-                    <p className="mt-1.5 text-xs text-white/30">
-                      Paste a direct link to your logo image (PNG, JPG, WebP)
-                    </p>
-                  </div>
-                  {form.shopLogo && (
-                    <div className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-4">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={form.shopLogo}
-                        alt="Logo preview"
-                        className="h-16 w-16 rounded-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                      <div>
-                        <p className="text-sm font-semibold text-white/80">{form.shopName}</p>
-                        <p className="text-xs text-white/40">Logo preview</p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setStep(2)}
-                      className="flex-1 rounded-xl border border-white/10 py-3 text-sm font-medium text-white/60 transition-colors hover:border-white/30"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="button"
                       onClick={handleSubmit}
-                      disabled={loading}
+                      disabled={loading || uploading}
                       className="flex-1 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 py-3 text-sm font-bold transition-all hover:opacity-90 disabled:opacity-50"
                     >
                       {loading ? "Creating..." : "Create Shop"}

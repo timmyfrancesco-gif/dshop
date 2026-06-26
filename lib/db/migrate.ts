@@ -43,7 +43,10 @@ export async function runMigrations() {
         discord_bot_token TEXT,
         discord_guild_id TEXT,
         ltc_address TEXT,
-        fee_pct REAL NOT NULL DEFAULT 5,
+        btc_address TEXT,
+        ltc_private_key TEXT,
+        btc_private_key TEXT,
+        fee_pct REAL NOT NULL DEFAULT 3,
         active BOOLEAN NOT NULL DEFAULT TRUE,
         created_at TIMESTAMP NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -111,6 +114,16 @@ export async function runMigrations() {
         ts TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+    // Add new columns if they don't exist (for existing installations)
+    const alterStatements = [
+      "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS btc_address TEXT",
+      "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS ltc_private_key TEXT",
+      "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS btc_private_key TEXT",
+      "ALTER TABLE users DROP CONSTRAINT IF EXISTS users_username_key",
+    ];
+    for (const stmt of alterStatements) {
+      try { await client.query(stmt); } catch { /* column may already exist */ }
+    }
   } finally {
     client.release();
     await pool.end();
