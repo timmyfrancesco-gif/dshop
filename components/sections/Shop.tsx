@@ -67,7 +67,7 @@ export default function Shop() {
   }, [items, category, search, sort]);
 
   return (
-    <section id="shop" className="px-4 py-24 sm:px-6 lg:px-8">
+    <section id="shop" className="section-glow relative px-4 py-28 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeading
@@ -166,14 +166,14 @@ export default function Shop() {
             {visibleItems.map((item, i) => (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.5, delay: (i % 3) * 0.08 }}
-                whileHover={{ y: -6 }}
-                className="group glass-panel relative flex flex-col overflow-hidden rounded-2xl transition-colors hover:border-accent/50"
+                transition={{ duration: 0.6, delay: (i % 3) * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -8, transition: { duration: 0.25 } }}
+                className="group gradient-border relative flex flex-col overflow-hidden rounded-2xl bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] transition-all duration-300 hover:shadow-[0_8px_40px_-12px_var(--accent)]"
               >
-                <div className="absolute -right-8 -top-8 z-10 h-24 w-24 rounded-full bg-accent/10 blur-2xl opacity-0 transition-opacity group-hover:opacity-100" />
+                <div className="pointer-events-none absolute -right-12 -top-12 z-10 h-32 w-32 rounded-full bg-accent/15 blur-3xl opacity-0 transition-all duration-500 group-hover:opacity-100 group-hover:scale-150" />
 
                 <Link
                   href={`/products/${item.id}`}
