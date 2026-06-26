@@ -2,7 +2,31 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { tenants, tenantProducts } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import TenantStorefront from "./TenantStorefront";
+import TenantShell from "./TenantShell";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const rows = await db
+      .select()
+      .from(tenants)
+      .where(eq(tenants.slug, slug))
+      .limit(1);
+    if (rows.length === 0) return {};
+    const tenant = rows[0];
+    return {
+      title: `${tenant.name} — Shop`,
+      description: tenant.description || `Shop at ${tenant.name}`,
+    };
+  } catch {
+    return {};
+  }
+}
 
 export default async function TenantPage({
   params,
@@ -38,7 +62,7 @@ export default async function TenantPage({
     return notFound();
   }
 
-  const tenantInfo = {
+  const tenantConfig = {
     id: tenant.id,
     slug: tenant.slug,
     name: tenant.name,
@@ -46,30 +70,35 @@ export default async function TenantPage({
     logo: tenant.logo,
     theme: tenant.theme,
     accentColor: tenant.accentColor,
-    discordInvite: tenant.discordInvite,
+    discordInvite: tenant.discordInvite ?? "",
     ltcAddress: tenant.ltcAddress,
   };
 
-  const shopItems = products.map((p) => ({
+  const shopProducts = products.map((p) => ({
     id: p.id,
     name: p.name,
-    description: p.description ?? "",
     category: p.category ?? "Shop",
     price: p.price,
     comparePrice: p.comparePrice,
     currency: p.currency,
     stock: p.stock,
+    description: p.description ?? "",
+    icon: "shop" as const,
     image: p.image,
     images: (p.images as string[] | null) ?? [],
+    instructions: p.instructions,
     variants: p.variants as Array<{
       id: string;
       title: string;
       price: number;
       stock: number;
+      stockItems?: string[];
     }> | null,
     deliverableType: p.deliverableType,
     totalSold: p.totalSold,
   }));
 
-  return <TenantStorefront tenant={tenantInfo} products={shopItems} />;
+  return (
+    <TenantShell tenant={tenantConfig} products={shopProducts} />
+  );
 }

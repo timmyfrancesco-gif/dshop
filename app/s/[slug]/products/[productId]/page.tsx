@@ -2,9 +2,34 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { tenants, tenantProducts } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import TenantProductDetail from "./TenantProductDetail";
+import TenantProductPage from "./TenantProductPage";
+import type { Metadata } from "next";
 
-export default async function TenantProductPage({
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string; productId: string }>;
+}): Promise<Metadata> {
+  const { slug, productId } = await params;
+  try {
+    const tenantRows = await db.select().from(tenants).where(eq(tenants.slug, slug)).limit(1);
+    if (tenantRows.length === 0) return {};
+    const productRows = await db
+      .select()
+      .from(tenantProducts)
+      .where(and(eq(tenantProducts.id, productId), eq(tenantProducts.tenantId, tenantRows[0].id)))
+      .limit(1);
+    if (productRows.length === 0) return {};
+    return {
+      title: `${productRows[0].name} — ${tenantRows[0].name}`,
+      description: productRows[0].description || undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+export default async function Page({
   params,
 }: {
   params: Promise<{ slug: string; productId: string }>;
@@ -36,7 +61,7 @@ export default async function TenantProductPage({
     if (productRows.length === 0) return notFound();
     const product = productRows[0];
 
-    const tenantInfo = {
+    const tenantConfig = {
       id: tenant.id,
       slug: tenant.slug,
       name: tenant.name,
@@ -44,7 +69,7 @@ export default async function TenantProductPage({
       logo: tenant.logo,
       theme: tenant.theme,
       accentColor: tenant.accentColor,
-      discordInvite: tenant.discordInvite,
+      discordInvite: tenant.discordInvite ?? "",
       ltcAddress: tenant.ltcAddress,
     };
 
@@ -70,7 +95,7 @@ export default async function TenantProductPage({
       totalSold: product.totalSold,
     };
 
-    return <TenantProductDetail tenant={tenantInfo} product={productData} />;
+    return <TenantProductPage tenant={tenantConfig} product={productData} />;
   } catch {
     return notFound();
   }

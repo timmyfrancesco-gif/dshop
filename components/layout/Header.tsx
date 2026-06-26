@@ -7,15 +7,16 @@ import LocaleSelector from "@/components/ui/LocaleSelector";
 import { SITE } from "@/lib/config";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useLocale } from "@/lib/hooks/useLocale";
+import { useSiteConfig } from "@/lib/contexts/SiteConfigContext";
 
 const NAV_KEYS = [
-  { href: "/#top", key: "nav.home" },
-  { href: "/#shop", key: "nav.products" },
-  { href: "/#services", key: "nav.features" },
-  { href: "/#faq", key: "nav.faq" },
-  { href: "/#vouches", key: "nav.reviews" },
-  { href: "/track", key: "nav.trackOrder" },
-  { href: "/terms", key: "nav.terms" },
+  { href: "/#top", key: "nav.home", tenantVisible: true },
+  { href: "/#shop", key: "nav.products", tenantVisible: true },
+  { href: "/#services", key: "nav.features", tenantVisible: false },
+  { href: "/#faq", key: "nav.faq", tenantVisible: true },
+  { href: "/#vouches", key: "nav.reviews", tenantVisible: false },
+  { href: "/track", key: "nav.trackOrder", tenantVisible: false },
+  { href: "/terms", key: "nav.terms", tenantVisible: false },
 ];
 
 function UserMenu() {
@@ -128,32 +129,43 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const { t } = useLocale();
   const { user, logout } = useAuth();
+  const site = useSiteConfig();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/#top" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-          <Logo className="h-8 w-8" />
-          <span>{SITE.name}</span>
+        <Link href={site.isTenant ? `/s/${site.tenantSlug}` : "/#top"} className="flex items-center gap-2 text-lg font-bold tracking-tight">
+          {site.tenantLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={site.tenantLogo} alt="" className="h-8 w-8 rounded-full" />
+          ) : (
+            <Logo className="h-8 w-8" />
+          )}
+          <span>{site.name}</span>
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
-          {NAV_KEYS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-muted transition-colors hover:text-foreground"
-            >
-              {t(link.key)}
-            </Link>
-          ))}
+          {NAV_KEYS.filter((l) => !site.isTenant || l.tenantVisible).map((link) => {
+            const href = site.isTenant && link.href.startsWith("/#")
+              ? `/s/${site.tenantSlug}${link.href}`
+              : link.href;
+            return (
+              <Link
+                key={link.href}
+                href={href}
+                className="text-sm font-medium text-muted transition-colors hover:text-foreground"
+              >
+                {t(link.key)}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
           <LocaleSelector />
           <UserMenu />
           <a
-            href={SITE.discordInvite}
+            href={site.discordInvite}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
@@ -163,14 +175,16 @@ export default function Header() {
             </svg>
             {t("nav.discord")}
           </a>
+          {!site.isTenant && (
+            <Link
+              href="/create-shop"
+              className="rounded-full border border-accent/50 px-4 py-2 text-sm font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/10"
+            >
+              Create Shop
+            </Link>
+          )}
           <Link
-            href="/create-shop"
-            className="rounded-full border border-accent/50 px-4 py-2 text-sm font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/10"
-          >
-            Create Shop
-          </Link>
-          <Link
-            href="/#shop"
+            href={site.isTenant ? `/s/${site.tenantSlug}/#shop` : "/#shop"}
             className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-background shadow-[0_0_24px_-6px_var(--accent)] transition-transform hover:scale-105"
           >
             {t("nav.shopNow")}
@@ -196,16 +210,21 @@ export default function Header() {
       {open ? (
         <div className="border-t border-border/60 bg-background/95 px-4 pb-6 pt-2 lg:hidden">
           <nav className="flex flex-col gap-1">
-            {NAV_KEYS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-background-elevated hover:text-foreground"
-              >
-                {t(link.key)}
-              </Link>
-            ))}
+            {NAV_KEYS.filter((l) => !site.isTenant || l.tenantVisible).map((link) => {
+              const href = site.isTenant && link.href.startsWith("/#")
+                ? `/s/${site.tenantSlug}${link.href}`
+                : link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-background-elevated hover:text-foreground"
+                >
+                  {t(link.key)}
+                </Link>
+              );
+            })}
           </nav>
           <div className="mt-4 flex flex-col gap-2">
             <div className="flex justify-center">
@@ -252,22 +271,24 @@ export default function Header() {
               </Link>
             )}
             <a
-              href={SITE.discordInvite}
+              href={site.discordInvite}
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-full border border-border px-4 py-2 text-center text-sm font-semibold text-foreground"
             >
               {t("nav.discord")}
             </a>
+            {!site.isTenant && (
+              <Link
+                href="/create-shop"
+                onClick={() => setOpen(false)}
+                className="rounded-full border border-accent/50 px-4 py-2 text-center text-sm font-semibold text-accent"
+              >
+                Create Shop
+              </Link>
+            )}
             <Link
-              href="/create-shop"
-              onClick={() => setOpen(false)}
-              className="rounded-full border border-accent/50 px-4 py-2 text-center text-sm font-semibold text-accent"
-            >
-              Create Shop
-            </Link>
-            <Link
-              href="/#shop"
+              href={site.isTenant ? `/s/${site.tenantSlug}/#shop` : "/#shop"}
               onClick={() => setOpen(false)}
               className="rounded-full bg-accent px-4 py-2 text-center text-sm font-semibold text-background"
             >

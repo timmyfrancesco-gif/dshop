@@ -9,6 +9,7 @@ import CartDrawer from "@/components/shop/CartDrawer";
 import { useCart } from "@/lib/hooks/useCart";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { useHomepageData } from "@/lib/contexts/HomepageDataContext";
+import { useSiteConfig } from "@/lib/contexts/SiteConfigContext";
 
 type SortOption = "default" | "price-asc" | "price-desc" | "name";
 
@@ -22,6 +23,7 @@ export default function Shop() {
   const { t, formatPrice } = useLocale();
 
   const cart = useCart();
+  const site = useSiteConfig();
 
   const SORT_OPTIONS: { id: SortOption; label: string }[] = [
     { id: "default", label: t("shop.sortFeatured") },
@@ -225,7 +227,7 @@ export default function Shop() {
                   }`}
                 >
                   <Link
-                    href={`/products/${item.id}`}
+                    href={site.isTenant ? `/s/${site.tenantSlug}/products/${item.id}` : `/products/${item.id}`}
                     className="relative aspect-[4/3] w-full overflow-hidden bg-background-elevated"
                   >
                     {item.image ? (

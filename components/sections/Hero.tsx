@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { useRef } from "react";
 import { useLocale } from "@/lib/hooks/useLocale";
+import { useSiteConfig } from "@/lib/contexts/SiteConfigContext";
 
 const STAT_ICONS: Record<string, React.ReactNode> = {
   star: (
@@ -24,6 +25,7 @@ export default function Hero() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const { t } = useLocale();
+  const site = useSiteConfig();
 
   const blobY = useTransform(scrollYProgress, [0, 1], [0, 160]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
@@ -57,7 +59,7 @@ export default function Hero() {
           transition={{ duration: 0.6 }}
           className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent-soft px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.3em] text-accent"
         >
-          {t("hero.badge")}
+          {site.isTenant ? "Digital Shop" : t("hero.badge")}
         </motion.span>
 
         <motion.h1
@@ -66,7 +68,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.1 }}
           className="text-balance text-6xl font-black uppercase tracking-tight sm:text-8xl lg:text-9xl"
         >
-          <span className="text-gradient-accent">{t("hero.title")}</span>
+          <span className="text-gradient-accent">{site.isTenant ? site.name : t("hero.title")}</span>
         </motion.h1>
 
         <motion.p
@@ -75,7 +77,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="mt-6 max-w-2xl text-balance text-lg text-muted sm:text-xl"
         >
-          {t("hero.description")}
+          {site.isTenant && site.tagline ? site.tagline : t("hero.description")}
         </motion.p>
 
         <motion.div
@@ -85,52 +87,56 @@ export default function Hero() {
           className="mt-10 flex flex-col items-center gap-4 sm:flex-row"
         >
           <Link
-            href="/#shop"
+            href={site.isTenant ? `/s/${site.tenantSlug}/#shop` : "/#shop"}
             className="rounded-full bg-accent px-8 py-3 text-base font-semibold text-background shadow-[0_0_30px_-5px_var(--accent)] transition-transform hover:scale-105"
           >
             {t("hero.cta1")}
           </Link>
-          <div className="flex items-center gap-2 rounded-full border border-border bg-background-elevated/60 px-5 py-3 text-sm font-medium text-foreground">
-            <span className="flex gap-0.5 text-accent" aria-hidden>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <svg key={i} viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
-                  <path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.9l-5.2 2.6.99-5.78-4.21-4.1 5.82-.85L10 1.5z" />
-                </svg>
-              ))}
-            </span>
-            {t("hero.cta2")} <span className="font-bold text-accent">4.9</span> {t("hero.cta2Suffix")}
-          </div>
+          {!site.isTenant && (
+            <div className="flex items-center gap-2 rounded-full border border-border bg-background-elevated/60 px-5 py-3 text-sm font-medium text-foreground">
+              <span className="flex gap-0.5 text-accent" aria-hidden>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <svg key={i} viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
+                    <path d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.9l-5.2 2.6.99-5.78-4.21-4.1 5.82-.85L10 1.5z" />
+                  </svg>
+                ))}
+              </span>
+              {t("hero.cta2")} <span className="font-bold text-accent">4.9</span> {t("hero.cta2Suffix")}
+            </div>
+          )}
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.5 }}
-          className="mt-16 grid w-full max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4"
-        >
-          {STATS.map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 + i * 0.1 }}
-              whileHover={{ y: -4 }}
-              className="glass-panel rounded-2xl px-4 py-5 text-center transition-colors hover:border-accent/50"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="mx-auto mb-2 h-5 w-5 text-accent"
-                fill={stat.icon === "star" || stat.icon === "bolt" ? "currentColor" : "none"}
-                stroke="currentColor"
-                strokeWidth={2}
+        {!site.isTenant && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="mt-16 grid w-full max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4"
+          >
+            {STATS.map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 + i * 0.1 }}
+                whileHover={{ y: -4 }}
+                className="glass-panel rounded-2xl px-4 py-5 text-center transition-colors hover:border-accent/50"
               >
-                {STAT_ICONS[stat.icon]}
-              </svg>
-              <div className="text-xl font-bold text-foreground sm:text-2xl">{stat.value}</div>
-              <div className="mt-1 text-xs uppercase tracking-wider text-muted">{stat.label}</div>
-            </motion.div>
-          ))}
-        </motion.div>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="mx-auto mb-2 h-5 w-5 text-accent"
+                  fill={stat.icon === "star" || stat.icon === "bolt" ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  {STAT_ICONS[stat.icon]}
+                </svg>
+                <div className="text-xl font-bold text-foreground sm:text-2xl">{stat.value}</div>
+                <div className="mt-1 text-xs uppercase tracking-wider text-muted">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </motion.div>
     </section>
   );

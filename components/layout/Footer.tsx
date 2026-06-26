@@ -4,9 +4,11 @@ import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 import { SITE } from "@/lib/config";
 import { useLocale } from "@/lib/hooks/useLocale";
+import { useSiteConfig } from "@/lib/contexts/SiteConfigContext";
 
 export default function Footer() {
   const { t } = useLocale();
+  const site = useSiteConfig();
 
   return (
     <footer className="border-t border-border/60 bg-background-elevated/40">
@@ -14,16 +16,21 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="max-w-sm">
-            <Link href="/#top" className="flex items-center gap-2 text-lg font-bold tracking-tight">
-              <Logo className="h-8 w-8" />
-              <span>{SITE.name}</span>
+            <Link href={site.isTenant ? `/s/${site.tenantSlug}` : "/#top"} className="flex items-center gap-2 text-lg font-bold tracking-tight">
+              {site.tenantLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={site.tenantLogo} alt="" className="h-8 w-8 rounded-full" />
+              ) : (
+                <Logo className="h-8 w-8" />
+              )}
+              <span>{site.name}</span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">
               {t("footer.description")}
             </p>
             <div className="mt-5 flex gap-3">
               <a
-                href={SITE.discordInvite}
+                href={site.discordInvite}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-[#5865F2] px-5 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90"
@@ -70,7 +77,7 @@ export default function Footer() {
             <ul className="mt-4 flex flex-col gap-3 text-sm">
               <li>
                 <a
-                  href={SITE.discordInvite}
+                  href={site.discordInvite}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2.5 text-muted transition-colors hover:text-foreground"
@@ -116,9 +123,15 @@ export default function Footer() {
         <div className="flex flex-col gap-4 border-t border-border/40 pt-6 text-xs text-muted">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p>
-              &copy; {new Date().getFullYear()} {SITE.name}. {t("footer.rights")}
+              &copy; {new Date().getFullYear()} {site.name}. {t("footer.rights")}
             </p>
-            <p>{t("footer.tagline")}</p>
+            <p>
+              {site.isTenant ? (
+                <>Powered by <span className="font-semibold text-foreground">Heaven Market</span></>
+              ) : (
+                t("footer.tagline")
+              )}
+            </p>
           </div>
         </div>
       </div>
