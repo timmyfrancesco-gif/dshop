@@ -162,107 +162,81 @@ export default function Shop() {
             {t("shop.noProducts")}
           </p>
         ) : (
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleItems.map((item, i) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.6, delay: (i % 3) * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                whileHover={{ y: -8, transition: { duration: 0.25 } }}
-                className="group gradient-border relative flex flex-col overflow-hidden rounded-2xl bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] transition-all duration-300 hover:shadow-[0_8px_40px_-12px_var(--accent)]"
-              >
-                <div className="pointer-events-none absolute -right-12 -top-12 z-10 h-32 w-32 rounded-full bg-accent/15 blur-3xl opacity-0 transition-all duration-500 group-hover:opacity-100 group-hover:scale-150" />
+          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {visibleItems.map((item, i) => {
+              const displayPrice = item.variants && item.variants.length > 1
+                ? (() => {
+                    const prices = item.variants.map((v) => v.price);
+                    const min = Math.min(...prices);
+                    const max = Math.max(...prices);
+                    return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`;
+                  })()
+                : formatPrice(item.price);
 
-                <Link
-                  href={`/products/${item.id}`}
-                  className="relative h-40 w-full overflow-hidden border-b border-border bg-background-elevated text-left"
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 40, scale: 0.95 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.6, delay: (i % 4) * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] transition-all duration-300 hover:border-accent/30 hover:shadow-[0_8px_40px_-12px_var(--accent)]"
                 >
-                  {item.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-accent">
-                      <ServiceIcon name={item.icon} className="h-12 w-12" />
-                    </div>
-                  )}
-
-                  <span className="absolute left-3 top-3 rounded-full bg-gradient-to-r from-casino-from to-casino-to px-3 py-1 text-xs font-bold text-white shadow-lg">
-                    {item.variants && item.variants.length > 1
-                      ? (() => {
-                          const prices = item.variants.map((v) => v.price);
-                          const min = Math.min(...prices);
-                          const max = Math.max(...prices);
-                          return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`;
-                        })()
-                      : formatPrice(item.price)}
-                  </span>
-
-                  <span
-                    className={`absolute bottom-3 left-3 rounded-full border px-3 py-1 text-xs font-semibold ${
-                      item.stock > 0
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                        : "border-rose-500/30 bg-rose-500/10 text-rose-400"
-                    }`}
+                  <Link
+                    href={`/products/${item.id}`}
+                    className="relative aspect-[4/3] w-full overflow-hidden bg-background-elevated"
                   >
-                    {item.stock > 0 ? t("shop.inStock") : t("shop.outOfStock") || "Out of Stock"}
-                  </span>
-                </Link>
-
-                <div className="flex flex-1 flex-col p-6">
-                  <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-                    {item.category}
-                  </span>
-                  <h3 className="mt-1 text-lg font-semibold text-foreground">{item.name}</h3>
-                  <p className="mt-2 flex-1 text-sm text-muted">
-                    {item.description?.replace(/<[^>]*>/g, "") ?? ""}
-                  </p>
-
-                  <div className="mt-6 flex items-center gap-3">
-                    <Link
-                      href={`/products/${item.id}`}
-                      className="flex-1 rounded-full border border-accent/30 bg-accent-soft px-4 py-2 text-center text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
-                    >
-                      {t("shop.viewDetails")}
-                    </Link>
-                    {item.variants && item.variants.length > 1 ? (
-                      <Link
-                        href={`/products/${item.id}`}
-                        aria-label={`${t("shop.addToCart")} ${item.name}`}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-accent hover:text-accent"
-                      >
-                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
-                        </svg>
-                      </Link>
+                    {item.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const v = item.variants?.[0];
-                          if (v) {
-                            cart.addItem(item, 1, v.id, v.title, v.price);
-                          } else {
-                            cart.addItem(item, 1);
-                          }
-                        }}
-                        aria-label={`${t("shop.addToCart")} ${item.name}`}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-accent hover:text-accent"
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/10 to-background-elevated text-accent">
+                        <ServiceIcon name={item.icon} className="h-16 w-16" />
+                      </div>
+                    )}
+
+                    {/* Hover overlay with View Details */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 backdrop-blur-[2px] transition-all duration-300 group-hover:opacity-100">
+                      <span className="rounded-xl bg-gradient-to-r from-casino-from to-casino-to px-8 py-3 text-sm font-bold text-white shadow-xl transition-transform duration-300 group-hover:scale-100 scale-90">
+                        {t("shop.viewDetails")}
+                      </span>
+                    </div>
+                  </Link>
+
+                  <div className="flex flex-1 flex-col p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-extrabold text-foreground">
+                          {displayPrice}
+                        </span>
+                        {item.comparePrice && item.comparePrice > item.price ? (
+                          <span className="text-sm font-medium text-muted line-through">
+                            {formatPrice(item.comparePrice)}
+                          </span>
+                        ) : null}
+                      </div>
+                      <span
+                        className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                          item.stock > 0
+                            ? "bg-emerald-500/15 text-emerald-400"
+                            : "bg-rose-500/15 text-rose-400"
+                        }`}
                       >
-                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
                         </svg>
-                      </button>
-                    )}
+                        {item.stock > 0 ? `${item.stock} In Stock` : "Out of Stock"}
+                      </span>
+                    </div>
+                    <h3 className="mt-2 text-base font-bold text-foreground">{item.name}</h3>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>

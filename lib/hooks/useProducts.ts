@@ -8,6 +8,7 @@ interface ApiProduct {
   name: string;
   category?: string;
   price: number;
+  comparePrice?: number;
   currency?: string;
   stock: number;
   description?: string;
@@ -52,6 +53,7 @@ export function useProducts() {
             name: p.name,
             category: p.category || "Shop",
             price: minPrice(p),
+            comparePrice: p.comparePrice,
             currency: p.currency ?? "EUR",
             stock: totalStock(p),
             description: p.description ?? "",

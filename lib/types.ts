@@ -83,6 +83,7 @@ export interface ShopItem {
   name: string;
   category: string;
   price: number;
+  comparePrice?: number;
   currency: string;
   stock: number;
   description: string;
@@ -109,6 +110,7 @@ export interface ApiProduct {
   id: string;
   name: string;
   price: number;
+  comparePrice?: number;
   currency: string;
   stock: number;
   image?: string;

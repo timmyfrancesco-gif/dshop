@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
@@ -9,6 +9,23 @@ import ServiceIcon from "@/components/ui/ServiceIcon";
 import { useCart } from "@/lib/hooks/useCart";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { useProducts } from "@/lib/hooks/useProducts";
+
+function useViewerCount() {
+  const [count] = useState(() => Math.floor(Math.random() * 3) + 1);
+  return count;
+}
+
+function usePurchaseCount(productId: string) {
+  const count = useMemo(() => {
+    let hash = 0;
+    for (let i = 0; i < productId.length; i++) {
+      hash = ((hash << 5) - hash) + productId.charCodeAt(i);
+      hash |= 0;
+    }
+    return 50 + Math.abs(hash % 200);
+  }, [productId]);
+  return count;
+}
 
 export default function ProductPage() {
   const { t, formatPrice } = useLocale();
@@ -22,6 +39,15 @@ export default function ProductPage() {
   const [activeImage, setActiveImage] = useState(0);
 
   const product = items.find((item) => String(item.id) === params.id);
+  const viewers = useViewerCount();
+  const purchases = usePurchaseCount(params.id ?? "");
+
+  useEffect(() => {
+    if (product?.variants && product.variants.length > 0) {
+      const firstInStock = product.variants.findIndex((v) => v.stock > 0);
+      if (firstInStock >= 0) setSelectedVariant(firstInStock);
+    }
+  }, [product]);
 
   if (!loaded) {
     return (
@@ -33,29 +59,16 @@ export default function ProductPage() {
     );
   }
 
-  if (error) {
+  if (error || !product) {
     return (
       <PageShell>
         <section className="px-4 py-24 text-center sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold text-foreground">{t("product.errorTitle")}</h1>
-          <p className="mt-2 text-sm text-muted">{t("product.errorSubtitle")}</p>
-          <Link
-            href="/#shop"
-            className="mt-6 inline-block rounded-full border border-accent/30 bg-accent-soft px-5 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
-          >
-            {t("product.backToShop")}
-          </Link>
-        </section>
-      </PageShell>
-    );
-  }
-
-  if (!product) {
-    return (
-      <PageShell>
-        <section className="px-4 py-24 text-center sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold text-foreground">{t("product.notFoundTitle")}</h1>
-          <p className="mt-2 text-sm text-muted">{t("product.notFoundSubtitle")}</p>
+          <h1 className="text-2xl font-bold text-foreground">
+            {error ? t("product.errorTitle") : t("product.notFoundTitle")}
+          </h1>
+          <p className="mt-2 text-sm text-muted">
+            {error ? t("product.errorSubtitle") : t("product.notFoundSubtitle")}
+          </p>
           <Link
             href="/#shop"
             className="mt-6 inline-block rounded-full border border-accent/30 bg-accent-soft px-5 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background"
@@ -87,20 +100,20 @@ export default function ProductPage() {
   }
 
   function handlePurchaseNow() {
-    const params = new URLSearchParams({
+    const p = new URLSearchParams({
       productId: product!.id,
       qty: String(quantity),
     });
     if (variant) {
-      params.set("variantId", variant.id);
+      p.set("variantId", variant.id);
     }
-    router.push(`/checkout?${params.toString()}`);
+    router.push(`/checkout?${p.toString()}`);
   }
 
   return (
     <PageShell>
-      <section className="px-4 py-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl">
+      <section className="px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
           <Link href="/#shop" className="inline-flex items-center gap-1 text-sm font-medium text-muted transition-colors hover:text-foreground">
             &larr; {t("product.backToShop")}
           </Link>
@@ -108,7 +121,7 @@ export default function ProductPage() {
           <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-2">
             {/* Image gallery */}
             <div className="space-y-3">
-              <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-background-elevated/60">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-border bg-background-elevated/60">
                 {allImages.length > 0 ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -141,43 +154,10 @@ export default function ProductPage() {
                   ))}
                 </div>
               )}
-            </div>
 
-            {/* Details */}
-            <div className="flex flex-col">
-              {product.category ? (
-                <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">
-                  {product.category}
-                </span>
-              ) : null}
-              <h1 className="mt-2 text-3xl font-bold text-foreground sm:text-4xl">{product.name}</h1>
-
-              {/* Price + Stock */}
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <span className="rounded-full bg-accent px-4 py-1.5 text-sm font-bold text-background shadow-[0_0_20px_-4px_var(--accent)]">
-                  {hasVariants && product.variants!.length > 1
-                    ? (() => {
-                        const prices = product.variants!.map((v) => v.price);
-                        const min = Math.min(...prices);
-                        const max = Math.max(...prices);
-                        return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`;
-                      })()
-                    : formatPrice(currentPrice)}
-                </span>
-                <span
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                    currentStock > 0
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                      : "border-rose-500/30 bg-rose-500/10 text-rose-400"
-                  }`}
-                >
-                  {currentStock > 0 ? `${currentStock} ${t("product.inStock")}` : t("product.outOfStock")}
-                </span>
-              </div>
-
-              {/* Description - render HTML if present */}
+              {/* Description below image */}
               {product.description ? (
-                <div className="mt-6">
+                <div className="rounded-2xl border border-border bg-background-elevated/40 p-5">
                   {product.description.includes("<") ? (
                     <SafeHtml
                       html={product.description}
@@ -188,6 +168,54 @@ export default function ProductPage() {
                   )}
                 </div>
               ) : null}
+            </div>
+
+            {/* Details */}
+            <div className="flex flex-col">
+              <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">{product.name}</h1>
+
+              {/* Social proof */}
+              <div className="mt-3 flex flex-col gap-1.5">
+                <p className="flex items-center gap-2 text-sm text-muted">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                  </svg>
+                  <span><strong className="text-foreground">{viewers}</strong> {viewers === 1 ? "person is viewing" : "people are viewing"}</span>
+                </p>
+                <p className="flex items-center gap-2 text-sm text-muted">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-casino-from" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <span><strong className="text-foreground">{purchases}</strong> people have purchased.</span>
+                </p>
+              </div>
+
+              {/* Price + Stock */}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span className="text-lg font-extrabold text-foreground">
+                    {formatPrice(currentPrice)}
+                  </span>
+                  {product.comparePrice && product.comparePrice > currentPrice ? (
+                    <span className="text-sm text-muted line-through">
+                      {formatPrice(product.comparePrice)}
+                    </span>
+                  ) : null}
+                </span>
+                <span
+                  className={`rounded-full border px-4 py-2 text-xs font-bold ${
+                    currentStock > 0
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                      : "border-rose-500/30 bg-rose-500/10 text-rose-400"
+                  }`}
+                >
+                  {currentStock > 0 ? `${currentStock} In Stock` : "Out of Stock"}
+                </span>
+              </div>
 
               {/* Variant selector */}
               {hasVariants && product.variants!.length > 1 && (
@@ -240,8 +268,8 @@ export default function ProductPage() {
                 </div>
               )}
 
-              {/* Quantity + Total */}
-              <div className="mt-8 rounded-2xl border border-border bg-background-elevated/40 p-4">
+              {/* Quantity */}
+              <div className="mt-6 rounded-2xl border border-border bg-background-elevated/40 p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">{t("product.quantity")}</span>
                   <div className="flex items-center gap-0 overflow-hidden rounded-full border border-border bg-background/60">
@@ -268,12 +296,6 @@ export default function ProductPage() {
                     </button>
                   </div>
                 </div>
-                <div className="mt-4 border-t border-border/60 pt-4 flex items-center justify-between">
-                  <span className="text-sm text-muted">{t("product.total")}</span>
-                  <span className="text-xl font-bold text-foreground">
-                    {formatPrice(total)}
-                  </span>
-                </div>
               </div>
 
               {/* Buttons */}
@@ -282,23 +304,29 @@ export default function ProductPage() {
                   type="button"
                   onClick={handleAddToCart}
                   disabled={currentStock === 0}
-                  className="rounded-full border border-accent/40 bg-accent-soft py-3 text-sm font-semibold text-accent transition-colors hover:bg-accent hover:text-background disabled:opacity-40"
+                  className="flex items-center justify-center gap-2 rounded-full bg-accent py-3.5 text-sm font-bold text-background shadow-[0_0_24px_-4px_var(--accent)] transition-all hover:shadow-[0_0_36px_-4px_var(--accent)] hover:brightness-110 disabled:opacity-40"
                 >
                   {added ? `${t("product.added")} ✓` : t("product.addToCart")}
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                  </svg>
                 </button>
                 <button
                   type="button"
                   onClick={handlePurchaseNow}
                   disabled={currentStock === 0}
-                  className="rounded-full bg-accent py-3 text-sm font-semibold text-background shadow-[0_0_24px_-4px_var(--accent)] transition-opacity hover:opacity-90 disabled:opacity-40"
+                  className="flex items-center justify-center gap-2 rounded-full border border-border bg-background-elevated/60 py-3.5 text-sm font-bold text-foreground transition-all hover:border-accent hover:text-accent disabled:opacity-40"
                 >
-                  {currentStock === 0 ? t("product.outOfStock") : t("product.purchaseNow")}
+                  {currentStock === 0 ? t("product.outOfStock") : "Buy Now"}
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
                 </button>
               </div>
 
               {/* Instructions */}
               {product.instructions && (
-                <div className="mt-8 rounded-2xl border border-border bg-background-elevated/40 p-5">
+                <div className="mt-6 rounded-2xl border border-border bg-background-elevated/40 p-5">
                   <h3 className="text-sm font-semibold text-foreground">
                     {t("product.instructions") || "Instructions"}
                   </h3>
