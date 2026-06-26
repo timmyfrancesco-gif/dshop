@@ -193,24 +193,24 @@ export default function ProductPage() {
 
               {/* Price + Stock */}
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-2">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-accent" fill="none" stroke="currentColor" strokeWidth={2}>
+                <span className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-casino-from to-accent px-4 py-2.5 shadow-[0_14px_30px_rgba(168,85,247,0.3),inset_0_1px_0_rgba(255,255,255,0.35)]">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-background" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
-                  <span className="text-lg font-extrabold text-foreground">
+                  <span className="text-lg font-extrabold text-background">
                     {formatPrice(currentPrice)}
                   </span>
-                  {product.comparePrice && product.comparePrice > currentPrice ? (
-                    <span className="text-sm text-muted line-through">
-                      {formatPrice(product.comparePrice)}
-                    </span>
-                  ) : null}
                 </span>
+                {product.comparePrice && product.comparePrice > currentPrice ? (
+                  <span className="text-sm font-semibold text-muted line-through">
+                    {formatPrice(product.comparePrice)}
+                  </span>
+                ) : null}
                 <span
-                  className={`rounded-full border px-4 py-2 text-xs font-bold ${
+                  className={`rounded-full border border-white/10 px-4 py-2 text-xs font-extrabold shadow-lg ${
                     currentStock > 0
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                      : "border-rose-500/30 bg-rose-500/10 text-rose-400"
+                      ? "bg-gradient-to-r from-emerald-400 to-emerald-500 text-emerald-950"
+                      : "bg-gradient-to-r from-rose-400 to-rose-500 text-rose-950"
                   }`}
                 >
                   {currentStock > 0 ? `${currentStock} In Stock` : "Out of Stock"}

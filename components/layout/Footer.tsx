@@ -47,20 +47,26 @@ export default function Footer() {
 
           {/* Navigation */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">{t("footer.quickLinks")}</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">
+              {t("footer.quickLinks")}
+              <span className="mt-1.5 block h-[3px] w-20 rounded-full bg-gradient-to-r from-accent to-transparent" />
+            </h3>
             <ul className="mt-4 flex flex-col gap-2.5 text-sm text-muted">
-              <li><Link href="/#top" className="transition-colors hover:text-foreground">{t("nav.home")}</Link></li>
-              <li><Link href="/#shop" className="transition-colors hover:text-foreground">{t("nav.products")}</Link></li>
-              <li><Link href="/#services" className="transition-colors hover:text-foreground">{t("nav.features")}</Link></li>
-              <li><Link href="/#faq" className="transition-colors hover:text-foreground">{t("nav.faq")}</Link></li>
-              <li><Link href="/#vouches" className="transition-colors hover:text-foreground">{t("nav.reviews")}</Link></li>
-              <li><Link href="/terms" className="transition-colors hover:text-foreground">{t("nav.terms")}</Link></li>
+              <li><Link href="/#top" className="footer-link">{t("nav.home")}</Link></li>
+              <li><Link href="/#shop" className="footer-link">{t("nav.products")}</Link></li>
+              <li><Link href="/#services" className="footer-link">{t("nav.features")}</Link></li>
+              <li><Link href="/#faq" className="footer-link">{t("nav.faq")}</Link></li>
+              <li><Link href="/#vouches" className="footer-link">{t("nav.reviews")}</Link></li>
+              <li><Link href="/terms" className="footer-link">{t("nav.terms")}</Link></li>
             </ul>
           </div>
 
           {/* Support */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">{t("footer.support")}</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">
+              {t("footer.support")}
+              <span className="mt-1.5 block h-[3px] w-20 rounded-full bg-gradient-to-r from-accent to-transparent" />
+            </h3>
             <ul className="mt-4 flex flex-col gap-3 text-sm">
               <li>
                 <a
@@ -90,7 +96,10 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">Contact</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-foreground">
+              Contact
+              <span className="mt-1.5 block h-[3px] w-20 rounded-full bg-gradient-to-r from-accent to-transparent" />
+            </h3>
             <div className="mt-4 flex items-center gap-2.5">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />

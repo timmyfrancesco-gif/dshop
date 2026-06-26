@@ -220,10 +220,10 @@ export default function Shop() {
                         ) : null}
                       </div>
                       <span
-                        className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                        className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white ${
                           item.stock > 0
-                            ? "bg-emerald-500/15 text-emerald-400"
-                            : "bg-rose-500/15 text-rose-400"
+                            ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                            : "bg-gradient-to-r from-rose-500 to-rose-400"
                         }`}
                       >
                         <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2}>
