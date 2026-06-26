@@ -86,20 +86,25 @@ export default function SlotPurchaseModal({
     }
 
     setLoading(true);
-    const res = await createSlotOrder({
-      tier: tierId,
-      duration: durationId,
-      discord: discord.trim(),
-    });
-    setLoading(false);
+    try {
+      const res = await createSlotOrder({
+        tier: tierId,
+        duration: durationId,
+        discord: discord.trim(),
+      });
 
-    if (!res) {
+      if (!res) {
+        setError("Something went wrong creating your order. Please try again or contact staff.");
+        return;
+      }
+
+      setOrder(res);
+      setStep(2);
+    } catch {
       setError("Something went wrong creating your order. Please try again or contact staff.");
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    setOrder(res);
-    setStep(2);
   }
 
   const approxLtc = order && ltcEur ? (order.amountEur / ltcEur).toFixed(6) : null;

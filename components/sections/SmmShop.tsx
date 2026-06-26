@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -234,8 +234,11 @@ function SmmProductCard({ product, index }: { product: SmmProduct; index: number
 
               <Link
                 href={`/checkout/smm?productId=${product.id}&quantity=${quantity}&link=${encodeURIComponent(link)}&discord=${encodeURIComponent(discord)}`}
-                onClick={() => {
-                  if (!link.trim() || !discord.trim()) return;
+                onClick={(e) => {
+                  if (!link.trim() || !discord.trim()) {
+                    e.preventDefault();
+                    return;
+                  }
                 }}
                 className={`w-full rounded-full bg-accent px-4 py-3 text-center text-sm font-bold text-background transition-all hover:shadow-[0_0_24px_-6px_var(--accent)] hover:brightness-110 ${
                   !link.trim() || !discord.trim() ? "pointer-events-none opacity-50" : ""

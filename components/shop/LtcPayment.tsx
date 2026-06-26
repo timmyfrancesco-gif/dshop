@@ -7,7 +7,7 @@ import { useLocale } from "@/lib/hooks/useLocale";
 import { useQrCode } from "@/lib/hooks/useQrCode";
 import type { ProductOrderResponse } from "@/lib/types";
 
-const POLL_INTERVAL_MS = 1000;
+const POLL_INTERVAL_MS = 5000;
 
 interface LtcPaymentProps {
   order: ProductOrderResponse;
@@ -111,7 +111,6 @@ export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelle
   const [phase, setPhase] = useState<PaymentPhase>("waiting");
   const [confirmations, setConfirmations] = useState(0);
   const [requiredConfirmations, setRequiredConfirmations] = useState(1);
-  const [txHash, setTxHash] = useState<string | null>(null);
   const onPaidRef = useRef(onPaid);
   const onCancelledRef = useRef(onCancelled);
   onPaidRef.current = onPaid;
@@ -241,12 +240,7 @@ export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelle
           <h3 className="text-accent font-semibold text-lg mb-3">{t("ltcPayment.transactionHistory")}</h3>
           <div className="flex items-center gap-3 rounded-xl border border-border bg-background/60 px-4 py-3">
             <span className="text-sm font-mono text-foreground">{approxLtc ?? "—"} LTC</span>
-            {txHash && (
-              <span className="text-sm font-mono text-muted truncate">{txHash.slice(0, 16)}…</span>
-            )}
-            {!txHash && (
-              <span className="text-sm text-muted truncate">{order.orderId}</span>
-            )}
+            <span className="text-sm text-muted truncate">{order.orderId}</span>
             <svg className="ml-auto h-4 w-4 animate-spin text-accent shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden>
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
               <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />

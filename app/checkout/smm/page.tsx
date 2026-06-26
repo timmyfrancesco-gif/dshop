@@ -16,7 +16,7 @@ export default function SmmCheckoutPage() {
     <PageShell>
       <section className="px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-lg">
-          <Suspense fallback={<p className="mt-10 text-sm text-muted">Loading...</p>}>
+          <Suspense fallback={<SmmLoadingFallback />}>
             <SmmCheckoutContent />
           </Suspense>
         </div>
@@ -25,10 +25,15 @@ export default function SmmCheckoutPage() {
   );
 }
 
+function SmmLoadingFallback() {
+  const { t } = useLocale();
+  return <p className="mt-10 text-sm text-muted">{t("smm.loading")}</p>;
+}
+
 type Phase = "loading" | "confirm" | "paying" | "processing" | "completed" | "error";
 
 function SmmCheckoutContent() {
-  const { formatPrice } = useLocale();
+  const { formatPrice, t } = useLocale();
   const params = useSearchParams();
 
   const productId = params.get("productId") ?? "";
@@ -46,13 +51,13 @@ function SmmCheckoutContent() {
   const totalEur = product ? (quantity / 1000) * product.pricePerThousand : 0;
 
   useEffect(() => {
-    if (!productId) { setPhase("error"); setError("Missing product ID."); return; }
-    if (!link) { setPhase("error"); setError("Missing link."); return; }
-    if (!discord) { setPhase("error"); setError("Missing Discord username."); return; }
+    if (!productId) { setPhase("error"); setError(t("smm.missingProductId")); return; }
+    if (!link) { setPhase("error"); setError(t("smm.missingLink")); return; }
+    if (!discord) { setPhase("error"); setError(t("smm.missingDiscord")); return; }
 
     getSmmProducts().then((res) => {
       const p = res?.products?.find((x) => x.id === productId);
-      if (!p) { setPhase("error"); setError("Product not found."); return; }
+      if (!p) { setPhase("error"); setError(t("smm.productNotFound")); return; }
       setProduct(p);
       setPhase("confirm");
     });
@@ -61,7 +66,7 @@ function SmmCheckoutContent() {
   async function handleConfirm() {
     setPhase("loading");
     const res = await createSmmOrder({ smmProductId: productId, quantity, link, discord });
-    if (!res) { setPhase("error"); setError("Failed to create order. Please try again."); return; }
+    if (!res) { setPhase("error"); setError(t("smm.createOrderFailed")); return; }
     setOrder(res);
     setPhase("paying");
     startPolling(res.orderId);
@@ -84,7 +89,7 @@ function SmmCheckoutContent() {
             setStatus(s2);
             if (s2.status === "completed" || s2.status === "cancelled") {
               setPhase(s2.status === "completed" ? "completed" : "error");
-              if (s2.status === "cancelled") setError("Order was cancelled.");
+              if (s2.status === "cancelled") setError(t("smm.orderCancelled"));
               if (pollRef.current) clearInterval(pollRef.current);
             }
           }, 5000);
@@ -92,7 +97,7 @@ function SmmCheckoutContent() {
       }
       if (s.status === "cancelled") {
         setPhase("error");
-        setError("Order was cancelled.");
+        setError(t("smm.orderCancelled"));
         if (pollRef.current) clearInterval(pollRef.current);
       }
     }, 3000);
@@ -133,8 +138,8 @@ function SmmCheckoutContent() {
   if (phase === "confirm" && product) {
     return (
       <div className="mt-10">
-        <h1 className="text-2xl font-bold text-foreground">Confirm SMM Order</h1>
-        <p className="mt-2 text-sm text-muted">Review your order details before proceeding to payment.</p>
+        <h1 className="text-2xl font-bold text-foreground">{t("smm.confirmTitle")}</h1>
+        <p className="mt-2 text-sm text-muted">{t("smm.confirmSubtitle")}</p>
 
         <div className="mt-8 rounded-2xl border border-border bg-background/60 p-6">
           <div className="flex items-center gap-3 border-b border-border pb-4 mb-4">
@@ -144,29 +149,29 @@ function SmmCheckoutContent() {
 
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-muted">Service</span>
+              <span className="text-muted">{t("smm.service")}</span>
               <span className="font-medium text-foreground">{product.name}</span>
             </div>
             {product.category && (
               <div className="flex justify-between text-sm">
-                <span className="text-muted">Platform</span>
+                <span className="text-muted">{t("smm.platform")}</span>
                 <span className="font-medium text-foreground">{product.category}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-muted">Quantity</span>
+              <span className="text-muted">{t("smm.quantity")}</span>
               <span className="font-medium text-foreground">{quantity.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted">Link</span>
+              <span className="text-muted">{t("smm.link")}</span>
               <span className="max-w-[200px] truncate font-medium text-foreground">{link}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted">Price per 1K</span>
+              <span className="text-muted">{t("smm.pricePerThousand")}</span>
               <span className="font-medium text-foreground">{formatPrice(product.pricePerThousand)}</span>
             </div>
             <div className="border-t border-border pt-3 flex justify-between">
-              <span className="text-sm font-bold text-foreground">Total</span>
+              <span className="text-sm font-bold text-foreground">{t("smm.total")}</span>
               <span className="text-lg font-bold text-accent">{formatPrice(totalEur)}</span>
             </div>
           </div>
@@ -176,7 +181,7 @@ function SmmCheckoutContent() {
             onClick={handleConfirm}
             className="mt-6 w-full rounded-full bg-accent px-4 py-3 text-sm font-bold text-background transition-all hover:shadow-[0_0_24px_-6px_var(--accent)] hover:brightness-110"
           >
-            Pay with Litecoin &mdash; {formatPrice(totalEur)}
+            {t("smm.payWithLitecoin")} &mdash; {formatPrice(totalEur)}
           </button>
         </div>
       </div>
@@ -187,7 +192,7 @@ function SmmCheckoutContent() {
     return (
       <div className="mt-10">
         <h1 className="text-2xl font-bold text-foreground">
-          {phase === "paying" ? "Send Payment" : phase === "processing" ? "Processing Order" : "Order Complete"}
+          {phase === "paying" ? t("smm.sendPayment") : phase === "processing" ? t("smm.processingOrder") : t("smm.orderComplete")}
         </h1>
 
         {phase === "paying" && (
@@ -200,10 +205,10 @@ function SmmCheckoutContent() {
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
               <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
             </svg>
-            <h2 className="text-xl font-bold text-amber-400">Processing Your Order</h2>
-            <p className="text-sm text-muted">Payment received! Your SMM order is being processed.</p>
+            <h2 className="text-xl font-bold text-amber-400">{t("smm.processingTitle")}</h2>
+            <p className="text-sm text-muted">{t("smm.processingSubtitle")}</p>
             {status?.smmOrderId && (
-              <p className="text-xs text-muted">SMM Order ID: #{status.smmOrderId}</p>
+              <p className="text-xs text-muted">{t("smm.smmOrderId")}: #{status.smmOrderId}</p>
             )}
             {status?.smmStatus && (
               <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-1.5 text-xs font-semibold text-amber-400">
@@ -220,15 +225,15 @@ function SmmCheckoutContent() {
                 <path d="M20 6L9 17l-5-5" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-emerald-400">Order Completed!</h2>
-            <p className="text-sm text-muted">Your SMM order has been fulfilled successfully.</p>
+            <h2 className="text-2xl font-bold text-emerald-400">{t("smm.orderCompletedTitle")}</h2>
+            <p className="text-sm text-muted">{t("smm.orderCompletedSubtitle")}</p>
             <div className="space-y-1">
-              <p className="text-xs text-muted">Service: {order.serviceName}</p>
-              <p className="text-xs text-muted">Quantity: {order.quantity.toLocaleString()}</p>
-              {status?.smmOrderId && <p className="text-xs text-muted">SMM Order ID: #{status.smmOrderId}</p>}
+              <p className="text-xs text-muted">{t("smm.service")}: {order.serviceName}</p>
+              <p className="text-xs text-muted">{t("smm.quantity")}: {order.quantity.toLocaleString()}</p>
+              {status?.smmOrderId && <p className="text-xs text-muted">{t("smm.smmOrderId")}: #{status.smmOrderId}</p>}
             </div>
             <Link href="/#smm" className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-6 py-2.5 text-sm font-semibold text-emerald-400 hover:bg-emerald-500 hover:text-white transition-colors">
-              Back to SMM Shop
+              {t("smm.backToShop")}
             </Link>
           </div>
         )}
@@ -240,6 +245,7 @@ function SmmCheckoutContent() {
 }
 
 function SmmPaymentView({ order, status }: { order: SmmOrderResponse; status: SmmOrderStatusResponse | null }) {
+  const { t } = useLocale();
   const ltcUri = `litecoin:${order.address}?amount=${order.amountLtc}`;
   const qrSvg = useQrCode(ltcUri);
   const [copied, setCopied] = useState(false);
@@ -263,16 +269,16 @@ function SmmPaymentView({ order, status }: { order: SmmOrderResponse; status: Sm
             <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
           </svg>
           <div>
-            <p className="text-sm font-semibold text-amber-400">Transaction detected!</p>
+            <p className="text-sm font-semibold text-amber-400">{t("smm.transactionDetected")}</p>
             <p className="text-xs text-muted">
-              Confirmations: {status.confirmations ?? 0}/{status.requiredConfirmations ?? 1}
+              {t("smm.confirmations")}: {status.confirmations ?? 0}/{status.requiredConfirmations ?? 1}
             </p>
           </div>
         </div>
       )}
 
       <div className="flex flex-col items-center gap-4">
-        <p className="text-sm text-muted">Send exactly:</p>
+        <p className="text-sm text-muted">{t("smm.sendExactly")}</p>
         <p className="text-2xl font-bold text-accent">{order.amountLtc} LTC</p>
         <p className="text-xs text-muted">({formatEur(order.amountEur)})</p>
 
@@ -284,26 +290,26 @@ function SmmPaymentView({ order, status }: { order: SmmOrderResponse; status: Sm
         )}
 
         <div className="w-full rounded-xl border border-border bg-background-elevated p-3">
-          <p className="mb-1 text-xs text-muted">LTC Address</p>
+          <p className="mb-1 text-xs text-muted">{t("smm.ltcAddress")}</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 break-all text-xs text-foreground">{order.address}</code>
             <button type="button" onClick={copyAddress} className="shrink-0 rounded-lg border border-border px-2 py-1 text-xs text-muted hover:text-accent transition-colors">
-              {copied ? "Copied!" : "Copy"}
+              {copied ? t("smm.copied") : t("smm.copy")}
             </button>
           </div>
         </div>
 
         <div className="w-full space-y-2 rounded-xl border border-border bg-background-elevated p-3">
           <div className="flex justify-between text-xs">
-            <span className="text-muted">Service</span>
+            <span className="text-muted">{t("smm.service")}</span>
             <span className="text-foreground">{order.serviceName}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-muted">Quantity</span>
+            <span className="text-muted">{t("smm.quantity")}</span>
             <span className="text-foreground">{order.quantity.toLocaleString()}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span className="text-muted">Link</span>
+            <span className="text-muted">{t("smm.link")}</span>
             <span className="max-w-[180px] truncate text-foreground">{order.link}</span>
           </div>
         </div>
@@ -314,7 +320,7 @@ function SmmPaymentView({ order, status }: { order: SmmOrderResponse; status: Sm
               <circle cx="12" cy="12" r="10" />
               <path d="M12 6v6l4 2" />
             </svg>
-            Waiting for payment...
+            {t("smm.waitingForPayment")}
           </div>
         )}
       </div>

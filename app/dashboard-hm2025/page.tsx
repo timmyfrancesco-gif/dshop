@@ -9,6 +9,7 @@ import {
   getHealth,
   getLtcPrice,
   getProducts,
+  getReviews,
   getStats,
   getWalletInfo,
   transferFunds,
@@ -22,6 +23,7 @@ import type {
   ApiProduct,
   FeedItem,
   LtcResponse,
+  Review,
   StatsResponse,
   WalletInfo,
 } from "@/lib/types";
@@ -516,6 +518,7 @@ function AdminPanel() {
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [ltc, setLtc] = useState<LtcResponse | null>(null);
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [botOnline, setBotOnline] = useState<boolean | null>(null);
@@ -542,7 +545,7 @@ function AdminPanel() {
   /* -- data fetching -- */
   const refresh = useCallback(async () => {
     setLoading(true);
-    const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes] =
+    const [statsRes, productsRes, feedRes, ltcRes, healthRes, walletRes, reviewsRes] =
       await Promise.all([
         getStats(),
         getProducts(),
@@ -550,10 +553,12 @@ function AdminPanel() {
         getLtcPrice(),
         getHealth(),
         getWalletInfo(),
+        getReviews(),
       ]);
     if (statsRes) setStats(statsRes);
     if (productsRes?.products) setProducts(productsRes.products);
     if (feedRes?.items) setFeed(feedRes.items);
+    if (reviewsRes?.reviews) setReviews(reviewsRes.reviews);
     if (ltcRes) setLtc(ltcRes);
     if (walletRes) setWallet(walletRes);
     setBotOnline(healthRes?.ok ?? false);
@@ -1048,8 +1053,15 @@ function AdminPanel() {
               onEdit={openProductEdit}
               onNew={() => openProductEdit(null)}
               onDelete={(p) => setModal({ kind: "confirm-delete", product: p })}
-              onStockChange={handleStockChange}
-              ltc={ltc}
+              onClone={(p) => {
+                const cloned: ApiProduct = {
+                  ...p,
+                  id: "",
+                  name: `${p.name} (Copy)`,
+                  stock: 0,
+                };
+                openProductEdit(cloned);
+              }}
             />
           )}
           {activeNav === "product-edit" && (
@@ -1095,7 +1107,7 @@ function AdminPanel() {
           )}
           {activeNav === "categories" && <CategoriesView products={products} />}
           {activeNav === "coupons" && <CouponsView />}
-          {activeNav === "feedbacks" && <FeedbacksView feed={feed} />}
+          {activeNav === "feedbacks" && <FeedbacksView feed={feed} reviews={reviews} />}
           {activeNav === "abandoned-checkouts" && <AbandonedCheckoutsView />}
           {activeNav === "storefront-configure" && (
             <StorefrontConfigureView showToast={showToast} />
@@ -1251,27 +1263,20 @@ function DashboardView({
         <StatCard
           label="Revenue"
           value={formatCurrency(revenueTotal, "EUR")}
-          change="+12.5%"
-          positive
           sparkData={dailyRevenue}
         />
         <StatCard
           label="Orders"
           value={orderCount.toString()}
-          change="+8.2%"
-          positive
           sparkData={dailyOrders}
         />
         <StatCard
           label="Customers"
           value={customerCount.toString()}
-          change="+3.1%"
-          positive
         />
         <StatCard
           label="Avg Order"
           value={formatCurrency(avgOrderValue, "EUR")}
-          change=""
         />
       </div>
 
@@ -1479,8 +1484,7 @@ function ProductsView({
   onEdit,
   onNew,
   onDelete,
-  onStockChange,
-  ltc,
+  onClone,
 }: {
   products: ApiProduct[];
   productSearch: string;
@@ -1488,143 +1492,217 @@ function ProductsView({
   onEdit: (product: ApiProduct) => void;
   onNew: () => void;
   onDelete: (product: ApiProduct) => void;
-  onStockChange: (product: ApiProduct, delta: number) => void;
-  ltc: LtcResponse | null;
+  onClone: (product: ApiProduct) => void;
 }) {
-  const inStock = products.filter((p) => p.stock > 0).length;
-  const outOfStock = products.filter((p) => p.stock <= 0).length;
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  function priceDisplay(p: ApiProduct) {
+    if (p.variants && p.variants.length > 1) {
+      const prices = p.variants.map((v) => v.price);
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      return min === max
+        ? formatCurrency(min, p.currency)
+        : `${formatCurrency(min, p.currency)} - ${formatCurrency(max, p.currency)}`;
+    }
+    return formatCurrency(p.price, p.currency);
+  }
+
+  function totalStock(p: ApiProduct) {
+    if (p.variants && p.variants.length > 0) {
+      return p.variants.reduce((s, v) => s + v.stock, 0);
+    }
+    return p.stock;
+  }
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h3 className="text-xl font-bold text-white">Products</h3>
+          <h3 className="text-2xl font-bold text-white">Products</h3>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Manage your product catalog ({products.length} total)
+            Manage your product inventory.
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <IconSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
-            <input
-              type="text"
-              value={productSearch}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search products..."
-              className="w-56 rounded-lg border border-white/10 py-2 pl-9 pr-3 text-xs text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-600"
-              style={{ backgroundColor: "#161619" }}
-            />
-          </div>
           <button
             type="button"
             onClick={onNew}
-            className="rounded-lg bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600"
+            className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-600"
           >
             + Create Product
           </button>
         </div>
       </div>
 
-      {/* Product grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {products.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center rounded-xl border border-white/5 py-16" style={{ backgroundColor: "#121214" }}>
-            <IconProducts className="h-10 w-10 text-zinc-600" />
-            <p className="mt-3 text-sm text-zinc-500">No products found.</p>
-          </div>
-        ) : (
-          products.map((p) => (
-            <div
-              key={p.id}
-              className="group flex flex-col overflow-hidden rounded-xl border border-white/5 transition-all hover:border-white/10 cursor-pointer"
-              style={{ backgroundColor: "#121214" }}
-              onClick={() => onEdit(p)}
-            >
-              {/* Banner / Image */}
-              <div className="relative h-28 w-full overflow-hidden">
-                {p.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={p.image}
-                    alt=""
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-purple-500/10">
-                    <IconProducts className="h-8 w-8 text-indigo-400/40" />
-                  </div>
-                )}
-                {/* Stock badge */}
-                <span
-                  className={`absolute right-2 top-2 rounded-md px-2 py-0.5 text-[10px] font-bold backdrop-blur-sm ${
-                    p.stock > 0
-                      ? "bg-emerald-500/20 text-emerald-400"
-                      : "bg-rose-500/20 text-rose-400"
-                  }`}
-                >
-                  {p.stock > 0 ? `${p.stock} in stock` : "Out of stock"}
-                </span>
-              </div>
+      {/* Filters bar */}
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <div className="relative">
+          <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="text"
+            value={productSearch}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search by name..."
+            className="w-60 rounded-lg border border-white/10 py-2.5 pl-10 pr-4 text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-600"
+            style={{ backgroundColor: "#161619" }}
+          />
+        </div>
+        <div className="flex overflow-hidden rounded-lg border border-white/10">
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            className={`flex items-center justify-center px-3 py-2 transition-colors ${viewMode === "list" ? "bg-white/10 text-white" : "text-zinc-500 hover:text-white"}`}
+            aria-label="List view"
+          >
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path fillRule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 5A.75.75 0 012.75 9h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 9.75zm0 5a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75z" clipRule="evenodd" /></svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            className={`flex items-center justify-center px-3 py-2 transition-colors ${viewMode === "grid" ? "bg-white/10 text-white" : "text-zinc-500 hover:text-white"}`}
+            aria-label="Grid view"
+          >
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor"><path fillRule="evenodd" d="M4.25 2A2.25 2.25 0 002 4.25v2.5A2.25 2.25 0 004.25 9h2.5A2.25 2.25 0 009 6.75v-2.5A2.25 2.25 0 006.75 2h-2.5zm0 9A2.25 2.25 0 002 13.25v2.5A2.25 2.25 0 004.25 18h2.5A2.25 2.25 0 009 15.75v-2.5A2.25 2.25 0 006.75 11h-2.5zm9-9A2.25 2.25 0 0011 4.25v2.5A2.25 2.25 0 0013.25 9h2.5A2.25 2.25 0 0018 6.75v-2.5A2.25 2.25 0 0015.75 2h-2.5zm0 9A2.25 2.25 0 0011 13.25v2.5A2.25 2.25 0 0013.25 18h2.5A2.25 2.25 0 0018 15.75v-2.5A2.25 2.25 0 0015.75 11h-2.5z" clipRule="evenodd" /></svg>
+          </button>
+        </div>
+      </div>
 
-              {/* Info */}
-              <div className="flex flex-1 flex-col p-4">
-                <h4 className="text-sm font-semibold text-white truncate">{p.name}</h4>
-                <p className="mt-1 truncate text-xs text-zinc-500">{p.description}</p>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="rounded-md bg-indigo-500/10 px-2 py-0.5 text-xs font-bold text-indigo-400">
-                    {formatCurrency(p.price, p.currency)}
-                  </span>
-                  {ltc && (
-                    <span className="text-[10px] text-zinc-600 font-mono">
-                      {(p.price / ltc.eur).toFixed(4)} LTC
-                    </span>
+      {/* Product grid */}
+      {products.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-white/5 py-16" style={{ backgroundColor: "#121214" }}>
+          <IconProducts className="h-10 w-10 text-zinc-600" />
+          <p className="mt-3 text-sm text-zinc-500">No products found.</p>
+        </div>
+      ) : viewMode === "grid" ? (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {products.map((p) => {
+            const stock = totalStock(p);
+            return (
+              <div
+                key={p.id}
+                className="group flex flex-col overflow-hidden rounded-xl border border-white/5 transition-all hover:border-white/10 cursor-pointer"
+                style={{ backgroundColor: "#121214" }}
+                onClick={() => onEdit(p)}
+              >
+                {/* Product Image */}
+                <div className="relative h-44 w-full overflow-hidden">
+                  {p.image || (p.images && p.images[0]) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.images?.[0] || p.image}
+                      alt=""
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-purple-500/10">
+                      <IconProducts className="h-12 w-12 text-indigo-400/40" />
+                    </div>
                   )}
                 </div>
-              </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-between border-t border-white/5 px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => onStockChange(p, -1)}
-                    className="flex h-6 w-6 items-center justify-center rounded border border-white/10 text-xs font-bold text-rose-400 transition-all hover:border-rose-400/30 hover:bg-rose-500/10"
-                  >
-                    -
-                  </button>
-                  <span className="min-w-[2rem] text-center text-xs font-semibold text-zinc-300">
-                    {p.stock}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onStockChange(p, 1)}
-                    className="flex h-6 w-6 items-center justify-center rounded border border-white/10 text-xs font-bold text-emerald-400 transition-all hover:border-emerald-400/30 hover:bg-emerald-500/10"
-                  >
-                    +
-                  </button>
+                {/* Info */}
+                <div className="flex flex-1 flex-col px-5 pt-4 pb-2">
+                  <h4 className="text-sm font-semibold text-white truncate">{p.name}</h4>
+                  <div className="mt-1.5 flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-zinc-300">
+                      {priceDisplay(p)}
+                    </span>
+                    <span
+                      className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold ${
+                        stock > 0 && stock <= 5
+                          ? "bg-amber-500/10 text-amber-400"
+                          : stock > 0
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : "bg-rose-500/10 text-rose-400"
+                      }`}
+                    >
+                      {stock <= 0 ? (
+                        <>
+                          <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
+                          Out of stock
+                        </>
+                      ) : stock <= 5 ? (
+                        <>
+                          <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" /></svg>
+                          {stock} left
+                        </>
+                      ) : (
+                        `${stock} in stock`
+                      )}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
+                    <span>Public</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+
+                {/* Actions */}
+                <div className="flex items-center gap-4 px-5 pb-4 pt-1" onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"
-                    onClick={() => onEdit(p)}
-                    className="text-xs text-zinc-500 transition-colors hover:text-indigo-400"
+                    onClick={() => onClone(p)}
+                    className="text-xs font-semibold text-indigo-400 transition-colors hover:text-indigo-300"
                   >
-                    Edit
+                    Clone
                   </button>
                   <button
                     type="button"
                     onClick={() => onDelete(p)}
-                    className="text-xs text-zinc-500 transition-colors hover:text-rose-400"
+                    className="text-xs font-semibold text-rose-400 transition-colors hover:text-rose-300"
                   >
                     Delete
                   </button>
                 </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+          {products.map((p, i) => {
+            const stock = totalStock(p);
+            return (
+              <div
+                key={p.id}
+                onClick={() => onEdit(p)}
+                className={`flex cursor-pointer items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.03] ${i > 0 ? "border-t border-white/5" : ""}`}
+              >
+                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg">
+                  {p.image || (p.images && p.images[0]) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.images?.[0] || p.image} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-purple-500/10">
+                      <IconProducts className="h-5 w-5 text-indigo-400/40" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-semibold text-white truncate">{p.name}</h4>
+                  <p className="text-xs text-zinc-500">{priceDisplay(p)}</p>
+                </div>
+                <span
+                  className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold shrink-0 ${
+                    stock > 0 && stock <= 5
+                      ? "bg-amber-500/10 text-amber-400"
+                      : stock > 0
+                        ? "bg-emerald-500/10 text-emerald-400"
+                        : "bg-rose-500/10 text-rose-400"
+                  }`}
+                >
+                  {stock <= 0 ? "Out of stock" : stock <= 5 ? `${stock} left` : `${stock} in stock`}
+                </span>
+                <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <button type="button" onClick={() => onClone(p)} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300">Clone</button>
+                  <button type="button" onClick={() => onDelete(p)} className="text-xs font-semibold text-rose-400 hover:text-rose-300">Delete</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1672,7 +1750,7 @@ function ProductEditView({
           title: v.title,
           price: v.price?.toString() ?? "",
           stock: v.stock ?? 0,
-          stockItems: v.stockItems ?? "",
+          stockItems: v.stockItems?.join("\n") ?? "",
         }))
       : [
           {
@@ -1684,8 +1762,21 @@ function ProductEditView({
           },
         ],
   );
-  const [stockModes, setStockModes] = useState<Record<string, "add" | "edit">>({});
+  const [stockModes, setStockModes] = useState<Record<string, "add" | "edit" | "replace">>({});
   const [saving, setSaving] = useState(false);
+  const [editTab, setEditTab] = useState<"general" | "pricing">("general");
+  const [expandedVariants, setExpandedVariants] = useState<Set<string>>(
+    () => new Set(variants.map((v) => v.id)),
+  );
+
+  function toggleVariantExpanded(id: string) {
+    setExpandedVariants((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1729,16 +1820,18 @@ function ProductEditView({
   }
 
   function addVariant() {
+    const id = Math.random().toString(36).slice(2);
     setVariants((prev) => [
       ...prev,
       {
-        id: Math.random().toString(36).slice(2),
+        id,
         title: "",
         price: "",
         stock: 0,
         stockItems: "",
       },
     ]);
+    setExpandedVariants((prev) => new Set(prev).add(id));
   }
 
   function removeVariant(id: string) {
@@ -1746,14 +1839,14 @@ function ProductEditView({
     setVariants((prev) => prev.filter((v) => v.id !== id));
   }
 
-  function getStockMode(id: string): "add" | "edit" {
+  function getStockMode(id: string): "add" | "edit" | "replace" {
     return stockModes[id] ?? "add";
   }
 
   function toggleStockMode(id: string) {
     setStockModes((prev) => ({
       ...prev,
-      [id]: prev[id] === "edit" ? "add" : "edit",
+      [id]: prev[id] && prev[id] !== "add" ? "add" : "edit",
     }));
   }
 
@@ -1771,7 +1864,9 @@ function ProductEditView({
         title: v.title,
         price: parseFloat(v.price) || 0,
         stock: v.stock,
-        stockItems: v.stockItems || undefined,
+        stockItems: v.stockItems.trim()
+          ? v.stockItems.split("\n").map((l) => l.trim()).filter(Boolean)
+          : undefined,
       }));
       await onSave({
         ...(product ? { id: product.id } : {}),
@@ -1813,8 +1908,71 @@ function ProductEditView({
   const inputCls =
     "w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50";
 
+  async function handleSaveAndExit() {
+    await handleSave();
+    onCancel();
+  }
+
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-white">
+            {product ? "Edit Product" : "Create Product"}
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500">Edit the product details below.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-white/10 px-4 py-2 text-xs font-semibold text-zinc-300 transition-all hover:bg-white/5"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSaveAndExit}
+            disabled={saving || !name.trim()}
+            className="rounded-lg border border-indigo-500/30 px-4 py-2 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10 disabled:opacity-50"
+          >
+            Save &amp; Exit
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !name.trim()}
+            className="rounded-lg bg-indigo-500 px-5 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </div>
+
+      {/* Tab navigation */}
+      <div className="flex flex-wrap gap-1 border-b border-white/5">
+        {([
+          { key: "general", label: "General" },
+          { key: "pricing", label: "Pricing & Stock" },
+        ] as const).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setEditTab(tab.key)}
+            className={`px-4 py-3 text-sm transition-colors ${
+              editTab === tab.key
+                ? "border-b-2 border-indigo-500 font-semibold text-indigo-400"
+                : "border-b-2 border-transparent text-zinc-400 hover:text-white"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {editTab === "general" && (
+        <div className="space-y-6">
       {/* Top action bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
@@ -1859,34 +2017,37 @@ function ProductEditView({
         className="rounded-xl border border-white/5 p-6"
         style={{ backgroundColor: "#121214" }}
       >
-        <h3 className="mb-5 text-sm font-semibold text-white">General</h3>
+        <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-white">
+          <IconFileTextInline className="h-4 w-4 text-indigo-400" />
+          General
+        </h3>
         <div className="space-y-5">
-          <div className="grid gap-5 lg:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Name *</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => handleNameChange(e.target.value)}
-                className={inputCls}
-                style={{ backgroundColor: "#161619" }}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">URL Path</label>
-              <input
-                type="text"
-                value={urlPath}
-                onChange={(e) => handleUrlChange(e.target.value)}
-                placeholder="auto-generated-from-name"
-                className={`${inputCls} placeholder:text-zinc-600`}
-                style={{ backgroundColor: "#161619" }}
-              />
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-white">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => handleNameChange(e.target.value)}
+              className={inputCls}
+              style={{ backgroundColor: "#161619" }}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-white">
+              URL Path <span className="font-normal text-zinc-500">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={urlPath}
+              onChange={(e) => handleUrlChange(e.target.value)}
+              placeholder="auto-generated-from-name"
+              className={`${inputCls} placeholder:text-zinc-600`}
+              style={{ backgroundColor: "#161619" }}
+            />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-zinc-400">Description</label>
+            <label className="text-sm font-semibold text-white">Description</label>
             <RichTextEditor
               content={description}
               onChange={setDescription}
@@ -1895,7 +2056,7 @@ function ProductEditView({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-zinc-400">Category</label>
+            <label className="text-sm font-semibold text-white">Category</label>
             <input
               type="text"
               value={category}
@@ -1907,9 +2068,9 @@ function ProductEditView({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-zinc-400">
+            <label className="text-sm font-semibold text-white">
               Images{" "}
-              <span className="font-normal text-zinc-600">
+              <span className="font-normal text-zinc-500">
                 ({images.length}/5, max 2MB each)
               </span>
             </label>
@@ -1958,7 +2119,7 @@ function ProductEditView({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-zinc-400">Instructions</label>
+            <label className="text-sm font-semibold text-white">Instructions</label>
             <RichTextEditor
               content={instructions}
               onChange={setInstructions}
@@ -2002,7 +2163,7 @@ function ProductEditView({
         {deliverableType === "smm-panels" && (
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Service ID</label>
+              <label className="text-sm font-semibold text-white">Service ID</label>
               <input
                 type="number"
                 value={smmServiceId}
@@ -2012,7 +2173,7 @@ function ProductEditView({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Min Quantity</label>
+              <label className="text-sm font-semibold text-white">Min Quantity</label>
               <input
                 type="number"
                 value={smmMinQty}
@@ -2022,7 +2183,7 @@ function ProductEditView({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Max Quantity</label>
+              <label className="text-sm font-semibold text-white">Max Quantity</label>
               <input
                 type="number"
                 value={smmMaxQty}
@@ -2034,35 +2195,99 @@ function ProductEditView({
           </div>
         )}
       </div>
+        </div>
+      )}
 
-      {/* Section: Pricing & Stock */}
+      {editTab === "pricing" && (
       <div
         className="rounded-xl border border-white/5 p-6"
         style={{ backgroundColor: "#121214" }}
       >
-        <h3 className="mb-5 text-sm font-semibold text-white">Pricing &amp; Stock</h3>
-        <div className="space-y-4">
-          {variants.map((variant) => (
+        <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-white">
+          <IconTag className="h-4 w-4 text-indigo-400" />
+          Pricing &amp; Stock
+        </h3>
+        <div className="space-y-3">
+          {variants.map((variant) => {
+            const expanded = expandedVariants.has(variant.id);
+            return (
             <div
               key={variant.id}
-              className="rounded-lg border border-white/5 p-4"
+              className="rounded-lg border border-white/5"
               style={{ backgroundColor: "#161619" }}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="grid flex-1 gap-4 sm:grid-cols-2">
+              {/* Accordion header */}
+              <div className="flex items-center gap-3 px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => toggleVariantExpanded(variant.id)}
+                  className="flex flex-1 items-center gap-3 text-left"
+                >
+                  <IconChevronDown
+                    className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform ${
+                      expanded ? "" : "-rotate-90"
+                    }`}
+                  />
+                  <svg
+                    className="h-4 w-4 shrink-0 text-zinc-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 16h16" />
+                  </svg>
+                  <span
+                    className={`text-sm font-semibold ${
+                      expanded ? "text-indigo-400" : "text-white"
+                    }`}
+                  >
+                    {variant.title || "Untitled Variant"}
+                  </span>
+                </button>
+                {variants.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeVariant(variant.id)}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-rose-500/20 text-rose-400 transition-all hover:bg-rose-500/10"
+                    title="Remove variant"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {expanded && (
+              <div className="space-y-5 border-t border-white/5 p-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-white">Variant Name</label>
+                  <input
+                    type="text"
+                    value={variant.title}
+                    onChange={(e) => updateVariant(variant.id, "title", e.target.value)}
+                    placeholder="e.g. Standard, Premium"
+                    className={`${inputCls} placeholder:text-zinc-600`}
+                    style={{ backgroundColor: "#1e1e22" }}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-white">
+                    Description <span className="font-normal text-zinc-500">(optional)</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Variant Description"
+                    className={`${inputCls} resize-none placeholder:text-zinc-600`}
+                    style={{ backgroundColor: "#1e1e22" }}
+                  />
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-semibold text-zinc-400">Variant Title</label>
-                    <input
-                      type="text"
-                      value={variant.title}
-                      onChange={(e) => updateVariant(variant.id, "title", e.target.value)}
-                      placeholder="e.g. Standard, Premium"
-                      className={`${inputCls} placeholder:text-zinc-600`}
-                      style={{ backgroundColor: "#1e1e22" }}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-xs font-semibold text-zinc-400">Price (EUR)</label>
+                    <label className="text-sm font-semibold text-white">Price</label>
                     <input
                       type="number"
                       step="any"
@@ -2073,77 +2298,120 @@ function ProductEditView({
                       style={{ backgroundColor: "#1e1e22" }}
                     />
                   </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-white">
+                      Slashed Price <span className="font-normal text-zinc-500">(optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      disabled
+                      placeholder="—"
+                      className={`${inputCls} placeholder:text-zinc-600 disabled:opacity-50`}
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                  </div>
                 </div>
-                {variants.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeVariant(variant.id)}
-                    className="mt-6 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-rose-500/20 text-rose-400 transition-all hover:bg-rose-500/10"
-                    title="Remove variant"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                )}
-              </div>
 
-              <div className="mt-4">
+                {/* Stock */}
                 {deliverableType === "serials" ? (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-zinc-400">
-                        Stock Items{" "}
-                        <span className="font-normal text-zinc-600">
-                          (
-                          {variant.stockItems.trim()
-                            ? variant.stockItems.trim().split("\n").filter((l) => l.trim()).length
-                            : 0}{" "}
-                          items)
+                    {/* Stock summary bar */}
+                    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/5 px-3 py-2.5" style={{ backgroundColor: "#1e1e22" }}>
+                      <div className="flex items-center gap-2">
+                        <span className={`flex h-7 w-7 items-center justify-center rounded-md ${variant.stock > 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                         </span>
-                      </label>
+                        <span className="text-sm text-zinc-300">
+                          <span className="font-semibold text-white">{variant.stock}</span> {variant.stock === 1 ? "item" : "items"} in stock
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => toggleStockMode(variant.id)}
-                        className="text-xs font-medium text-indigo-400 transition-colors hover:text-indigo-300"
+                        className="shrink-0 rounded-lg border border-indigo-500/30 px-3 py-1.5 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10"
                       >
-                        {getStockMode(variant.id) === "add" ? "Edit Stock" : "Add to Stock"}
+                        {getStockMode(variant.id) !== "add" ? "Close" : "Manage Stock"}
                       </button>
                     </div>
-                    <textarea
-                      value={variant.stockItems}
-                      onChange={(e) => {
-                        updateVariant(variant.id, "stockItems", e.target.value);
-                        if (getStockMode(variant.id) === "edit") {
-                          const lines = e.target.value.trim().split("\n").filter((l) => l.trim());
-                          updateVariant(variant.id, "stock", lines.length);
-                        }
-                      }}
-                      rows={4}
-                      placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
-                      className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
-                      style={{ backgroundColor: "#1e1e22" }}
-                    />
-                    {getStockMode(variant.id) === "add" && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const lines = variant.stockItems
-                            .trim()
-                            .split("\n")
-                            .filter((l) => l.trim());
-                          updateVariant(variant.id, "stock", variant.stock + lines.length);
-                        }}
-                        disabled={!variant.stockItems.trim()}
-                        className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 disabled:opacity-50"
-                      >
-                        Add to Stock ({variant.stock} current)
-                      </button>
+
+                    {/* Stock management panel */}
+                    {getStockMode(variant.id) !== "add" && (
+                      <div className="rounded-lg border border-white/5 p-4 space-y-3" style={{ backgroundColor: "#1e1e22" }}>
+                        {/* Mode toggle */}
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setStockModes((p) => ({ ...p, [variant.id]: "edit" }))}
+                            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                              getStockMode(variant.id) === "edit"
+                                ? "bg-indigo-500/20 text-indigo-400"
+                                : "text-zinc-500 hover:text-white"
+                            }`}
+                          >
+                            Add Stock
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStockModes((p) => ({ ...p, [variant.id]: "replace" }))}
+                            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                              stockModes[variant.id] === "replace"
+                                ? "bg-indigo-500/20 text-indigo-400"
+                                : "text-zinc-500 hover:text-white"
+                            }`}
+                          >
+                            Replace Stock
+                          </button>
+                        </div>
+
+                        <label className="text-xs font-semibold text-zinc-400">
+                          Enter one deliverable per line
+                        </label>
+                        <textarea
+                          value={variant.stockItems}
+                          onChange={(e) => {
+                            updateVariant(variant.id, "stockItems", e.target.value);
+                          }}
+                          rows={5}
+                          placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
+                          className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
+                          style={{ backgroundColor: "#121214" }}
+                        />
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-zinc-500">
+                            {variant.stockItems.trim()
+                              ? `${variant.stockItems.trim().split("\n").filter((l) => l.trim()).length} new items`
+                              : "No items entered"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const lines = variant.stockItems.trim().split("\n").filter((l) => l.trim());
+                              if (lines.length === 0) return;
+                              if (stockModes[variant.id] === "replace") {
+                                updateVariant(variant.id, "stock", lines.length);
+                              } else {
+                                updateVariant(variant.id, "stock", variant.stock + lines.length);
+                              }
+                              updateVariant(variant.id, "stockItems", "");
+                              toggleStockMode(variant.id);
+                            }}
+                            disabled={!variant.stockItems.trim()}
+                            className="rounded-lg bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 disabled:opacity-50"
+                          >
+                            {stockModes[variant.id] === "replace"
+                              ? "Replace Stock"
+                              : `Add to Stock (+${variant.stockItems.trim() ? variant.stockItems.trim().split("\n").filter((l) => l.trim()).length : 0})`}
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    <label className="text-xs font-semibold text-zinc-400">Stock</label>
+                    <label className="text-sm font-semibold text-white">Stock</label>
                     <input
                       type="number"
                       min="0"
@@ -2156,9 +2424,38 @@ function ProductEditView({
                     />
                   </div>
                 )}
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-white">
+                      Min Quantity <span className="font-normal text-zinc-500">(optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="1"
+                      className={`${inputCls} placeholder:text-zinc-600`}
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-semibold text-white">
+                      Max Quantity <span className="font-normal text-zinc-500">(optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="—"
+                      className={`${inputCls} placeholder:text-zinc-600`}
+                      style={{ backgroundColor: "#1e1e22" }}
+                    />
+                  </div>
+                </div>
               </div>
+              )}
             </div>
-          ))}
+            );
+          })}
 
           <button
             type="button"
@@ -2169,6 +2466,7 @@ function ProductEditView({
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -2368,26 +2666,32 @@ function CouponsView() {
   );
 }
 
-function FeedbacksView({ feed }: { feed: FeedItem[] }) {
+function FeedbacksView({ feed, reviews }: { feed: FeedItem[]; reviews: Review[] }) {
   const orderCount = feed.filter((f) => f.type === "order").length;
-  // Resolve "now" once on mount to keep render pure.
-  const [now, setNow] = useState(0);
-  useEffect(() => {
-    Promise.resolve().then(() => setNow(Math.floor(Date.now() / 1000)));
-  }, []);
-  const sampleFeedbacks = [
-    { name: "Marco R.", rating: 5, comment: "Fast delivery and exactly as described. Will buy again!", ts: now - 3600 },
-    { name: "Luca B.", rating: 5, comment: "Great service, the bot delivered instantly. Highly recommended.", ts: now - 86400 },
-    { name: "Sara T.", rating: 4, comment: "Good product, took a little while but support was helpful.", ts: now - 172800 },
-    { name: "Alex M.", rating: 5, comment: "Smooth transaction, escrow worked perfectly.", ts: now - 259200 },
-  ];
-  const avg = (sampleFeedbacks.reduce((s, f) => s + f.rating, 0) / sampleFeedbacks.length).toFixed(1);
+
+  if (reviews.length === 0) {
+    return (
+      <div className="space-y-5">
+        <ViewHeader
+          title="Feedbacks"
+          subtitle={`Customer reviews and ratings (0 reviews · ${orderCount} orders)`}
+        />
+        <EmptyState
+          icon={<IconStar className="h-6 w-6" />}
+          message="No reviews yet"
+          hint="Customer reviews submitted after their orders will appear here."
+        />
+      </div>
+    );
+  }
+
+  const avg = (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1);
 
   return (
     <div className="space-y-5">
       <ViewHeader
         title="Feedbacks"
-        subtitle={`Customer reviews and ratings (${sampleFeedbacks.length} reviews · ${orderCount} orders)`}
+        subtitle={`Customer reviews and ratings (${reviews.length} reviews · ${orderCount} orders)`}
       />
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
@@ -2406,37 +2710,40 @@ function FeedbacksView({ feed }: { feed: FeedItem[] }) {
         </div>
         <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Total Reviews</p>
-          <p className="mt-2 text-3xl font-bold text-white">{sampleFeedbacks.length}</p>
+          <p className="mt-2 text-3xl font-bold text-white">{reviews.length}</p>
         </div>
         <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">5-Star Reviews</p>
           <p className="mt-2 text-3xl font-bold text-emerald-400">
-            {sampleFeedbacks.filter((f) => f.rating === 5).length}
+            {reviews.filter((r) => r.rating === 5).length}
           </p>
         </div>
       </div>
       <div className="space-y-3">
-        {sampleFeedbacks.map((f, i) => (
-          <div key={i} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-400">
-                  {f.name.charAt(0)}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-white">{f.name}</p>
-                  <div className="mt-0.5 flex">
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <IconStar key={j} className={`h-3.5 w-3.5 ${j < f.rating ? "text-amber-400" : "text-zinc-700"}`} />
-                    ))}
+        {reviews.map((r, i) => {
+          const ts = Math.floor(new Date(r.createdAt).getTime() / 1000);
+          return (
+            <div key={i} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-400">
+                    {r.orderId.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">Order {r.orderId}</p>
+                    <div className="mt-0.5 flex">
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <IconStar key={j} className={`h-3.5 w-3.5 ${j < r.rating ? "text-amber-400" : "text-zinc-700"}`} />
+                      ))}
+                    </div>
                   </div>
                 </div>
+                <span className="text-xs text-zinc-500">{formatRelativeTime(ts)}</span>
               </div>
-              <span className="text-xs text-zinc-500">{formatRelativeTime(f.ts)}</span>
+              {r.comment && <p className="mt-3 text-sm text-zinc-300">{r.comment}</p>}
             </div>
-            <p className="mt-3 text-sm text-zinc-300">{f.comment}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -3455,7 +3762,7 @@ function SettingsView({
             <div>
               <p className="text-sm text-white">Auto-refresh</p>
               <p className="text-xs text-zinc-500">
-                Automatically refresh data every 15 seconds
+                Automatically refresh data every 60 seconds
               </p>
             </div>
             <label className="relative inline-flex cursor-pointer items-center">
@@ -3565,6 +3872,17 @@ function ConfirmModal({
 }) {
   const [busy, setBusy] = useState(false);
 
+  async function handleConfirm() {
+    setBusy(true);
+    try {
+      await onConfirm();
+    } catch {
+      // allow retry on failure
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <ModalOverlay onClose={onClose}>
       <h3 className="mb-2 text-base font-bold text-white">{title}</h3>
@@ -3580,10 +3898,7 @@ function ConfirmModal({
         <button
           type="button"
           disabled={busy}
-          onClick={() => {
-            setBusy(true);
-            onConfirm();
-          }}
+          onClick={handleConfirm}
           className={`rounded-lg px-4 py-2 text-sm font-bold transition-all disabled:opacity-50 ${confirmClass}`}
         >
           {busy ? "..." : confirmLabel}

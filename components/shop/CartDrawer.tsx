@@ -10,7 +10,6 @@ interface CartDrawerProps {
   open: boolean;
   lines: CartLine[];
   total: number;
-  currency: string;
   onClose: () => void;
   onUpdateQuantity: (id: string, quantity: number, variantId?: string) => void;
   onRemove: (id: string, variantId?: string) => void;
