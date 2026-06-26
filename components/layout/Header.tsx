@@ -164,6 +164,12 @@ export default function Header() {
             {t("nav.discord")}
           </a>
           <Link
+            href="/create-shop"
+            className="rounded-full border border-accent/50 px-4 py-2 text-sm font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/10"
+          >
+            Create Shop
+          </Link>
+          <Link
             href="/#shop"
             className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-background shadow-[0_0_24px_-6px_var(--accent)] transition-transform hover:scale-105"
           >
@@ -253,6 +259,13 @@ export default function Header() {
             >
               {t("nav.discord")}
             </a>
+            <Link
+              href="/create-shop"
+              onClick={() => setOpen(false)}
+              className="rounded-full border border-accent/50 px-4 py-2 text-center text-sm font-semibold text-accent"
+            >
+              Create Shop
+            </Link>
             <Link
               href="/#shop"
               onClick={() => setOpen(false)}
