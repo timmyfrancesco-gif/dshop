@@ -146,13 +146,36 @@ export function getSlots(): Promise<SlotsResponse | null> {
   return apiFetch<SlotsResponse>("/api/slots");
 }
 
-export function createSlotOrder(
+export async function createSlotOrder(
   payload: SlotOrderRequest
-): Promise<SlotOrderResponse | null> {
-  return apiFetch<SlotOrderResponse>("/api/slot-order", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+): Promise<{ data: SlotOrderResponse | null; error?: string }> {
+  if (!API_BASE) return { data: null, error: "API not configured" };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${API_BASE}/api/slot-order`, {
+      method: "POST",
+      signal: controller.signal,
+      cache: "no-store",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      let errorMsg = "Order failed";
+      try {
+        const body = await res.json();
+        errorMsg = body?.error || body?.message || `Error ${res.status}`;
+      } catch {
+        errorMsg = `Error ${res.status}`;
+      }
+      return { data: null, error: errorMsg };
+    }
+    return { data: (await res.json()) as SlotOrderResponse };
+  } catch {
+    clearTimeout(timeout);
+    return { data: null, error: "Network error — please try again" };
+  }
 }
 
 export function getSlotOrder(

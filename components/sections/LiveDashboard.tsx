@@ -31,7 +31,7 @@ export default function LiveDashboard() {
         <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           <StatCard
             label={t("dashboard.totalOrders")}
-            value={stats?.totalOrders !== undefined ? formatNumber(stats.totalOrders) : stats ? formatNumber(stats.totalUserTrades) : "—"}
+            value={stats?.totalOrders !== undefined ? formatNumber(stats.totalOrders) : feed.length > 0 ? formatNumber(feed.length) : stats ? formatNumber(stats.totalUserTrades) : "—"}
           />
           <StatCard
             label={t("dashboard.totalVolume")}

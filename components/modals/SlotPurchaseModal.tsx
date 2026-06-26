@@ -87,18 +87,18 @@ export default function SlotPurchaseModal({
 
     setLoading(true);
     try {
-      const res = await createSlotOrder({
+      const { data, error: apiError } = await createSlotOrder({
         tier: tierId,
         duration: durationId,
         discord: discord.trim(),
       });
 
-      if (!res) {
-        setError("Something went wrong creating your order. Please try again or contact staff.");
+      if (!data) {
+        setError(apiError || "Something went wrong creating your order. Please try again or contact staff.");
         return;
       }
 
-      setOrder(res);
+      setOrder(data);
       setStep(2);
     } catch {
       setError("Something went wrong creating your order. Please try again or contact staff.");
