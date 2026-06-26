@@ -1762,7 +1762,7 @@ function ProductEditView({
           },
         ],
   );
-  const [stockModes, setStockModes] = useState<Record<string, "add" | "edit">>({});
+  const [stockModes, setStockModes] = useState<Record<string, "add" | "edit" | "replace">>({});
   const [saving, setSaving] = useState(false);
   const [editTab, setEditTab] = useState<"general" | "pricing">("general");
   const [expandedVariants, setExpandedVariants] = useState<Set<string>>(
@@ -1839,14 +1839,14 @@ function ProductEditView({
     setVariants((prev) => prev.filter((v) => v.id !== id));
   }
 
-  function getStockMode(id: string): "add" | "edit" {
+  function getStockMode(id: string): "add" | "edit" | "replace" {
     return stockModes[id] ?? "add";
   }
 
   function toggleStockMode(id: string) {
     setStockModes((prev) => ({
       ...prev,
-      [id]: prev[id] === "edit" ? "add" : "edit",
+      [id]: prev[id] && prev[id] !== "add" ? "add" : "edit",
     }));
   }
 
@@ -2210,9 +2210,6 @@ function ProductEditView({
         <div className="space-y-3">
           {variants.map((variant) => {
             const expanded = expandedVariants.has(variant.id);
-            const stockCount = variant.stockItems.trim()
-              ? variant.stockItems.trim().split("\n").filter((l) => l.trim()).length
-              : 0;
             return (
             <div
               key={variant.id}
@@ -2320,39 +2317,96 @@ function ProductEditView({
                 {/* Stock */}
                 {deliverableType === "serials" ? (
                   <div className="space-y-3">
+                    {/* Stock summary bar */}
                     <div className="flex items-center justify-between gap-3 rounded-lg border border-white/5 px-3 py-2.5" style={{ backgroundColor: "#1e1e22" }}>
-                      <span className="text-sm text-zinc-400">
-                        {variant.stock} items in stock - Click to manage deliverables
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`flex h-7 w-7 items-center justify-center rounded-md ${variant.stock > 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                        </span>
+                        <span className="text-sm text-zinc-300">
+                          <span className="font-semibold text-white">{variant.stock}</span> {variant.stock === 1 ? "item" : "items"} in stock
+                        </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => toggleStockMode(variant.id)}
                         className="shrink-0 rounded-lg border border-indigo-500/30 px-3 py-1.5 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10"
                       >
-                        Manage Stock
+                        {getStockMode(variant.id) !== "add" ? "Close" : "Manage Stock"}
                       </button>
                     </div>
-                    {getStockMode(variant.id) === "edit" && (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <label className="text-sm font-semibold text-white">
-                            Stock Items{" "}
-                            <span className="font-normal text-zinc-500">({stockCount} items)</span>
-                          </label>
+
+                    {/* Stock management panel */}
+                    {getStockMode(variant.id) !== "add" && (
+                      <div className="rounded-lg border border-white/5 p-4 space-y-3" style={{ backgroundColor: "#1e1e22" }}>
+                        {/* Mode toggle */}
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setStockModes((p) => ({ ...p, [variant.id]: "edit" }))}
+                            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                              getStockMode(variant.id) === "edit"
+                                ? "bg-indigo-500/20 text-indigo-400"
+                                : "text-zinc-500 hover:text-white"
+                            }`}
+                          >
+                            Add Stock
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStockModes((p) => ({ ...p, [variant.id]: "replace" }))}
+                            className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                              stockModes[variant.id] === "replace"
+                                ? "bg-indigo-500/20 text-indigo-400"
+                                : "text-zinc-500 hover:text-white"
+                            }`}
+                          >
+                            Replace Stock
+                          </button>
                         </div>
+
+                        <label className="text-xs font-semibold text-zinc-400">
+                          Enter one deliverable per line
+                        </label>
                         <textarea
                           value={variant.stockItems}
                           onChange={(e) => {
                             updateVariant(variant.id, "stockItems", e.target.value);
-                            const lines = e.target.value.trim().split("\n").filter((l) => l.trim());
-                            updateVariant(variant.id, "stock", lines.length);
                           }}
-                          rows={4}
+                          rows={5}
                           placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
                           className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
-                          style={{ backgroundColor: "#1e1e22" }}
+                          style={{ backgroundColor: "#121214" }}
                         />
-                      </>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-zinc-500">
+                            {variant.stockItems.trim()
+                              ? `${variant.stockItems.trim().split("\n").filter((l) => l.trim()).length} new items`
+                              : "No items entered"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const lines = variant.stockItems.trim().split("\n").filter((l) => l.trim());
+                              if (lines.length === 0) return;
+                              if (stockModes[variant.id] === "replace") {
+                                updateVariant(variant.id, "stock", lines.length);
+                              } else {
+                                updateVariant(variant.id, "stock", variant.stock + lines.length);
+                              }
+                              updateVariant(variant.id, "stockItems", "");
+                              toggleStockMode(variant.id);
+                            }}
+                            disabled={!variant.stockItems.trim()}
+                            className="rounded-lg bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 disabled:opacity-50"
+                          >
+                            {stockModes[variant.id] === "replace"
+                              ? "Replace Stock"
+                              : `Add to Stock (+${variant.stockItems.trim() ? variant.stockItems.trim().split("\n").filter((l) => l.trim()).length : 0})`}
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ) : (
