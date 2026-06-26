@@ -12,9 +12,14 @@ export async function runMigrations() {
       discord_id TEXT,
       role TEXT NOT NULL DEFAULT 'user',
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
-    );
-    CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users (email);
+    )
+  `);
 
+  await db.execute(sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS users_email_idx ON users (email)
+  `);
+
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS tenants (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       slug TEXT NOT NULL,
@@ -33,9 +38,14 @@ export async function runMigrations() {
       active BOOLEAN NOT NULL DEFAULT TRUE,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    );
-    CREATE UNIQUE INDEX IF NOT EXISTS tenants_slug_idx ON tenants (slug);
+    )
+  `);
 
+  await db.execute(sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS tenants_slug_idx ON tenants (slug)
+  `);
+
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS tenant_products (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -56,8 +66,10 @@ export async function runMigrations() {
       sort_order INTEGER NOT NULL DEFAULT 0,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    );
+    )
+  `);
 
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS tenant_orders (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -76,8 +88,10 @@ export async function runMigrations() {
       confirmations INTEGER DEFAULT 0,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-    );
+    )
+  `);
 
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS tenant_feed (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -86,6 +100,6 @@ export async function runMigrations() {
       method TEXT,
       amount REAL,
       ts TIMESTAMP NOT NULL DEFAULT NOW()
-    );
+    )
   `);
 }
