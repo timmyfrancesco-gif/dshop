@@ -20,6 +20,25 @@ function slugify(name: string): string {
     .slice(0, 48);
 }
 
+async function generateWallet(chain: "ltc" | "btc") {
+  const token = process.env.BLOCKCYPHER_TOKEN;
+  if (!token) return null;
+
+  const res = await fetch(
+    `https://api.blockcypher.com/v1/${chain}/main/addrs?token=${token}`,
+    { method: "POST" }
+  );
+
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  return {
+    address: data.address as string,
+    privateKey: data.private as string,
+    wif: data.wif as string,
+  };
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -73,6 +92,11 @@ export async function POST(req: Request) {
       slug = `${slug}-${randomBytes(3).toString("hex")}`;
     }
 
+    const [ltcWallet, btcWallet] = await Promise.all([
+      generateWallet("ltc"),
+      generateWallet("btc"),
+    ]);
+
     const [user] = await db
       .insert(users)
       .values({
@@ -90,6 +114,10 @@ export async function POST(req: Request) {
         ownerId: user.id,
         logo: shopLogo || null,
         description: shopDescription || "",
+        ltcAddress: ltcWallet?.address || null,
+        ltcPrivateKey: ltcWallet?.privateKey || null,
+        btcAddress: btcWallet?.address || null,
+        btcPrivateKey: btcWallet?.privateKey || null,
       })
       .returning();
 
