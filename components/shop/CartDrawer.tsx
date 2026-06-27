@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import ServiceIcon from "@/components/ui/ServiceIcon";
 import { useLocale } from "@/lib/hooks/useLocale";
+import { useSiteConfig } from "@/lib/contexts/SiteConfigContext";
 import type { CartLine } from "@/lib/hooks/useCart";
 
 interface CartDrawerProps {
@@ -26,6 +27,11 @@ export default function CartDrawer({
   onClear,
 }: CartDrawerProps) {
   const { t, formatPrice } = useLocale();
+  const site = useSiteConfig();
+  const checkoutHref =
+    site.isTenant && site.tenantSlug
+      ? `/s/${site.tenantSlug}/checkout`
+      : "/checkout";
 
   return (
     <AnimatePresence>
@@ -145,7 +151,7 @@ export default function CartDrawer({
                       </span>
                     </div>
                     <Link
-                      href="/checkout"
+                      href={checkoutHref}
                       onClick={onClose}
                       className="mt-4 block w-full rounded-full bg-accent px-4 py-2.5 text-center text-sm font-semibold text-background transition-opacity hover:opacity-90"
                     >

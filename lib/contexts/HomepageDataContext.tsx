@@ -67,9 +67,16 @@ export interface HomepageInitialData {
 export function HomepageDataProvider({
   children,
   initialData,
+  staticData = false,
 }: {
   children: ReactNode;
   initialData?: HomepageInitialData;
+  /**
+   * When true, the provider never polls /api/cache/homepage (the main
+   * Heaven Market data source). Used by tenant shops so their products
+   * and feed are never overwritten by main-site data.
+   */
+  staticData?: boolean;
 }) {
   const [stats, setStats] = useState<StatsResponse | null>(initialData?.stats ?? null);
   const [ltc, setLtc] = useState<LtcResponse | null>(initialData?.ltc ?? null);
@@ -81,6 +88,7 @@ export function HomepageDataProvider({
   const [loaded, setLoaded] = useState(!!initialData);
 
   useEffect(() => {
+    if (staticData) return;
     let cancelled = false;
 
     async function load() {
@@ -130,7 +138,7 @@ export function HomepageDataProvider({
       document.removeEventListener("visibilitychange", onVisibility);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [staticData]);
 
   const value = useMemo(
     () => ({ stats, ltc, feed, products, shopItems, reviews, smmProducts, loaded }),

@@ -120,6 +120,8 @@ export async function runMigrations() {
       "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS ltc_private_key TEXT",
       "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS btc_private_key TEXT",
       "ALTER TABLE users DROP CONSTRAINT IF EXISTS users_username_key",
+      "ALTER TABLE tenant_orders ADD COLUMN IF NOT EXISTS pay_private_key TEXT",
+      "ALTER TABLE tenant_orders ADD COLUMN IF NOT EXISTS payout_address TEXT",
     ];
     for (const stmt of alterStatements) {
       try { await client.query(stmt); } catch { /* column may already exist */ }

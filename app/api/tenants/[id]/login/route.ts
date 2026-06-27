@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { users, tenants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { createHash } from "crypto";
+import { signSession } from "@/lib/tenant/session";
 
 function verifyPassword(stored: string, input: string): boolean {
   const [salt, hash] = stored.split(":");
@@ -57,9 +58,15 @@ export async function POST(
       return NextResponse.json({ error: "not authorized" }, { status: 403 });
     }
 
-    const sessionToken = createHash("sha256")
-      .update(`${tenantId}:${user.id}:${process.env.PLATFORM_SECRET ?? "fallback"}`)
-      .digest("hex");
+    let sessionToken: string;
+    try {
+      sessionToken = signSession(tenantId, user.id);
+    } catch {
+      return NextResponse.json(
+        { error: "server misconfigured" },
+        { status: 500 }
+      );
+    }
 
     const response = NextResponse.json({
       ok: true,
@@ -70,7 +77,7 @@ export async function POST(
       httpOnly: true,
       secure: true,
       sameSite: "lax",
-      path: `/s/${tenantRows[0].slug}`,
+      path: "/",
       maxAge: 60 * 60 * 24,
     });
 

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { users, tenants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { createHash, randomBytes } from "crypto";
+import { generateWallet } from "@/lib/crypto/wallet";
 
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
@@ -18,25 +19,6 @@ function slugify(name: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 48);
-}
-
-async function generateWallet(chain: "ltc" | "btc") {
-  const token = process.env.BLOCKCYPHER_TOKEN;
-  if (!token) return null;
-
-  const res = await fetch(
-    `https://api.blockcypher.com/v1/${chain}/main/addrs?token=${token}`,
-    { method: "POST" }
-  );
-
-  if (!res.ok) return null;
-
-  const data = await res.json();
-  return {
-    address: data.address as string,
-    privateKey: data.private as string,
-    wif: data.wif as string,
-  };
 }
 
 export async function POST(req: Request) {

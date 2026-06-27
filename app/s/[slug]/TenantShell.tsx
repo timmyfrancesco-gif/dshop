@@ -118,6 +118,7 @@ export default function TenantShell({
     <SiteConfigProvider config={siteConfig}>
       <TenantThemeApplier theme={tenant.theme} />
       <HomepageDataProvider
+        staticData
         initialData={{
           stats: null,
           products: productsResponse,

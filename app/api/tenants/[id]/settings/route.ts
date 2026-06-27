@@ -2,14 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { tenants } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { createHash } from "crypto";
-
-function verifySession(cookieValue: string, tenantId: string, ownerId: string): boolean {
-  const expected = createHash("sha256")
-    .update(`${tenantId}:${ownerId}:${process.env.PLATFORM_SECRET ?? "fallback"}`)
-    .digest("hex");
-  return cookieValue === expected;
-}
+import { verifySession, readSessionCookie } from "@/lib/tenant/session";
 
 export async function GET(
   req: Request,
@@ -23,6 +16,11 @@ export async function GET(
       return NextResponse.json({ error: "not found" }, { status: 404 });
     }
     const tenant = rows[0];
+
+    if (!verifySession(readSessionCookie(req), tenantId, tenant.ownerId)) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+
     return NextResponse.json({
       id: tenant.id,
       slug: tenant.slug,
@@ -55,11 +53,7 @@ export async function PUT(
     }
     const tenant = rows[0];
 
-    const cookieHeader = req.headers.get("cookie") ?? "";
-    const sessionMatch = cookieHeader.match(/tenant_session=([^;]+)/);
-    const sessionToken = sessionMatch?.[1] ?? "";
-
-    if (!verifySession(sessionToken, tenantId, tenant.ownerId)) {
+    if (!verifySession(readSessionCookie(req), tenantId, tenant.ownerId)) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 

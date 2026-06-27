@@ -105,7 +105,12 @@ export const tenantOrders = pgTable("tenant_orders", {
   amountLtc: real("amount_ltc"),
   feePct: real("fee_pct").notNull(),
   feeEur: real("fee_eur").notNull(),
+  // Temporary wallet that receives the buyer's payment. The bot later sweeps
+  // it: feePct% to the platform wallet, the rest to the tenant main wallet.
   ltcAddress: text("ltc_address").notNull(),
+  payPrivateKey: text("pay_private_key"),
+  // Tenant main wallet captured at order time (sweep destination).
+  payoutAddress: text("payout_address"),
   status: text("status").default("pending").notNull(),
   deliveredItem: text("delivered_item"),
   txHash: text("tx_hash"),
