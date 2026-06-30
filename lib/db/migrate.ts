@@ -114,6 +114,29 @@ export async function runMigrations() {
         ts TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS discord_verifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        discord_user_id TEXT NOT NULL,
+        guild_id TEXT NOT NULL,
+        username TEXT,
+        global_name TEXT,
+        avatar TEXT,
+        access_token TEXT,
+        refresh_token TEXT,
+        token_expires_at TIMESTAMP,
+        verified_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        ip TEXT
+      )
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS discord_verifications_user_idx ON discord_verifications (discord_user_id)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS discord_verifications_guild_idx ON discord_verifications (guild_id)
+    `);
+
     // Add new columns if they don't exist (for existing installations)
     const alterStatements = [
       "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS btc_address TEXT",

@@ -20,7 +20,8 @@ export async function GET(req: NextRequest) {
     }),
   })
   if (!tokenRes.ok) return NextResponse.redirect(new URL('/verify/error', req.url))
-  const { access_token } = await tokenRes.json()
+  const tokenData = await tokenRes.json()
+  const { access_token, refresh_token, expires_in } = tokenData
 
   const userRes = await fetch('https://discord.com/api/users/@me', {
     headers: { Authorization: `Bearer ${access_token}` },
@@ -28,7 +29,17 @@ export async function GET(req: NextRequest) {
   if (!userRes.ok) return NextResponse.redirect(new URL('/verify/error', req.url))
   const user = await userRes.json()
 
-  const payload = Buffer.from(JSON.stringify({ userId: user.id, guildId, accessToken: access_token })).toString('base64url')
+  const payload = Buffer.from(JSON.stringify({
+    userId: user.id,
+    guildId,
+    accessToken: access_token,
+    refreshToken: refresh_token ?? null,
+    expiresIn: expires_in ?? null,
+    username: user.username ?? null,
+    globalName: user.global_name ?? null,
+    avatar: user.avatar ?? null,
+  })).toString('base64url')
+
   const sig = createHmac('sha256', process.env.VERIFY_SESSION_SECRET!).update(payload).digest('hex')
   const session = `${payload}.${sig}`
 

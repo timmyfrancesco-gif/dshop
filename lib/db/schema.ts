@@ -119,6 +119,21 @@ export const tenantOrders = pgTable("tenant_orders", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ── Discord verifications ───────────────────────────────────────────
+export const discordVerifications = pgTable("discord_verifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  discordUserId: text("discord_user_id").notNull(),
+  guildId: text("guild_id").notNull(),
+  username: text("username"),
+  globalName: text("global_name"),
+  avatar: text("avatar"),
+  accessToken: text("access_token"),   // AES-256-GCM encrypted
+  refreshToken: text("refresh_token"), // AES-256-GCM encrypted
+  tokenExpiresAt: timestamp("token_expires_at"),
+  verifiedAt: timestamp("verified_at").defaultNow().notNull(),
+  ip: text("ip"),
+});
+
 // ── Activity feed per tenant ────────────────────────────────────────
 export const tenantFeed = pgTable("tenant_feed", {
   id: uuid("id").defaultRandom().primaryKey(),
