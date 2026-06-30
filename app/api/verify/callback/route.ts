@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 
-function signSession(payload: string, secret: string) {
-  const sig = createHmac('sha256', secret).update(payload).digest('hex')
-  return `${Buffer.from(payload).toString('base64url')}.${sig}`
-}
-
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const code = searchParams.get('code')
   const guildId = searchParams.get('state')
 
-  if (!code || !guildId) {
-    return NextResponse.redirect(new URL('/verify/error', req.url))
-  }
+  if (!code || !guildId) return NextResponse.redirect(new URL('/verify/error', req.url))
 
   const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
     method: 'POST',
@@ -35,16 +28,11 @@ export async function GET(req: NextRequest) {
   if (!userRes.ok) return NextResponse.redirect(new URL('/verify/error', req.url))
   const user = await userRes.json()
 
-  const payload = `${user.id}|${guildId}`
-  const signed = signSession(payload, process.env.VERIFY_SESSION_SECRET!)
+  const payload = Buffer.from(JSON.stringify({ userId: user.id, guildId, accessToken: access_token })).toString('base64url')
+  const sig = createHmac('sha256', process.env.VERIFY_SESSION_SECRET!).update(payload).digest('hex')
+  const session = `${payload}.${sig}`
 
-  const res = NextResponse.redirect(new URL('/verify/captcha', req.url))
-  res.cookies.set('verify_session', signed, {
-    httpOnly: true,
-    secure: true,
-    maxAge: 60 * 10,
-    path: '/',
-    sameSite: 'lax',
-  })
-  return res
+  const captchaUrl = new URL('/verify/captcha', req.url)
+  captchaUrl.searchParams.set('s', session)
+  return NextResponse.redirect(captchaUrl)
 }

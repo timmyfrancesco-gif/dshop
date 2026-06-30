@@ -1,34 +1,30 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 
-export default function CaptchaPage() {
+function CaptchaInner() {
+  const searchParams = useSearchParams()
+  const session = searchParams.get('s')
   const [status, setStatus] = useState<'pending' | 'loading' | 'done' | 'error'>('pending')
   const [message, setMessage] = useState('')
 
   useEffect(() => {
+    if (!session) { setStatus('error'); setMessage('Sessione mancante. Ricomincia dal link Discord.'); return }
     ;(window as any).__verifyCallback = async (token: string) => {
       setStatus('loading')
       try {
         const res = await fetch('/api/verify/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token }),
+          body: JSON.stringify({ token, session }),
         })
-        if (res.ok) {
-          setStatus('done')
-        } else {
-          const d = await res.json()
-          setMessage(d.error || 'Verifica fallita.')
-          setStatus('error')
-        }
-      } catch {
-        setMessage('Errore di rete.')
-        setStatus('error')
-      }
+        if (res.ok) { setStatus('done') }
+        else { const d = await res.json(); setMessage(d.error || 'Verifica fallita.'); setStatus('error') }
+      } catch { setMessage('Errore di rete.'); setStatus('error') }
     }
     return () => { delete (window as any).__verifyCallback }
-  }, [])
+  }, [session])
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -43,9 +39,7 @@ export default function CaptchaPage() {
           <>
             <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Complete Verification</h1>
             <p style={{ color: '#888', marginBottom: 24 }}>Please complete the captcha to continue</p>
-            {status === 'error' && (
-              <p style={{ color: '#ff6b6b', marginBottom: 16, fontSize: 14 }}>{message}</p>
-            )}
+            {status === 'error' && <p style={{ color: '#ff6b6b', marginBottom: 16, fontSize: 14 }}>{message}</p>}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <div
                 className="cf-turnstile"
@@ -54,13 +48,19 @@ export default function CaptchaPage() {
                 data-theme="dark"
               />
             </div>
-            {status === 'loading' && (
-              <p style={{ color: '#aaa', marginTop: 16, fontSize: 14 }}>Verifica in corso...</p>
-            )}
+            {status === 'loading' && <p style={{ color: '#aaa', marginTop: 16, fontSize: 14 }}>Verifica in corso...</p>}
           </>
         )}
       </div>
-      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" />
+      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" />
     </div>
+  )
+}
+
+export default function CaptchaPage() {
+  return (
+    <Suspense>
+      <CaptchaInner />
+    </Suspense>
   )
 }

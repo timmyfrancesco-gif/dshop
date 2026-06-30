@@ -1,25 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHmac, timingSafeEqual } from 'crypto'
 
-function verifySession(signed: string, secret: string): { userId: string; guildId: string } | null {
-  const [payloadB64, sig] = signed.split('.')
-  if (!payloadB64 || !sig) return null
-  const expected = createHmac('sha256', secret).update(payloadB64).digest('hex')
-  const a = Buffer.from(sig)
-  const b = Buffer.from(expected)
-  if (a.length !== b.length) return null
-  if (!timingSafeEqual(a, b)) return null
-  const [userId, guildId] = Buffer.from(payloadB64, 'base64url').toString().split('|')
-  if (!userId || !guildId) return null
-  return { userId, guildId }
+function verifySession(signed: string, secret: string) {
+  try {
+    const lastDot = signed.lastIndexOf('.')
+    if (lastDot === -1) return null
+    const payload = signed.slice(0, lastDot)
+    const sig = signed.slice(lastDot + 1)
+    const expected = createHmac('sha256', secret).update(payload).digest('hex')
+    const a = Buffer.from(sig)
+    const b = Buffer.from(expected)
+    if (a.length !== b.length) return null
+    if (!timingSafeEqual(a, b)) return null
+    return JSON.parse(Buffer.from(payload, 'base64url').toString()) as {
+      userId: string; guildId: string; accessToken: string
+    }
+  } catch { return null }
 }
 
 export async function POST(req: NextRequest) {
-  let token: string
+  let token: string, sessionSigned: string
   try {
     const body = await req.json()
     token = body?.token
-    if (!token) return NextResponse.json({ error: 'Token mancante.' }, { status: 400 })
+    sessionSigned = body?.session
+    if (!token || !sessionSigned) return NextResponse.json({ error: 'Parametri mancanti.' }, { status: 400 })
   } catch {
     return NextResponse.json({ error: 'Richiesta non valida.' }, { status: 400 })
   }
@@ -35,36 +40,21 @@ export async function POST(req: NextRequest) {
     }),
   })
   const cfData = await cfRes.json()
-  if (!cfData.success) {
-    return NextResponse.json({ error: 'Captcha non valido. Riprova.' }, { status: 400 })
-  }
+  if (!cfData.success) return NextResponse.json({ error: 'Captcha non valido. Riprova.' }, { status: 400 })
 
-  // 2. Validate session cookie
-  const sessionCookie = req.cookies.get('verify_session')?.value
-  if (!sessionCookie) {
-    return NextResponse.json({ error: 'Sessione scaduta. Ricomincia dal link Discord.' }, { status: 401 })
-  }
-  const session = verifySession(sessionCookie, process.env.VERIFY_SESSION_SECRET!)
-  if (!session) {
-    return NextResponse.json({ error: 'Sessione non valida.' }, { status: 401 })
-  }
+  // 2. Verify session
+  const session = verifySession(sessionSigned, process.env.VERIFY_SESSION_SECRET!)
+  if (!session) return NextResponse.json({ error: 'Sessione non valida o scaduta.' }, { status: 401 })
 
-  // 3. Call bot API to grant role
+  // 3. Call bot API
   const botRes = await fetch(`${process.env.BOT_API_URL}/api/verify-grant`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-verify-secret': process.env.BOT_API_SECRET!,
-    },
-    body: JSON.stringify({ userId: session.userId, guildId: session.guildId }),
+    headers: { 'Content-Type': 'application/json', 'x-verify-secret': process.env.BOT_API_SECRET! },
+    body: JSON.stringify({ userId: session.userId, guildId: session.guildId, accessToken: session.accessToken }),
   })
   if (!botRes.ok) {
     const data = await botRes.json().catch(() => ({}))
     return NextResponse.json({ error: (data as any).error || 'Errore del bot.' }, { status: 500 })
   }
-
-  // 4. Clear cookie
-  const res = NextResponse.json({ ok: true })
-  res.cookies.set('verify_session', '', { maxAge: 0, path: '/' })
-  return res
+  return NextResponse.json({ ok: true })
 }
