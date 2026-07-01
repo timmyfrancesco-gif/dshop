@@ -133,8 +133,8 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href={site.isTenant ? `/s/${site.tenantSlug}` : "/#top"} className="flex items-center gap-2 text-lg font-bold tracking-tight">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
+        <Link href={site.isTenant ? `/s/${site.tenantSlug}` : "/#top"} className="flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight whitespace-nowrap">
           {site.tenantLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={site.tenantLogo} alt="" className="h-8 w-8 rounded-full" />

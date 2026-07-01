@@ -10,7 +10,7 @@ const ja: Record<string, string> = {
   "nav.shopNow": "今すぐ購入",
 
   "hero.badge": "プレミアム取引ハブ",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "安心して暗号通貨を取引——Discord 向けに構築されたエスクロー、仲介、交換サービス。エスクロー、仲介保護、交換、広告枠、デジタルショップ、カジノ——すべてが一つの Discord サーバーに。",
   "hero.cta1": "ショップを見る",
   "hero.cta2": "優秀",

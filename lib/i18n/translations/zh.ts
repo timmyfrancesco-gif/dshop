@@ -10,7 +10,7 @@ const zh: Record<string, string> = {
   "nav.shopNow": "立即购买",
 
   "hero.badge": "高端交易中心",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "放心交易加密货币——为 Discord 打造的托管、中间人和兑换服务。托管、中间人保护、兑换、广告位、数字商店和赌场——一切尽在一个 Discord 服务器。",
   "hero.cta1": "浏览商店",
   "hero.cta2": "优秀",

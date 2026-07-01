@@ -9,7 +9,7 @@ const de: Record<string, string> = {
   "nav.discord": "Discord",
   "nav.shopNow": "Jetzt Einkaufen",
   "hero.badge": "Premium-Trading-Hub",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "Handle Kryptowährungen mit Vertrauen — Escrow-, Mittelsmann- und Tausch-Dienste für Discord. Escrow, Mittelsmann-Schutz, Tausch, Werbeplätze, ein digitaler Shop und ein Casino — alles auf einem Discord-Server.",
   "hero.cta1": "Shop Entdecken",
   "hero.cta2": "Ausgezeichnet",

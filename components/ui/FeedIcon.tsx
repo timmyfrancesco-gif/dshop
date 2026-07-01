@@ -43,7 +43,7 @@ const COLORS: Record<FeedItemType, string> = {
   escrow: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
   mm: "text-amber-400 bg-amber-500/10 border-amber-500/30",
   slot: "text-pink-400 bg-pink-500/10 border-pink-500/30",
-  exchange: "text-purple-400 bg-purple-500/10 border-purple-500/30",
+  exchange: "text-sky-400 bg-sky-500/10 border-sky-500/30",
 };
 
 export default function FeedIcon({ type }: { type: FeedItemType }) {

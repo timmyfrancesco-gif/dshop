@@ -12,7 +12,7 @@ const hi: Record<string, string> = {
 
   // Hero
   "hero.badge": "Premium Trading Hub",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "विश्वास के साथ क्रिप्टो ट्रेड करें — Discord के लिए बनी एस्क्रो, मध्यस्थ और एक्सचेंज सेवाएँ। एस्क्रो, मध्यस्थ सुरक्षा, एक्सचेंज, विज्ञापन स्लॉट, एक डिजिटल शॉप और एक कैसीनो — सब एक ही Discord सर्वर में।",
   "hero.cta1": "शॉप देखें",
   "hero.cta2": "उत्कृष्ट",

@@ -12,7 +12,7 @@ const vi: Record<string, string> = {
 
   // Hero
   "hero.badge": "Trung tâm giao dịch cao cấp",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "Giao dịch tiền mã hóa một cách tự tin — dịch vụ ký quỹ, trung gian & trao đổi được xây dựng cho Discord. Ký quỹ, bảo vệ trung gian, trao đổi, vị trí quảng cáo, cửa hàng kỹ thuật số và sòng bài — tất cả trong một máy chủ Discord.",
   "hero.cta1": "Khám phá cửa hàng",
   "hero.cta2": "Xuất sắc",

@@ -12,7 +12,7 @@ const ko: Record<string, string> = {
 
   // Hero
   "hero.badge": "프리미엄 거래 허브",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "안심하고 암호화폐를 거래하세요 — Discord를 위해 구축된 에스크로, 중개인 및 환전 서비스. 에스크로, 중개인 보호, 환전, 광고 슬롯, 디지털 상점, 카지노까지 — 하나의 Discord 서버에서 모두 이용하세요.",
   "hero.cta1": "상점 둘러보기",
   "hero.cta2": "우수",

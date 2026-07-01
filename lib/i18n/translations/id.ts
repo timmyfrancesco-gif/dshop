@@ -12,7 +12,7 @@ const id: Record<string, string> = {
 
   // Hero
   "hero.badge": "Pusat Perdagangan Premium",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "Perdagangkan kripto dengan percaya diri — layanan escrow, perantara & pertukaran yang dibangun untuk Discord. Escrow, perlindungan perantara, pertukaran, slot iklan, toko digital, dan kasino — semua dalam satu server Discord.",
   "hero.cta1": "Jelajahi Toko",
   "hero.cta2": "Luar Biasa",

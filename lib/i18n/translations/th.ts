@@ -12,7 +12,7 @@ const th: Record<string, string> = {
 
   // Hero
   "hero.badge": "Premium Trading Hub",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "เทรดคริปโตอย่างมั่นใจ — บริการ escrow, คนกลาง และแลกเปลี่ยนที่สร้างมาสำหรับ Discord Escrow, การคุ้มครองคนกลาง, แลกเปลี่ยน, สล็อตโฆษณา, ร้านค้าดิจิทัล และคาสิโน — ทั้งหมดในเซิร์ฟเวอร์ Discord เดียว",
   "hero.cta1": "เยี่ยมชมร้านค้า",
   "hero.cta2": "ยอดเยี่ยม",

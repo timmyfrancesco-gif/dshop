@@ -1645,7 +1645,7 @@ function ProductsView({
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-purple-500/10">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-sky-500/10">
                       <IconProducts className="h-12 w-12 text-indigo-400/40" />
                     </div>
                   )}
@@ -1723,7 +1723,7 @@ function ProductsView({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.images?.[0] || p.image} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-purple-500/10">
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-sky-500/10">
                       <IconProducts className="h-5 w-5 text-indigo-400/40" />
                     </div>
                   )}

@@ -12,7 +12,7 @@ const sv: Record<string, string> = {
 
   // Hero
   "hero.badge": "Premium Trading Hub",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "Handla krypto med trygghet — escrow, mellanhand och växlingstjänster byggda för Discord. Escrow, mellanhandsskydd, växling, annonsplatser, en digital butik och ett kasino — allt i en Discord-server.",
   "hero.cta1": "Utforska butiken",
   "hero.cta2": "Utmärkt",

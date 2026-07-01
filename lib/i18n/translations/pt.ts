@@ -10,7 +10,7 @@ const pt: Record<string, string> = {
   "nav.shopNow": "Comprar Agora",
 
   "hero.badge": "Hub de Negociação Premium",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "Negocie criptomoedas com confiança — serviços de custódia, intermediário e câmbio feitos para o Discord. Custódia, proteção de intermediário, câmbio, espaços publicitários, uma loja digital e um cassino — tudo num único servidor Discord.",
   "hero.cta1": "Explorar Loja",
   "hero.cta2": "Excelente",

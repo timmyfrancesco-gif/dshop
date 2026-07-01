@@ -12,7 +12,7 @@ const ar: Record<string, string> = {
 
   // Hero
   "hero.badge": "مركز تداول متميز",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "تداول العملات المشفرة بثقة — خدمات الضمان والوساطة والتبادل مصممة لـ Discord. ضمان، حماية الوسيط، تبادل، مساحات إعلانية، متجر رقمي وكازينو — كل ذلك في سيرفر Discord واحد.",
   "hero.cta1": "استكشف المتجر",
   "hero.cta2": "ممتاز",

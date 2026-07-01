@@ -12,7 +12,7 @@ const pl: Record<string, string> = {
 
   // Hero
   "hero.badge": "Premium Trading Hub",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "Handluj kryptowalutami z pewnością — usługi escrow, pośrednictwa i wymiany stworzone dla Discord. Escrow, ochrona pośrednika, wymiana, miejsca reklamowe, sklep cyfrowy i kasyno — wszystko na jednym serwerze Discord.",
   "hero.cta1": "Przeglądaj sklep",
   "hero.cta2": "Doskonale",

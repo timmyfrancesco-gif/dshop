@@ -12,7 +12,7 @@ const nl: Record<string, string> = {
 
   // Hero
   "hero.badge": "Premium Handelscentrum",
-  "hero.title": "Heaven",
+  "hero.title": "Dshop",
   "hero.description": "Handel in crypto met vertrouwen — escrow, tussenpersoon- en wisselservices gebouwd voor Discord. Escrow, bescherming door tussenpersonen, wisselservice, advertentieslots, een digitale winkel en een casino — alles in één Discord-server.",
   "hero.cta1": "Verken Winkel",
   "hero.cta2": "Uitstekend",
