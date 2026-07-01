@@ -21,7 +21,7 @@ export async function GET(
 
   if (!htmlBlob) {
     return new NextResponse(wrapPage("404 — Not Found", "", null,
-      `<div class="empty-state"><div class="empty-icon">🗂️</div><h2>Transcript not found</h2><p>This transcript does not exist or has been deleted.</p></div>`
+      `<div class="empty-state"><div class="empty-icon">🗂️</div><h2>Transcript not found</h2><p>This transcript does not exist or has been deleted.</p></div>`, ""
     ), {
       status: 404,
       headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -38,7 +38,8 @@ export async function GET(
   ]);
 
   const title = meta?.ticketName ?? `Transcript ${id}`;
-  const wrapped = wrapPage(title, id, meta, htmlContent);
+  const { styles: transcriptStyles, body: transcriptBody } = extractTranscriptParts(htmlContent)
+  const wrapped = wrapPage(title, id, meta, transcriptBody, transcriptStyles);
 
   return new NextResponse(wrapped, {
     status: 200,
@@ -64,7 +65,8 @@ function wrapPage(
   title: string,
   id: string,
   meta: Record<string, string> | null,
-  bodyHtml: string
+  bodyHtml: string,
+  transcriptStyles: string = ""
 ): string {
   const category = meta?.category ? `<span class="badge">${esc(meta.category)}</span>` : "";
   const header = meta ? `
@@ -193,6 +195,7 @@ function wrapPage(
       .meta-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
+  ${transcriptStyles ? `<style>${transcriptStyles}</style>` : ""}
 </head>
 <body>
   ${header}
@@ -210,4 +213,22 @@ function wrapPage(
 
 function esc(str: string): string {
   return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+/**
+ * discord-html-transcripts (and similar libs) generate a full HTML document.
+ * Embedding that directly inside our wrapper causes the browser to discard
+ * nested <html>/<head>/<style> tags, stripping all transcript CSS.
+ * We extract the <style> blocks and <body> content separately so both render.
+ */
+function extractTranscriptParts(html: string): { styles: string; body: string } {
+  // Collect all <style>...</style> blocks from anywhere in the document
+  const styleMatches = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)]
+  const styles = styleMatches.map((m) => m[1]).join("\n")
+
+  // Extract inner content of <body>
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i)
+  const body = bodyMatch ? bodyMatch[1] : html
+
+  return { styles, body }
 }
