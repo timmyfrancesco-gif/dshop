@@ -21,7 +21,7 @@ interface Stats {
 }
 
 function avatarUrl(userId: string, avatar: string | null) {
-  if (!avatar) return `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> 22n) % 6}.png`
+  if (!avatar) return `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> BigInt(22)) % 6}.png`
   return `https://cdn.discordapp.com/avatars/${userId}/${avatar}.png?size=64`
 }
 
