@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #07050d;
-  --background-elevated: #110c1e;
-  --foreground: #f3f0fb;
-  --muted: #9c93b5;
-  --border: #241c38;
+  --background: #050810;
+  --background-elevated: #0c121e;
+  --foreground: #f0f5fb;
+  --muted: #93a1b5;
+  --border: #1c2638;
 
   --accent: #90C6FF;
   --accent-soft: #90C6FF1a;
@@ -140,7 +140,7 @@ body {
 }
 
 .shimmer-bg {
-  background: linear-gradient(90deg, transparent 0%, rgba(168,85,247,0.06) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(144,198,255,0.06) 50%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer 2.5s linear infinite;
 }
@@ -170,7 +170,7 @@ body {
   padding: 26px 24px;
   border-radius: 20px;
   background:
-    radial-gradient(240px 160px at var(--mx) var(--my), rgba(168,85,247,0.08), transparent 60%),
+    radial-gradient(240px 160px at var(--mx) var(--my), rgba(144,198,255,0.08), transparent 60%),
     linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
   border: 1px solid rgba(255,255,255,0.12);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
@@ -184,7 +184,7 @@ body {
 }
 .feature-card:hover {
   transform: translateY(-6px) scale(1.01);
-  border-color: rgba(168,85,247,0.35);
+  border-color: rgba(144,198,255,0.35);
   box-shadow: 0 24px 80px rgba(0,0,0,0.45);
 }
 .feature-card::after {
@@ -193,8 +193,8 @@ body {
   inset: -1px;
   border-radius: 20px;
   background: conic-gradient(from 180deg at 50% 50%,
-    rgba(168,85,247,0.45), transparent 16%, transparent 50%,
-    rgba(192,132,252,0.5) 66%, transparent 82%, transparent 100%);
+    rgba(144,198,255,0.45), transparent 16%, transparent 50%,
+    rgba(96,170,255,0.5) 66%, transparent 82%, transparent 100%);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);

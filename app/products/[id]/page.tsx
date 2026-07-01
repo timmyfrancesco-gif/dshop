@@ -246,7 +246,7 @@ export default function ProductPage() {
 
               {/* Price + Stock */}
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-casino-from to-accent px-4 py-2.5 shadow-[0_14px_30px_rgba(168,85,247,0.3),inset_0_1px_0_rgba(255,255,255,0.35)]">
+                <span className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-casino-from to-accent px-4 py-2.5 shadow-[0_14px_30px_rgba(144,198,255,0.3),inset_0_1px_0_rgba(255,255,255,0.35)]">
                   <svg viewBox="0 0 24 24" className="h-4 w-4 text-background" fill="none" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>

@@ -20,11 +20,11 @@ const THEMES: Record<ThemeId, { label: string; colors: ThemeColors }> = {
   heaven: {
     label: "Heaven",
     colors: {
-      background: "#07050d",
-      backgroundElevated: "#110c1e",
-      foreground: "#f3f0fb",
-      muted: "#9c93b5",
-      border: "#241c38",
+      background: "#050810",
+      backgroundElevated: "#0c121e",
+      foreground: "#f0f5fb",
+      muted: "#93a1b5",
+      border: "#1c2638",
       accent: "#90C6FF",
       accentSoft: "#90C6FF1a",
       casinoFrom: "#60aaff",

@@ -42,7 +42,7 @@ const COLORS: Record<FeedItemType, string> = {
   order: "text-accent bg-accent/10 border-accent/30",
   escrow: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
   mm: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-  slot: "text-pink-400 bg-pink-500/10 border-pink-500/30",
+  slot: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
   exchange: "text-sky-400 bg-sky-500/10 border-sky-500/30",
 };
 
