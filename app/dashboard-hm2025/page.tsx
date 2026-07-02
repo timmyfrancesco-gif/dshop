@@ -39,6 +39,41 @@ const AUTO_REFRESH_MS = 60_000;
 
 const STOREFRONT_CONFIG_KEY = "hm_storefront_config";
 
+/* Real platform data from /api/admin/overview (tenant_orders DB) */
+interface PlatformOrder {
+  id: string;
+  product: string;
+  tenantSlug: string;
+  amountEur: number;
+  status: string;
+  method: string;
+  buyerEmail: string | null;
+  createdAt: string;
+}
+interface PlatformCustomer {
+  email: string;
+  orders: number;
+  totalSpent: number;
+  lastOrder: string;
+}
+interface PlatformOverview {
+  totalOrders: number;
+  paidOrders: number;
+  revenueEur: number;
+  totalCustomers: number;
+  avgOrderEur: number;
+  orders: PlatformOrder[];
+  customers: PlatformCustomer[];
+}
+interface PlatformWallet {
+  configured: boolean;
+  address?: string;
+  balanceLtc?: number | null;
+  unconfirmedLtc?: number;
+  totalReceivedLtc?: number;
+  txCount?: number;
+}
+
 const NAV_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
   products: "Products",
@@ -310,7 +345,7 @@ function IconCrypto({ className }: { className?: string }) {
 function BarChart({
   data,
   labels,
-  color = "#6366f1",
+  color = "#90C6FF",
   height = 160,
 }: {
   data: number[];
@@ -372,7 +407,7 @@ function BarChart({
 
 function SparkLine({
   data,
-  color = "#6366f1",
+  color = "#90C6FF",
   height = 40,
   width = 120,
 }: {
@@ -460,7 +495,7 @@ export default function SecretDashboardPage() {
     return (
       <main className="flex min-h-screen items-center justify-center" style={{ backgroundColor: "#09090b" }}>
         <div className="flex flex-col items-center gap-4">
-          <svg className="h-10 w-10 animate-spin text-indigo-500" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <svg className="h-10 w-10 animate-spin text-[#90C6FF]" viewBox="0 0 24 24" fill="none" aria-hidden>
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
             <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
           </svg>
@@ -474,8 +509,8 @@ export default function SecretDashboardPage() {
     return (
       <main className="flex min-h-screen items-center justify-center px-4" style={{ backgroundColor: "#09090b" }}>
         <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-white/5 p-8 text-center" style={{ backgroundColor: "#121214" }}>
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-500/10 ring-2 ring-indigo-500/20">
-            <svg viewBox="0 0 24 24" className="h-8 w-8 text-indigo-500" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#90C6FF]/10 ring-2 ring-[#90C6FF]/20">
+            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#90C6FF]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
@@ -510,7 +545,7 @@ export default function SecretDashboardPage() {
               value={pwInput}
               onChange={(e) => { setPwInput(e.target.value); setPwError(false); }}
               placeholder="Dashboard password"
-              className={`w-full rounded-xl border bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-indigo-500 ${
+              className={`w-full rounded-xl border bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-[#90C6FF] ${
                 pwError ? "border-rose-500" : "border-white/10"
               }`}
             />
@@ -520,7 +555,7 @@ export default function SecretDashboardPage() {
             <button
               type="submit"
               disabled={pwBusy}
-              className="rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
+              className="rounded-xl bg-[#90C6FF] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#6fb0f0] disabled:opacity-50"
             >
               {pwBusy ? "Checking..." : "Enter Dashboard"}
             </button>
@@ -541,6 +576,8 @@ function AdminPanel() {
   const { user: authUser } = useAuth();
   /* -- state -- */
   const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [overview, setOverview] = useState<PlatformOverview | null>(null);
+  const [platWallet, setPlatWallet] = useState<PlatformWallet | null>(null);
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -595,6 +632,15 @@ function AdminPanel() {
       if (ltcRes) setLtc(ltcRes);
       if (walletRes) setWallet(walletRes);
       setBotOnline(healthRes?.ok ?? false);
+
+      // Real platform data (tenant_orders DB) — preferred over bot feed.
+      const [ovRes, pwRes] = await Promise.all([
+        fetch("/api/admin/overview").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch("/api/admin/platform-wallet").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      ]);
+      if (ovRes) setOverview(ovRes);
+      if (pwRes) setPlatWallet(pwRes);
+
       setLastUpdated(Date.now());
     } finally {
       setLoading(false);
@@ -643,14 +689,35 @@ function AdminPanel() {
     [products, productSearch]
   );
 
-  const orderFeed = useMemo(() => feed.filter((f) => f.type === "order"), [feed]);
+  // Platform orders (real DB data) mapped to the feed shape so every
+  // existing view (recent orders, charts, method breakdown) renders them.
+  const orderFeed = useMemo<FeedItem[]>(() => {
+    if (overview?.orders?.length) {
+      return overview.orders.map((o) => ({
+        type: "order" as const,
+        label:
+          o.status === "paid" || o.status === "delivered"
+            ? o.product
+            : `${o.product} (${o.status})`,
+        method: (o.method || "ltc").toUpperCase(),
+        amount: o.amountEur,
+        ts: new Date(o.createdAt).getTime(),
+      }));
+    }
+    return feed.filter((f) => f.type === "order");
+  }, [feed, overview]);
+
   const revenueTotal = useMemo(
-    () => stats?.totalVolumeEur ?? orderFeed.reduce((s, f) => s + (f.amount ?? 0), 0),
-    [stats, orderFeed]
+    () =>
+      overview?.revenueEur ??
+      stats?.totalVolumeEur ??
+      orderFeed.reduce((s, f) => s + (f.amount ?? 0), 0),
+    [overview, stats, orderFeed]
   );
-  const orderCount = stats?.totalOrders ?? orderFeed.length;
-  const customerCount = stats?.totalCustomers ?? 0;
-  const avgOrderValue = orderCount > 0 ? revenueTotal / orderCount : 0;
+  const orderCount = overview?.totalOrders ?? stats?.totalOrders ?? orderFeed.length;
+  const customerCount = overview?.totalCustomers ?? stats?.totalCustomers ?? 0;
+  const avgOrderValue =
+    overview?.avgOrderEur ?? (orderCount > 0 ? revenueTotal / orderCount : 0);
 
   /* -- daily aggregations for charts (memoized) -- */
   const { dayLabels, dailyRevenue, dailyOrders } = useMemo(() => {
@@ -820,8 +887,8 @@ function AdminPanel() {
       >
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-white/5 px-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/15">
-            <span className="text-sm font-bold text-indigo-400">HM</span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#90C6FF]/15">
+            <span className="text-sm font-bold text-[#90C6FF]">HM</span>
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-white">Dshop</span>
@@ -968,7 +1035,7 @@ function AdminPanel() {
         {/* Bottom user profile + bot status */}
         <div className="border-t border-white/5 p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-500/15 text-sm font-bold text-indigo-400">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#90C6FF]/15 text-sm font-bold text-[#90C6FF]">
               {authUser?.username?.charAt(0)?.toUpperCase() ?? "A"}
             </div>
             <div className="min-w-0 flex-1">
@@ -1026,7 +1093,7 @@ function AdminPanel() {
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="accent-indigo-500"
+                className="accent-[#90C6FF]"
               />
               Auto
             </label>
@@ -1034,7 +1101,7 @@ function AdminPanel() {
               type="button"
               onClick={refresh}
               disabled={loading}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition-all hover:border-indigo-500/50 hover:text-indigo-400 disabled:opacity-50"
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition-all hover:border-[#90C6FF]/50 hover:text-[#90C6FF] disabled:opacity-50"
             >
               {loading ? "..." : "Refresh"}
             </button>
@@ -1123,10 +1190,10 @@ function AdminPanel() {
             />
           )}
           {activeNav === "orders" && (
-            <OrdersView feed={orderFeed} allFeed={feed} ltc={ltc} />
+            <OrdersView orders={overview?.orders ?? []} allFeed={feed} />
           )}
           {activeNav === "customers" && (
-            <CustomersView feed={feed} />
+            <CustomersView customers={overview?.customers ?? []} />
           )}
           {activeNav === "tickets" && (
             <TicketsView openTickets={stats?.openTickets ?? 0} />
@@ -1137,6 +1204,7 @@ function AdminPanel() {
           {activeNav === "wallet" && (
             <WalletView
               wallet={wallet}
+              platWallet={platWallet}
               ltc={ltc}
               showToast={showToast}
               onTransfer={(amount, toAddress) =>
@@ -1241,14 +1309,14 @@ function SidebarItem({
         indent ? "ml-2" : ""
       } ${
         active
-          ? "bg-indigo-500/10 font-semibold text-indigo-400"
+          ? "bg-[#90C6FF]/10 font-semibold text-[#90C6FF]"
           : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
       }`}
     >
-      <span className={active ? "text-indigo-400" : "text-zinc-500"}>{icon}</span>
+      <span className={active ? "text-[#90C6FF]" : "text-zinc-500"}>{icon}</span>
       {label}
       {active && (
-        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-400" />
+        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#90C6FF]" />
       )}
     </button>
   );
@@ -1340,7 +1408,7 @@ function DashboardView({
           <BarChart
             data={dailyRevenue}
             labels={dayLabels}
-            color="#6366f1"
+            color="#90C6FF"
             height={160}
           />
         </div>
@@ -1375,8 +1443,8 @@ function DashboardView({
                 key={i}
                 className="flex items-center gap-3 border-b border-white/5 py-3 last:border-0"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10">
-                  <IconProducts className="h-4 w-4 text-indigo-400" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#90C6FF]/10">
+                  <IconProducts className="h-4 w-4 text-[#90C6FF]" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-white">{item.label}</p>
@@ -1409,7 +1477,7 @@ function DashboardView({
             <ul className="space-y-3">
               {bestSelling.map(([name, count], i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-xs font-bold text-indigo-400">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#90C6FF]/10 text-xs font-bold text-[#90C6FF]">
                     {i + 1}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm text-zinc-300">{name}</span>
@@ -1462,7 +1530,7 @@ function DashboardView({
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
                       <div
-                        className="h-full rounded-full bg-indigo-500 transition-all"
+                        className="h-full rounded-full bg-[#90C6FF] transition-all"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -1512,7 +1580,7 @@ function StatCard({
         {sparkData && sparkData.length > 1 && (
           <SparkLine
             data={sparkData}
-            color={positive ? "#22c55e" : "#6366f1"}
+            color={positive ? "#22c55e" : "#90C6FF"}
             width={80}
             height={32}
           />
@@ -1578,7 +1646,7 @@ function ProductsView({
           <button
             type="button"
             onClick={onNew}
-            className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-indigo-600"
+            className="rounded-lg bg-[#90C6FF] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#6fb0f0]"
           >
             + Create Product
           </button>
@@ -1594,7 +1662,7 @@ function ProductsView({
             value={productSearch}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search by name..."
-            className="w-60 rounded-lg border border-white/10 py-2.5 pl-10 pr-4 text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-600"
+            className="w-60 rounded-lg border border-white/10 py-2.5 pl-10 pr-4 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50 placeholder:text-zinc-600"
             style={{ backgroundColor: "#161619" }}
           />
         </div>
@@ -1645,8 +1713,8 @@ function ProductsView({
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-sky-500/10">
-                      <IconProducts className="h-12 w-12 text-indigo-400/40" />
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#90C6FF]/20 to-sky-500/10">
+                      <IconProducts className="h-12 w-12 text-[#90C6FF]/40" />
                     </div>
                   )}
                 </div>
@@ -1692,7 +1760,7 @@ function ProductsView({
                   <button
                     type="button"
                     onClick={() => onClone(p)}
-                    className="text-xs font-semibold text-indigo-400 transition-colors hover:text-indigo-300"
+                    className="text-xs font-semibold text-[#90C6FF] transition-colors hover:text-[#b8dcff]"
                   >
                     Clone
                   </button>
@@ -1723,8 +1791,8 @@ function ProductsView({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.images?.[0] || p.image} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500/20 to-sky-500/10">
-                      <IconProducts className="h-5 w-5 text-indigo-400/40" />
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#90C6FF]/20 to-sky-500/10">
+                      <IconProducts className="h-5 w-5 text-[#90C6FF]/40" />
                     </div>
                   )}
                 </div>
@@ -1744,7 +1812,7 @@ function ProductsView({
                   {stock <= 0 ? "Out of stock" : stock <= 5 ? `${stock} left` : `${stock} in stock`}
                 </span>
                 <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" onClick={() => onClone(p)} className="text-xs font-semibold text-indigo-400 hover:text-indigo-300">Clone</button>
+                  <button type="button" onClick={() => onClone(p)} className="text-xs font-semibold text-[#90C6FF] hover:text-[#b8dcff]">Clone</button>
                   <button type="button" onClick={() => onDelete(p)} className="text-xs font-semibold text-rose-400 hover:text-rose-300">Delete</button>
                 </div>
               </div>
@@ -1955,7 +2023,7 @@ function ProductEditView({
   ];
 
   const inputCls =
-    "w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50";
+    "w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50";
 
   async function handleSaveAndExit() {
     await handleSave();
@@ -1984,7 +2052,7 @@ function ProductEditView({
             type="button"
             onClick={handleSaveAndExit}
             disabled={saving || !name.trim()}
-            className="rounded-lg border border-indigo-500/30 px-4 py-2 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10 disabled:opacity-50"
+            className="rounded-lg border border-[#90C6FF]/30 px-4 py-2 text-xs font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/10 disabled:opacity-50"
           >
             Save &amp; Exit
           </button>
@@ -1992,7 +2060,7 @@ function ProductEditView({
             type="button"
             onClick={handleSave}
             disabled={saving || !name.trim()}
-            className="rounded-lg bg-indigo-500 px-5 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
+            className="rounded-lg bg-[#90C6FF] px-5 py-2 text-xs font-bold text-white transition-all hover:bg-[#6fb0f0] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>
@@ -2011,7 +2079,7 @@ function ProductEditView({
             onClick={() => setEditTab(tab.key)}
             className={`px-4 py-3 text-sm transition-colors ${
               editTab === tab.key
-                ? "border-b-2 border-indigo-500 font-semibold text-indigo-400"
+                ? "border-b-2 border-[#90C6FF] font-semibold text-[#90C6FF]"
                 : "border-b-2 border-transparent text-zinc-400 hover:text-white"
             }`}
           >
@@ -2046,7 +2114,7 @@ function ProductEditView({
             type="button"
             onClick={handleSave}
             disabled={saving || !name.trim()}
-            className="rounded-lg border border-indigo-500/30 px-4 py-2 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10 disabled:opacity-50"
+            className="rounded-lg border border-[#90C6FF]/30 px-4 py-2 text-xs font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/10 disabled:opacity-50"
           >
             Save &amp; Exit
           </button>
@@ -2054,7 +2122,7 @@ function ProductEditView({
             type="button"
             onClick={handleSave}
             disabled={saving || !name.trim()}
-            className="rounded-lg bg-indigo-500 px-5 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600 disabled:opacity-50"
+            className="rounded-lg bg-[#90C6FF] px-5 py-2 text-xs font-bold text-white transition-all hover:bg-[#6fb0f0] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>
@@ -2067,7 +2135,7 @@ function ProductEditView({
         style={{ backgroundColor: "#121214" }}
       >
         <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-white">
-          <IconFileTextInline className="h-4 w-4 text-indigo-400" />
+          <IconFileTextInline className="h-4 w-4 text-[#90C6FF]" />
           General
         </h3>
         <div className="space-y-5">
@@ -2133,7 +2201,7 @@ function ProductEditView({
                     className="h-24 w-24 rounded-lg border border-white/10 object-cover"
                   />
                   {idx === 0 && (
-                    <span className="absolute left-1 top-1 rounded bg-indigo-500/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    <span className="absolute left-1 top-1 rounded bg-[#90C6FF]/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
                       Cover
                     </span>
                   )}
@@ -2150,7 +2218,7 @@ function ProductEditView({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-dashed border-white/10 text-zinc-500 transition-colors hover:border-indigo-500/30 hover:text-indigo-400"
+                  className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-dashed border-white/10 text-zinc-500 transition-colors hover:border-[#90C6FF]/30 hover:text-[#90C6FF]"
                 >
                   <span className="text-2xl leading-none">+</span>
                   <span className="mt-1 text-[10px]">Upload</span>
@@ -2192,14 +2260,14 @@ function ProductEditView({
               onClick={() => setDeliverableType(opt.value)}
               className={`rounded-lg border p-4 text-left transition-all ${
                 deliverableType === opt.value
-                  ? "border-indigo-500 bg-indigo-500/5"
+                  ? "border-[#90C6FF] bg-[#90C6FF]/5"
                   : "border-white/10 hover:border-white/20"
               }`}
               style={{ backgroundColor: deliverableType === opt.value ? undefined : "#161619" }}
             >
               <p
                 className={`text-sm font-semibold ${
-                  deliverableType === opt.value ? "text-indigo-400" : "text-white"
+                  deliverableType === opt.value ? "text-[#90C6FF]" : "text-white"
                 }`}
               >
                 {opt.label}
@@ -2253,7 +2321,7 @@ function ProductEditView({
         style={{ backgroundColor: "#121214" }}
       >
         <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-white">
-          <IconTag className="h-4 w-4 text-indigo-400" />
+          <IconTag className="h-4 w-4 text-[#90C6FF]" />
           Pricing &amp; Stock
         </h3>
         <div className="space-y-3">
@@ -2288,7 +2356,7 @@ function ProductEditView({
                   </svg>
                   <span
                     className={`text-sm font-semibold ${
-                      expanded ? "text-indigo-400" : "text-white"
+                      expanded ? "text-[#90C6FF]" : "text-white"
                     }`}
                   >
                     {variant.title || "Untitled Variant"}
@@ -2379,7 +2447,7 @@ function ProductEditView({
                       <button
                         type="button"
                         onClick={() => toggleStockMode(variant.id)}
-                        className="shrink-0 rounded-lg border border-indigo-500/30 px-3 py-1.5 text-xs font-semibold text-indigo-400 transition-all hover:bg-indigo-500/10"
+                        className="shrink-0 rounded-lg border border-[#90C6FF]/30 px-3 py-1.5 text-xs font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/10"
                       >
                         {getStockMode(variant.id) !== "add" ? "Close" : "Manage Stock"}
                       </button>
@@ -2395,7 +2463,7 @@ function ProductEditView({
                             onClick={() => setStockModes((p) => ({ ...p, [variant.id]: "edit" }))}
                             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                               getStockMode(variant.id) === "edit"
-                                ? "bg-indigo-500/20 text-indigo-400"
+                                ? "bg-[#90C6FF]/20 text-[#90C6FF]"
                                 : "text-zinc-500 hover:text-white"
                             }`}
                           >
@@ -2406,7 +2474,7 @@ function ProductEditView({
                             onClick={() => setStockModes((p) => ({ ...p, [variant.id]: "replace" }))}
                             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                               stockModes[variant.id] === "replace"
-                                ? "bg-indigo-500/20 text-indigo-400"
+                                ? "bg-[#90C6FF]/20 text-[#90C6FF]"
                                 : "text-zinc-500 hover:text-white"
                             }`}
                           >
@@ -2424,7 +2492,7 @@ function ProductEditView({
                           }}
                           rows={5}
                           placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
-                          className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-indigo-500/50 resize-none placeholder:text-zinc-700"
+                          className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-[#90C6FF]/50 resize-none placeholder:text-zinc-700"
                           style={{ backgroundColor: "#121214" }}
                         />
 
@@ -2468,7 +2536,7 @@ function ProductEditView({
                       onChange={(e) =>
                         updateVariant(variant.id, "stock", Math.max(0, parseInt(e.target.value) || 0))
                       }
-                      className="w-32 rounded-lg border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/50"
+                      className="w-32 rounded-lg border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#90C6FF]/50"
                       style={{ backgroundColor: "#1e1e22" }}
                     />
                   </div>
@@ -2509,7 +2577,7 @@ function ProductEditView({
           <button
             type="button"
             onClick={addVariant}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/10 py-3 text-xs font-semibold text-zinc-500 transition-all hover:border-indigo-500/30 hover:text-indigo-400"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/10 py-3 text-xs font-semibold text-zinc-500 transition-all hover:border-[#90C6FF]/30 hover:text-[#90C6FF]"
           >
             <span className="text-base leading-none">+</span> Create a New Variant
           </button>
@@ -2536,7 +2604,7 @@ function ToggleSwitch({
       type="button"
       onClick={() => onChange(!checked)}
       className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-        checked ? "bg-indigo-500" : "bg-zinc-700"
+        checked ? "bg-[#90C6FF]" : "bg-zinc-700"
       }`}
     >
       <span
@@ -2602,7 +2670,7 @@ function PrimaryButton({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-lg bg-indigo-500 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-indigo-600"
+      className="rounded-lg bg-[#90C6FF] px-4 py-2 text-xs font-bold text-white transition-all hover:bg-[#6fb0f0]"
     >
       {label}
     </button>
@@ -2775,7 +2843,7 @@ function FeedbacksView({ feed, reviews }: { feed: FeedItem[]; reviews: Review[] 
             <div key={i} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/10 text-sm font-bold text-indigo-400">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#90C6FF]/10 text-sm font-bold text-[#90C6FF]">
                     {r.orderId.charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -2862,7 +2930,6 @@ type StorefrontConfig = {
   description: string;
   discordInvite: string;
   shopUrl: string;
-  primaryColor: string;
   currency: string;
   bannerText: string;
   bannerEnabled: boolean;
@@ -2874,7 +2941,6 @@ const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
   description: "",
   discordInvite: "",
   shopUrl: "",
-  primaryColor: "#6366f1",
   currency: "EUR",
   bannerText: "",
   bannerEnabled: false,
@@ -2887,36 +2953,79 @@ function StorefrontConfigureView({
 }) {
   const [config, setConfig] = useState<StorefrontConfig>(DEFAULT_STOREFRONT_CONFIG);
   const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    Promise.resolve().then(() => {
-      try {
-        const raw = localStorage.getItem(STOREFRONT_CONFIG_KEY);
-        if (raw) {
-          setConfig({ ...DEFAULT_STOREFRONT_CONFIG, ...JSON.parse(raw) });
-        }
-      } catch {
-        /* ignore */
-      }
-      setLoaded(true);
-    });
+    fetch("/api/admin/site-config")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.config) setConfig({ ...DEFAULT_STOREFRONT_CONFIG, ...d.config });
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, []);
 
   function update<K extends keyof StorefrontConfig>(key: K, value: StorefrontConfig[K]) {
     setConfig((prev) => ({ ...prev, [key]: value }));
   }
 
-  function handleSave() {
+  async function handleSave() {
+    setSaving(true);
     try {
-      localStorage.setItem(STOREFRONT_CONFIG_KEY, JSON.stringify(config));
-      showToast("Storefront settings saved", true);
+      const res = await fetch("/api/admin/site-config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storeName: config.storeName,
+          logoUrl: config.logoUrl,
+          description: config.description,
+          discordInvite: config.discordInvite,
+          shopUrl: config.shopUrl,
+          currency: config.currency,
+          bannerText: config.bannerText,
+          bannerEnabled: config.bannerEnabled,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast("Storefront settings saved — live on the site", true);
+      } else {
+        showToast(data.error || "Failed to save settings", false);
+      }
     } catch {
-      showToast("Failed to save settings", false);
+      showToast("Network error while saving", false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleLogoUpload(file: File) {
+    if (file.size > 2 * 1024 * 1024) {
+      showToast("Image too large (max 2MB)", false);
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        update("logoUrl", data.url);
+        showToast("Logo uploaded", true);
+      } else {
+        showToast(data.error || "Upload failed", false);
+      }
+    } catch {
+      showToast("Upload failed", false);
+    } finally {
+      setUploading(false);
     }
   }
 
   const inputClass =
-    "rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-indigo-500/50";
+    "rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50";
 
   if (!loaded) {
     return <p className="text-sm text-zinc-500">Loading...</p>;
@@ -2947,31 +3056,20 @@ function StorefrontConfigureView({
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-zinc-400">Store Logo</label>
               <div className="flex items-center gap-3">
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-4 py-2.5 text-sm font-semibold text-indigo-400 transition-all hover:bg-indigo-500/20">
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#90C6FF]/30 bg-[#90C6FF]/10 px-4 py-2.5 text-sm font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/20">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
-                  Upload from PC
+                  {uploading ? "Uploading…" : "Upload from PC"}
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (!file) return;
-                      if (file.size > 2 * 1024 * 1024) {
-                        showToast("Image too large (max 2MB)", false);
-                        return;
-                      }
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        if (typeof reader.result === "string") {
-                          update("logoUrl", reader.result);
-                        }
-                      };
-                      reader.readAsDataURL(file);
+                      if (file) handleLogoUpload(file);
                     }}
                   />
                 </label>
@@ -3013,24 +3111,6 @@ function StorefrontConfigureView({
                 className={`${inputClass} resize-none`}
                 style={{ backgroundColor: "#161619" }}
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-zinc-400">Primary Color</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={config.primaryColor}
-                  onChange={(e) => update("primaryColor", e.target.value)}
-                  className="h-10 w-12 cursor-pointer rounded-lg border border-white/10 bg-transparent"
-                />
-                <input
-                  type="text"
-                  value={config.primaryColor}
-                  onChange={(e) => update("primaryColor", e.target.value)}
-                  className={`${inputClass} flex-1 font-mono`}
-                  style={{ backgroundColor: "#161619" }}
-                />
-              </div>
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-zinc-400">Currency</label>
@@ -3103,8 +3183,8 @@ function StorefrontConfigureView({
               </div>
               {config.bannerEnabled && config.bannerText.trim() && (
                 <div
-                  className="rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-white"
-                  style={{ backgroundColor: config.primaryColor }}
+                  className="rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-background"
+                  style={{ backgroundColor: "#90C6FF", color: "#050810" }}
                 >
                   {config.bannerText}
                 </div>
@@ -3143,7 +3223,7 @@ function ActivityLogsView({ feed }: { feed: FeedItem[] }) {
                         ? "bg-amber-400"
                         : item.type === "exchange"
                           ? "bg-cyan-400"
-                          : "bg-indigo-400"
+                          : "bg-[#90C6FF]"
                   }`}
                 />
                 <div className="flex flex-wrap items-center gap-2">
@@ -3167,24 +3247,23 @@ function ActivityLogsView({ feed }: { feed: FeedItem[] }) {
 /* ================================================================== */
 
 function OrdersView({
-  feed,
+  orders,
   allFeed,
-  ltc,
 }: {
-  feed: FeedItem[];
+  orders: PlatformOrder[];
   allFeed: FeedItem[];
-  ltc: LtcResponse | null;
 }) {
-  const orderItems = allFeed.filter(
-    (f) => f.type === "order" || f.type === "escrow"
-  );
+  // Fallback to bot feed only when the platform DB has no orders at all.
+  const feedFallback = orders.length === 0
+    ? allFeed.filter((f) => f.type === "order" || f.type === "escrow")
+    : [];
 
   return (
     <div className="space-y-5">
       <div>
         <h3 className="text-xl font-bold text-white">Invoices</h3>
         <p className="mt-0.5 text-sm text-zinc-500">
-          View all orders and transactions ({orderItems.length} total)
+          View all orders and transactions ({orders.length || feedFallback.length} total)
         </p>
       </div>
 
@@ -3195,6 +3274,7 @@ function OrdersView({
               <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Status</th>
               <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">ID</th>
               <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Product</th>
+              <th className="hidden px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 lg:table-cell">Shop</th>
               <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Price</th>
               <th className="hidden px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 sm:table-cell">Method</th>
               <th className="hidden px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500 md:table-cell">Email</th>
@@ -3202,60 +3282,81 @@ function OrdersView({
             </tr>
           </thead>
           <tbody>
-            {orderItems.length === 0 ? (
+            {orders.length === 0 && feedFallback.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-4 py-12 text-center text-sm text-zinc-500"
                 >
                   No orders found.
                 </td>
               </tr>
+            ) : orders.length > 0 ? (
+              orders.map((o) => (
+                <tr
+                  key={o.id}
+                  className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
+                >
+                  <td className="px-4 py-3">
+                    <OrderStatusBadge status={o.status} />
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-zinc-500">
+                    #{o.id.slice(0, 8)}
+                  </td>
+                  <td className="px-4 py-3 font-medium text-white">
+                    {o.product}
+                  </td>
+                  <td className="hidden px-4 py-3 text-xs text-zinc-400 lg:table-cell">
+                    {o.tenantSlug}
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-white">
+                    {formatCurrency(o.amountEur, "EUR")}
+                  </td>
+                  <td className="hidden px-4 py-3 sm:table-cell">
+                    <span className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-zinc-400">
+                      {(o.method || "ltc").toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="hidden px-4 py-3 text-xs text-zinc-500 md:table-cell">
+                    {o.buyerEmail ?? "---"}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">
+                    {formatRelativeTime(new Date(o.createdAt).getTime())}
+                  </td>
+                </tr>
+              ))
             ) : (
-              orderItems.map((item, i) => {
-                const status =
-                  item.type === "escrow"
-                    ? "pending"
-                    : item.amount && item.amount > 0
-                      ? "paid"
-                      : "pending";
-                return (
-                  <tr
-                    key={i}
-                    className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
-                  >
-                    <td className="px-4 py-3">
-                      <OrderStatusBadge status={status} />
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-zinc-500">
-                      #{(1000 + i).toString().padStart(5, "0")}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-white">
-                      {item.label}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-white">
-                      {item.amount !== undefined
-                        ? formatCurrency(item.amount, "EUR")
-                        : "---"}
-                    </td>
-                    <td className="hidden px-4 py-3 sm:table-cell">
-                      {item.method ? (
-                        <span className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-zinc-400">
-                          {item.method}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-zinc-600">N/A</span>
-                      )}
-                    </td>
-                    <td className="hidden px-4 py-3 text-xs text-zinc-500 md:table-cell">
-                      ---
-                    </td>
-                    <td className="px-4 py-3 text-xs text-zinc-500">
-                      {formatRelativeTime(item.ts)}
-                    </td>
-                  </tr>
-                );
-              })
+              feedFallback.map((item, i) => (
+                <tr
+                  key={i}
+                  className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
+                >
+                  <td className="px-4 py-3">
+                    <OrderStatusBadge status={item.amount && item.amount > 0 ? "paid" : "pending"} />
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-zinc-500">
+                    #{(1000 + i).toString().padStart(5, "0")}
+                  </td>
+                  <td className="px-4 py-3 font-medium text-white">{item.label}</td>
+                  <td className="hidden px-4 py-3 lg:table-cell" />
+                  <td className="px-4 py-3 font-semibold text-white">
+                    {item.amount !== undefined ? formatCurrency(item.amount, "EUR") : "---"}
+                  </td>
+                  <td className="hidden px-4 py-3 sm:table-cell">
+                    {item.method ? (
+                      <span className="rounded-md bg-white/5 px-2 py-0.5 text-xs font-medium text-zinc-400">
+                        {item.method}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-zinc-600">N/A</span>
+                    )}
+                  </td>
+                  <td className="hidden px-4 py-3 text-xs text-zinc-500 md:table-cell">---</td>
+                  <td className="px-4 py-3 text-xs text-zinc-500">
+                    {formatRelativeTime(item.ts)}
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
@@ -3268,11 +3369,15 @@ function OrderStatusBadge({ status }: { status: string }) {
   const config =
     status === "paid"
       ? { bg: "bg-emerald-500/10", text: "text-emerald-400", dot: "bg-emerald-400", label: "Paid" }
-      : status === "pending"
-        ? { bg: "bg-amber-500/10", text: "text-amber-400", dot: "bg-amber-400", label: "Pending" }
-        : status === "confirming"
-          ? { bg: "bg-blue-500/10", text: "text-blue-400", dot: "bg-blue-400", label: "Confirming" }
-          : { bg: "bg-rose-500/10", text: "text-rose-400", dot: "bg-rose-400", label: "Cancelled" };
+      : status === "delivered"
+        ? { bg: "bg-emerald-500/10", text: "text-emerald-400", dot: "bg-emerald-400", label: "Delivered" }
+        : status === "pending"
+          ? { bg: "bg-amber-500/10", text: "text-amber-400", dot: "bg-amber-400", label: "Pending" }
+          : status === "confirming"
+            ? { bg: "bg-blue-500/10", text: "text-blue-400", dot: "bg-blue-400", label: "Confirming" }
+            : status === "expired"
+              ? { bg: "bg-zinc-500/10", text: "text-zinc-400", dot: "bg-zinc-400", label: "Expired" }
+              : { bg: "bg-rose-500/10", text: "text-rose-400", dot: "bg-rose-400", label: "Failed" };
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${config.bg} ${config.text}`}
@@ -3287,29 +3392,16 @@ function OrderStatusBadge({ status }: { status: string }) {
 /*  Customers View                                                     */
 /* ================================================================== */
 
-function CustomersView({ feed }: { feed: FeedItem[] }) {
-  const customerMap = new Map<
-    string,
-    { orders: number; total: number; lastSeen: number }
-  >();
-  feed
-    .filter((f) => f.type === "order" && f.method)
-    .forEach((f) => {
-      const key = f.method ?? "Unknown";
-      const existing = customerMap.get(key) ?? {
-        orders: 0,
-        total: 0,
-        lastSeen: 0,
-      };
-      existing.orders++;
-      existing.total += f.amount ?? 0;
-      const ts = f.ts > 1e12 ? f.ts : f.ts * 1000;
-      if (ts > existing.lastSeen) existing.lastSeen = ts;
-      customerMap.set(key, existing);
-    });
-
-  const customers = [...customerMap.entries()]
-    .sort((a, b) => b[1].total - a[1].total);
+function CustomersView({ customers: platformCustomers }: { customers: PlatformCustomer[] }) {
+  const customers: [string, { orders: number; total: number; lastSeen: number }][] =
+    platformCustomers.map((c) => [
+      c.email,
+      {
+        orders: c.orders,
+        total: c.totalSpent,
+        lastSeen: new Date(c.lastOrder).getTime(),
+      },
+    ]);
 
   return (
     <div className="space-y-5">
@@ -3348,7 +3440,7 @@ function CustomersView({ feed }: { feed: FeedItem[] }) {
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-500/10 text-xs font-bold text-indigo-400">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#90C6FF]/10 text-xs font-bold text-[#90C6FF]">
                         {name.charAt(0).toUpperCase()}
                       </div>
                       <span className="font-medium text-white">{name}</span>
@@ -3473,7 +3565,7 @@ function TranscriptsView() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by ticket name, owner, or ID..."
-            className="w-full rounded-lg border border-white/10 py-2.5 pl-9 pr-4 text-sm text-white outline-none transition-all focus:border-indigo-500/50"
+            className="w-full rounded-lg border border-white/10 py-2.5 pl-9 pr-4 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50"
             style={{ backgroundColor: "#161619" }}
           />
         </div>
@@ -3524,7 +3616,7 @@ function TranscriptsView() {
                   </td>
                   <td className="px-4 py-3">
                     {t.category ? (
-                      <span className="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-400">
+                      <span className="rounded-full border border-[#90C6FF]/20 bg-[#90C6FF]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#90C6FF]">
                         {t.category}
                       </span>
                     ) : (
@@ -3546,7 +3638,7 @@ function TranscriptsView() {
                       href={`/transcript/${t.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-all hover:border-indigo-500/30 hover:text-indigo-400"
+                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-all hover:border-[#90C6FF]/30 hover:text-[#90C6FF]"
                     >
                       View
                     </a>
@@ -3567,17 +3659,24 @@ function TranscriptsView() {
 
 function WalletView({
   wallet,
+  platWallet,
   ltc,
   showToast,
   onTransfer,
   feed,
 }: {
   wallet: WalletInfo | null;
+  platWallet: PlatformWallet | null;
   ltc: LtcResponse | null;
   showToast: (msg: string, ok: boolean) => void;
   onTransfer: (amount: number, toAddress: string) => void;
   feed: FeedItem[];
 }) {
+  // Prefer the bot wallet when it responds; otherwise show the platform
+  // fee wallet (PLATFORM_LTC_ADDRESS) with its live BlockCypher balance.
+  const balance = wallet?.balance ?? platWallet?.balanceLtc ?? null;
+  const address = wallet?.address ?? platWallet?.address ?? null;
+  const canTransfer = !!wallet; // transfers go through the bot's wallet only
   const [amount, setAmount] = useState("");
   const [toAddress, setToAddress] = useState("");
 
@@ -3614,19 +3713,24 @@ function WalletView({
             <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Available Balance</p>
           </div>
           <p className="mt-4 text-3xl font-bold text-amber-400">
-            {wallet ? `${wallet.balance.toFixed(8)} LTC` : "---"}
+            {balance !== null ? `${balance.toFixed(8)} LTC` : "---"}
           </p>
-          {wallet && ltc && (
+          {balance !== null && ltc && (
             <div className="mt-2 flex items-center gap-3">
               <span className="text-lg text-zinc-400">
-                ~ {formatCurrency(wallet.balance * ltc.eur, "EUR")}
+                ~ {formatCurrency(balance * ltc.eur, "EUR")}
               </span>
               <span className="text-sm text-zinc-600">
-                / ${(wallet.balance * ltc.usd).toFixed(2)}
+                / ${(balance * ltc.usd).toFixed(2)}
               </span>
             </div>
           )}
-          {wallet && (
+          {!wallet && platWallet?.configured && (
+            <p className="mt-2 text-[11px] text-zinc-500">
+              Platform fee wallet {platWallet.txCount !== undefined ? `— ${platWallet.txCount} transactions` : ""}
+            </p>
+          )}
+          {canTransfer && (
             <button
               type="button"
               onClick={() => {
@@ -3645,16 +3749,16 @@ function WalletView({
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Receiving Address</p>
           <div className="mt-4 flex items-center gap-2">
             <code className="flex-1 truncate rounded-lg border border-white/5 px-3 py-2.5 font-mono text-xs text-white" style={{ backgroundColor: "#161619" }}>
-              {wallet?.address ?? "---"}
+              {address ?? "---"}
             </code>
-            {wallet?.address && (
+            {address && (
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText(wallet.address);
+                  navigator.clipboard.writeText(address);
                   showToast("Address copied!", true);
                 }}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 transition-all hover:border-indigo-500/50 hover:text-indigo-400"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 transition-all hover:border-[#90C6FF]/50 hover:text-[#90C6FF]"
               >
                 <IconCopy className="h-4 w-4 text-zinc-400" />
               </button>
@@ -3666,8 +3770,15 @@ function WalletView({
         </div>
       </div>
 
-      {/* Transfer form */}
-      <div id="transfer-section" className="rounded-xl border border-white/5 p-6" style={{ backgroundColor: "#121214" }}>
+      {/* Transfer form (only when the bot wallet is connected — the platform
+          fee wallet is external and its keys are never on the server) */}
+      {!canTransfer && (
+        <div className="rounded-xl border border-white/5 p-5 text-sm text-zinc-500" style={{ backgroundColor: "#121214" }}>
+          Transfers are disabled: this is your external platform wallet — the private key
+          is not stored here. Use your own wallet app to move funds.
+        </div>
+      )}
+      <div id="transfer-section" className={`rounded-xl border border-white/5 p-6 ${canTransfer ? "" : "hidden"}`} style={{ backgroundColor: "#121214" }}>
         <h4 className="mb-5 text-sm font-semibold text-white">Transfer Funds</h4>
         <form onSubmit={handleSubmit} className="grid gap-5 lg:grid-cols-3">
           <div className="flex flex-col gap-2">
@@ -3680,7 +3791,7 @@ function WalletView({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00000000"
-              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
+              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50 placeholder:text-zinc-700"
               style={{ backgroundColor: "#161619" }}
             />
           </div>
@@ -3691,7 +3802,7 @@ function WalletView({
               value={toAddress}
               onChange={(e) => setToAddress(e.target.value)}
               placeholder="ltc1q..."
-              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-indigo-500/50 placeholder:text-zinc-700"
+              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50 placeholder:text-zinc-700"
               style={{ backgroundColor: "#161619" }}
             />
           </div>
@@ -3748,7 +3859,7 @@ function WalletView({
                             ? "bg-cyan-500/10 text-cyan-400"
                             : item.type === "escrow"
                               ? "bg-emerald-500/10 text-emerald-400"
-                              : "bg-indigo-500/10 text-indigo-400"
+                              : "bg-[#90C6FF]/10 text-[#90C6FF]"
                         }`}
                       >
                         {item.type}
@@ -3809,7 +3920,7 @@ function SettingsView({
               onClick={() => setTheme(id)}
               className={`group relative flex flex-col overflow-hidden rounded-xl border-2 transition-all ${
                 theme === id
-                  ? "border-indigo-500 shadow-[0_0_20px_-4px_rgba(99,102,241,0.4)]"
+                  ? "border-[#90C6FF] shadow-[0_0_20px_-4px_rgba(99,102,241,0.4)]"
                   : "border-white/5 hover:border-white/15"
               }`}
             >
@@ -3832,7 +3943,7 @@ function SettingsView({
                   <span className="text-sm font-semibold text-white">{t.label}</span>
                 </div>
                 {theme === id && (
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-indigo-400" fill="none" stroke="currentColor" strokeWidth={3}>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#90C6FF]" fill="none" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 )}
@@ -3859,7 +3970,7 @@ function SettingsView({
                 onChange={(e) => onAutoRefreshChange(e.target.checked)}
                 className="peer sr-only"
               />
-              <div className="h-6 w-11 rounded-full bg-zinc-700 peer-checked:bg-indigo-500 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
+              <div className="h-6 w-11 rounded-full bg-zinc-700 peer-checked:bg-[#90C6FF] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
         </div>

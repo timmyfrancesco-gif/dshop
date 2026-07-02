@@ -126,6 +126,16 @@ export const tenantOrders = pgTable("tenant_orders", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ── Main site storefront config (single row) ───────────────────────
+export const siteConfig = pgTable("site_config", {
+  id: integer("id").primaryKey().default(1),
+  config: jsonb("config")
+    .$type<Record<string, unknown>>()
+    .default({})
+    .notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // ── Discord verifications ───────────────────────────────────────────
 export const discordVerifications = pgTable("discord_verifications", {
   id: uuid("id").defaultRandom().primaryKey(),

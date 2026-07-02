@@ -115,6 +115,14 @@ export async function runMigrations() {
       )
     `);
     await client.query(`
+      CREATE TABLE IF NOT EXISTS site_config (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        config JSONB NOT NULL DEFAULT '{}',
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS discord_verifications (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         discord_user_id TEXT NOT NULL,

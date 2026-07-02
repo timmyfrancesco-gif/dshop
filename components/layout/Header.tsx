@@ -133,6 +133,11 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+      {!site.isTenant && site.bannerEnabled && site.bannerText?.trim() ? (
+        <div className="bg-accent px-4 py-2 text-center text-sm font-semibold text-background">
+          {site.bannerText}
+        </div>
+      ) : null}
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
         <Link href={site.isTenant ? `/s/${site.tenantSlug}` : "/#top"} className="flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight whitespace-nowrap">
           {site.tenantLogo ? (

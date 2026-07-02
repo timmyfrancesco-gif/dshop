@@ -11,6 +11,8 @@ export interface SiteConfig {
   isTenant: boolean;
   tenantSlug?: string;
   tenantLogo?: string | null;
+  bannerText?: string;
+  bannerEnabled?: boolean;
 }
 
 const defaultConfig: SiteConfig = {
