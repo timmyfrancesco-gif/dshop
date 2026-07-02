@@ -15,6 +15,7 @@ interface TenantSettings {
   accentColor: string | null;
   discordInvite: string | null;
   ltcAddress: string | null;
+  paypalEmail: string | null;
   feePct: number;
   active: boolean;
 }
@@ -50,6 +51,7 @@ export default function TenantDashboard() {
     logo: "",
     discordInvite: "",
     ltcAddress: "",
+    paypalEmail: "",
     theme: "hyper",
     accentColor: "#6571FF",
   });
@@ -70,6 +72,7 @@ export default function TenantDashboard() {
           logo: data.logo ?? "",
           discordInvite: data.discordInvite ?? "",
           ltcAddress: data.ltcAddress ?? "",
+          paypalEmail: data.paypalEmail ?? "",
           theme: data.theme ?? "hyper",
           accentColor: data.accentColor ?? "#6571FF",
         });
@@ -418,6 +421,20 @@ export default function TenantDashboard() {
                     }
                     className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-mono outline-none focus:border-white/30"
                     placeholder="ltc1q..."
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-white/50">
+                    PayPal Email (Friends &amp; Family — leave empty to disable PayPal)
+                  </label>
+                  <input
+                    type="email"
+                    value={editForm.paypalEmail}
+                    onChange={(e) =>
+                      setEditForm((f) => ({ ...f, paypalEmail: e.target.value }))
+                    }
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/30"
+                    placeholder="you@paypal-email.com"
                   />
                 </div>
               </div>
