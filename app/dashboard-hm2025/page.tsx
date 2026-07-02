@@ -1859,7 +1859,7 @@ function ProductEditView({
   const [smmMinQty, setSmmMinQty] = useState(product?.smmMinQty?.toString() ?? "");
   const [smmMaxQty, setSmmMaxQty] = useState(product?.smmMaxQty?.toString() ?? "");
   const [variants, setVariants] = useState<
-    { id: string; title: string; price: string; stock: number; stockItems: string }[]
+    { id: string; title: string; price: string; stock: number; stockItems: string; stockDraft: string }[]
   >(
     product?.variants?.length
       ? product.variants.map((v) => ({
@@ -1868,6 +1868,7 @@ function ProductEditView({
           price: v.price?.toString() ?? "",
           stock: v.stock ?? 0,
           stockItems: v.stockItems?.join("\n") ?? "",
+          stockDraft: "",
         }))
       : [
           {
@@ -1876,6 +1877,7 @@ function ProductEditView({
             price: product?.price?.toString() ?? "",
             stock: product?.stock ?? 0,
             stockItems: "",
+            stockDraft: "",
           },
         ],
   );
@@ -1946,6 +1948,7 @@ function ProductEditView({
         price: "",
         stock: 0,
         stockItems: "",
+        stockDraft: "",
       },
     ]);
     setExpandedVariants((prev) => new Set(prev).add(id));
@@ -1961,10 +1964,23 @@ function ProductEditView({
   }
 
   function toggleStockMode(id: string) {
-    setStockModes((prev) => ({
-      ...prev,
-      [id]: prev[id] && prev[id] !== "add" ? "add" : "edit",
-    }));
+    setStockModes((prev) => {
+      const opening = !prev[id] || prev[id] === "add";
+      if (opening) updateVariant(id, "stockDraft", "");
+      return { ...prev, [id]: opening ? "edit" : "add" };
+    });
+  }
+
+  function switchStockMode(id: string, mode: "edit" | "replace") {
+    setStockModes((prev) => ({ ...prev, [id]: mode }));
+    if (mode === "replace") {
+      // Prefill with the current full item list so it can be reviewed/edited.
+      const current = variants.find((v) => v.id === id);
+      updateVariant(id, "stockDraft", current?.stockItems ?? "");
+    } else {
+      // "Add" mode is a blank scratchpad for NEW items only.
+      updateVariant(id, "stockDraft", "");
+    }
   }
 
   async function handleSave() {
@@ -2460,7 +2476,7 @@ function ProductEditView({
                         <div className="flex gap-2">
                           <button
                             type="button"
-                            onClick={() => setStockModes((p) => ({ ...p, [variant.id]: "edit" }))}
+                            onClick={() => switchStockMode(variant.id, "edit")}
                             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                               getStockMode(variant.id) === "edit"
                                 ? "bg-[#90C6FF]/20 text-[#90C6FF]"
@@ -2471,7 +2487,7 @@ function ProductEditView({
                           </button>
                           <button
                             type="button"
-                            onClick={() => setStockModes((p) => ({ ...p, [variant.id]: "replace" }))}
+                            onClick={() => switchStockMode(variant.id, "replace")}
                             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                               stockModes[variant.id] === "replace"
                                 ? "bg-[#90C6FF]/20 text-[#90C6FF]"
@@ -2483,12 +2499,14 @@ function ProductEditView({
                         </div>
 
                         <label className="text-xs font-semibold text-zinc-400">
-                          Enter one deliverable per line
+                          {stockModes[variant.id] === "replace"
+                            ? "Full item list (this replaces everything in stock)"
+                            : "Enter new deliverables to add, one per line"}
                         </label>
                         <textarea
-                          value={variant.stockItems}
+                          value={variant.stockDraft}
                           onChange={(e) => {
-                            updateVariant(variant.id, "stockItems", e.target.value);
+                            updateVariant(variant.id, "stockDraft", e.target.value);
                           }}
                           rows={5}
                           placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
@@ -2498,29 +2516,35 @@ function ProductEditView({
 
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-zinc-500">
-                            {variant.stockItems.trim()
-                              ? `${variant.stockItems.trim().split("\n").filter((l) => l.trim()).length} new items`
+                            {variant.stockDraft.trim()
+                              ? `${variant.stockDraft.trim().split("\n").filter((l) => l.trim()).length} ${stockModes[variant.id] === "replace" ? "total items" : "new items"}`
                               : "No items entered"}
                           </span>
                           <button
                             type="button"
                             onClick={() => {
-                              const lines = variant.stockItems.trim().split("\n").filter((l) => l.trim());
-                              if (lines.length === 0) return;
-                              if (stockModes[variant.id] === "replace") {
-                                updateVariant(variant.id, "stock", lines.length);
-                              } else {
-                                updateVariant(variant.id, "stock", variant.stock + lines.length);
-                              }
-                              updateVariant(variant.id, "stockItems", "");
+                              const draftLines = variant.stockDraft.trim().split("\n").map((l) => l.trim()).filter(Boolean);
+                              if (draftLines.length === 0) return;
+                              const isReplace = stockModes[variant.id] === "replace";
+                              const merged = isReplace
+                                ? draftLines
+                                : [
+                                    ...variant.stockItems.trim().split("\n").map((l) => l.trim()).filter(Boolean),
+                                    ...draftLines,
+                                  ];
+                              // stock always mirrors the real item list — never tracked separately,
+                              // so a save can never send a stock count with no items behind it.
+                              updateVariant(variant.id, "stockItems", merged.join("\n"));
+                              updateVariant(variant.id, "stock", merged.length);
+                              updateVariant(variant.id, "stockDraft", "");
                               toggleStockMode(variant.id);
                             }}
-                            disabled={!variant.stockItems.trim()}
+                            disabled={!variant.stockDraft.trim()}
                             className="rounded-lg bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 disabled:opacity-50"
                           >
                             {stockModes[variant.id] === "replace"
                               ? "Replace Stock"
-                              : `Add to Stock (+${variant.stockItems.trim() ? variant.stockItems.trim().split("\n").filter((l) => l.trim()).length : 0})`}
+                              : `Add to Stock (+${variant.stockDraft.trim() ? variant.stockDraft.trim().split("\n").filter((l) => l.trim()).length : 0})`}
                           </button>
                         </div>
                       </div>
