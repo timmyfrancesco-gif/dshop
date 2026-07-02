@@ -224,14 +224,47 @@ export function createProduct(
   return adminFetch<ApiProduct>("POST", "/api/products", data);
 }
 
+/**
+ * Sets the real, authoritative list of deliverable items for a product
+ * (no-variant products only). The bot replaces `product.stockItems` with
+ * this array and recomputes `product.stock = stockItems.length` — sending
+ * a bare count here does nothing (the bot can't invent real stock), and
+ * the generic PUT /api/products/:id silently ignores stock/stockItems.
+ */
 export function updateProductStock(
   id: string,
-  stockItems: number
+  stockItems: string[]
 ): Promise<boolean> {
   return adminFetch<{ ok: boolean }>(
     "PUT",
     `/api/products/${encodeURIComponent(id)}/stock`,
     { stockItems }
+  ).then((res) => res !== null);
+}
+
+/** Same dedicated stock endpoint, for products with real (non-"Default") variants. */
+export function setVariantsStock(
+  id: string,
+  variants: { id: string; stockItems: string[] }[]
+): Promise<boolean> {
+  return adminFetch<{ ok: boolean }>(
+    "PUT",
+    `/api/products/${encodeURIComponent(id)}/stock`,
+    { variants }
+  ).then((res) => res !== null);
+}
+
+/**
+ * Bare-count form of the same endpoint, for non-serial deliverables
+ * (service/dynamic/files/smm-panels) where stock is just a number with no
+ * real items behind it — sending an empty stockItems array here would
+ * wrongly zero it out.
+ */
+export function setProductStockCount(id: string, stock: number): Promise<boolean> {
+  return adminFetch<{ ok: boolean }>(
+    "PUT",
+    `/api/products/${encodeURIComponent(id)}/stock`,
+    { stock }
   ).then((res) => res !== null);
 }
 

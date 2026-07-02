@@ -15,6 +15,8 @@ import {
   transferFunds,
   updateProduct,
   updateProductStock,
+  setVariantsStock,
+  setProductStockCount,
 } from "@/lib/api";
 import { formatCurrency, formatEur, formatRelativeTime } from "@/lib/format";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -754,22 +756,12 @@ function AdminPanel() {
     return { dayLabels: labels, dailyRevenue: revenue, dailyOrders: orders };
   }, [orderFeed]);
 
-  /* -- product actions -- */
-  async function handleStockChange(product: ApiProduct, delta: number) {
-    const newStock = Math.max(0, product.stock + delta);
-    const ok = await updateProductStock(product.id, newStock);
-    if (ok) {
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.id === product.id ? { ...p, stock: newStock } : p
-        )
-      );
-      showToast(`Stock aggiornato a ${newStock}`, true);
-    } else {
-      showToast("Errore aggiornamento stock", false);
-    }
+  function totalStockOf(variants: ApiProduct["variants"]): number {
+    if (!variants || variants.length === 0) return 0;
+    return variants.reduce((sum, v) => sum + (v.stockItems?.length ?? v.stock ?? 0), 0);
   }
 
+  /* -- product actions -- */
   async function handleDeleteProduct(product: ApiProduct) {
     const ok = await deleteProduct(product.id);
     if (ok) {
@@ -781,6 +773,33 @@ function AdminPanel() {
     setModal(null);
   }
 
+  // The generic product endpoint silently ignores stock/stockItems (bot design —
+  // it's metadata-only). Real stock must go through the dedicated stock endpoint,
+  // which is also the only endpoint that actually persists deliverable items
+  // (create-product always starts a product at stock 0 regardless of payload).
+  async function persistStock(
+    id: string,
+    variants: ApiProduct["variants"],
+    deliverableType?: string
+  ) {
+    if (!variants || variants.length === 0) return;
+    if (deliverableType !== "serials") {
+      // Non-serial deliverables track stock as a plain count with no real
+      // items behind it — send the bare number, never an items array.
+      const totalCount = variants.reduce((sum, v) => sum + (v.stock ?? 0), 0);
+      await setProductStockCount(id, totalCount);
+      return;
+    }
+    if (variants.length === 1 && variants[0].title === "Default") {
+      await updateProductStock(id, variants[0].stockItems ?? []);
+    } else {
+      await setVariantsStock(
+        id,
+        variants.map((v) => ({ id: v.id, stockItems: v.stockItems ?? [] }))
+      );
+    }
+  }
+
   async function handleSaveProduct(
     data: Partial<ApiProduct> & { id?: string }
   ) {
@@ -788,8 +807,13 @@ function AdminPanel() {
       const { id, ...rest } = data;
       const updated = await updateProduct(id, rest);
       if (updated) {
+        await persistStock(id, data.variants, data.deliverableType);
         setProducts((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, ...updated } : p))
+          prev.map((p) =>
+            p.id === id
+              ? { ...p, ...updated, variants: data.variants, stock: totalStockOf(data.variants) }
+              : p
+          )
         );
         showToast(`"${updated.name}" aggiornato`, true);
       } else {
@@ -798,7 +822,11 @@ function AdminPanel() {
     } else {
       const created = await createProduct(data as Omit<ApiProduct, "id">);
       if (created) {
-        setProducts((prev) => [...prev, created]);
+        await persistStock(created.id, data.variants, data.deliverableType);
+        setProducts((prev) => [
+          ...prev,
+          { ...created, variants: data.variants, stock: totalStockOf(data.variants) },
+        ]);
         showToast(`"${created.name}" creato`, true);
       } else {
         showToast(!tokenConfigured ? "ADMIN_TOKEN non configurato — fai Redeploy su Vercel" : "Errore creazione prodotto — controlla console (F12)", false);
