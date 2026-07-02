@@ -32,6 +32,7 @@ export const tenants = pgTable(
     btcAddress: text("btc_address"),
     ltcPrivateKey: text("ltc_private_key"),
     btcPrivateKey: text("btc_private_key"),
+    paypalEmail: text("paypal_email"),
     feePct: real("fee_pct").default(3).notNull(),
     active: boolean("active").default(true).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -105,8 +106,14 @@ export const tenantOrders = pgTable("tenant_orders", {
   amountLtc: real("amount_ltc"),
   feePct: real("fee_pct").notNull(),
   feeEur: real("fee_eur").notNull(),
+  // Payment method: "ltc" (temp wallet) or "paypal" (Friends & Family).
+  method: text("method").default("ltc").notNull(),
+  // PayPal F&F: unique code the buyer must put in the payment note so the
+  // bot can match the incoming PayPal notification email to this order.
+  paypalNote: text("paypal_note"),
   // Temporary wallet that receives the buyer's payment. The bot later sweeps
   // it: feePct% to the platform wallet, the rest to the tenant main wallet.
+  // Empty string for PayPal orders.
   ltcAddress: text("ltc_address").notNull(),
   payPrivateKey: text("pay_private_key"),
   // Tenant main wallet captured at order time (sweep destination).

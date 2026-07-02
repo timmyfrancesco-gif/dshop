@@ -17,12 +17,16 @@ interface TenantInfo {
   theme: string;
   discordInvite: string;
   hasWallet: boolean;
+  paypalEmail: string | null;
 }
 
 interface OrderState {
   orderId: string;
-  address: string;
-  amountLtc: number;
+  method: "ltc" | "paypal";
+  address?: string;
+  amountLtc?: number;
+  paypalEmail?: string;
+  paypalNote?: string;
   amountEur: number;
   status: string;
 }
@@ -73,6 +77,11 @@ function CheckoutBody({ tenant }: { tenant: TenantInfo }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<OrderState | null>(null);
+  const [method, setMethod] = useState<"ltc" | "paypal">(
+    tenant.hasWallet ? "ltc" : "paypal"
+  );
+
+  const hasPaypal = !!tenant.paypalEmail;
 
   const total = useMemo(
     () =>
@@ -96,8 +105,12 @@ function CheckoutBody({ tenant }: { tenant: TenantInfo }) {
       return;
     }
     if (!firstLine) return;
-    if (!tenant.hasWallet) {
+    if (method === "ltc" && !tenant.hasWallet) {
       setError("This shop hasn't finished its wallet setup yet.");
+      return;
+    }
+    if (method === "paypal" && !hasPaypal) {
+      setError("This shop does not accept PayPal.");
       return;
     }
 
@@ -110,6 +123,7 @@ function CheckoutBody({ tenant }: { tenant: TenantInfo }) {
           productId: firstLine.item.id,
           variantId: firstLine.variantId,
           email: email.trim(),
+          method,
         }),
       });
       const data = await res.json();
@@ -189,6 +203,49 @@ function CheckoutBody({ tenant }: { tenant: TenantInfo }) {
       </div>
 
       <form onSubmit={startPayment} className="flex flex-col gap-4">
+        {(tenant.hasWallet && hasPaypal) && (
+          <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">
+              Payment method
+            </h2>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMethod("ltc")}
+                className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                  method === "ltc"
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-border bg-background/60 text-muted hover:border-accent/40"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
+                  <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1.5 5h2.2l-1.1 4.2 1.6-.6-.4 1.6-1.6.6-.6 2.2H14l-.4 1.5H8.5l.9-3.2-1.4.5.4-1.6 1.4-.5L11 7z" />
+                </svg>
+                Litecoin
+              </button>
+              <button
+                type="button"
+                onClick={() => setMethod("paypal")}
+                className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
+                  method === "paypal"
+                    ? "border-accent bg-accent-soft text-accent"
+                    : "border-border bg-background/60 text-muted hover:border-accent/40"
+                }`}
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden>
+                  <path d="M7.1 21.4h2.9l.7-4.3h2.4c3.9 0 6.5-1.9 7.2-5.6.3-1.6.1-2.9-.7-3.8-.3-.4-.8-.7-1.3-1 .5-2.5-.1-3.7-1-4.7C16.3 1 14.7.5 12.7.5H6.4c-.5 0-.9.3-1 .8L2.7 19.1c-.1.4.2.8.6.8h3.3l.5-3.4v.1l-.1 4.8h.1z" />
+                </svg>
+                PayPal
+              </button>
+            </div>
+            {method === "paypal" && (
+              <p className="mt-2 text-xs text-muted">
+                Friends &amp; Family payment — instructions on the next step.
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">
             Delivery email
@@ -210,7 +267,11 @@ function CheckoutBody({ tenant }: { tenant: TenantInfo }) {
           disabled={loading}
           className="rounded-full bg-accent py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {loading ? "Creating order…" : "Pay with Litecoin"}
+          {loading
+            ? "Creating order…"
+            : method === "paypal"
+            ? "Pay with PayPal"
+            : "Pay with Litecoin"}
         </button>
         <Link
           href={`/s/${tenant.slug}`}
@@ -241,15 +302,17 @@ function PaymentScreen({
   const paidFired = useRef(false);
 
   const isPaid = status === "paid" || status === "delivered";
+  const isPaypal = order.method === "paypal";
 
   useEffect(() => {
+    if (isPaypal || !order.address) return;
     QRCode.toDataURL(`litecoin:${order.address}?amount=${order.amountLtc}`, {
       width: 220,
       margin: 1,
     })
       .then(setQr)
       .catch(() => setQr(null));
-  }, [order.address, order.amountLtc]);
+  }, [order.address, order.amountLtc, isPaypal]);
 
   useEffect(() => {
     if (isPaid) return;
@@ -284,9 +347,9 @@ function PaymentScreen({
     }
   }, [isPaid, onPaid]);
 
-  async function copyAddress() {
+  async function copyText(text: string) {
     try {
-      await navigator.clipboard.writeText(order.address);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -326,6 +389,93 @@ function PaymentScreen({
     );
   }
 
+  if (isPaypal) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">PayPal payment</h1>
+          <p className="mt-1 text-sm text-muted">
+            Follow the steps below exactly. The page updates automatically once
+            the payment is confirmed.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-background-elevated/40 p-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted">
+              Amount
+            </p>
+            <p className="mt-1 text-2xl font-bold text-foreground">
+              €{order.amountEur.toFixed(2)}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted">
+              Send to (PayPal email)
+            </p>
+            <div className="mt-1 flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2">
+              <span className="flex-1 break-all font-mono text-sm text-foreground">
+                {order.paypalEmail}
+              </span>
+              <button
+                type="button"
+                onClick={() => copyText(order.paypalEmail ?? "")}
+                className="shrink-0 text-xs font-semibold text-accent transition-opacity hover:opacity-80"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted">
+              Payment note (required)
+            </p>
+            <div className="mt-1 flex items-center gap-2 rounded-xl border border-accent/40 bg-accent-soft px-3 py-2">
+              <span className="flex-1 font-mono text-lg font-bold tracking-wider text-accent">
+                {order.paypalNote}
+              </span>
+              <button
+                type="button"
+                onClick={() => copyText(order.paypalNote ?? "")}
+                className="shrink-0 text-xs font-semibold text-accent transition-opacity hover:opacity-80"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">
+              Important
+            </p>
+            <ul className="mt-2 flex list-disc flex-col gap-1 pl-4 text-xs text-muted">
+              <li>Send as <strong className="text-foreground">Friends &amp; Family</strong> — NOT Goods &amp; Services.</li>
+              <li>Put the code <strong className="text-foreground">{order.paypalNote}</strong> in the payment note.</li>
+              <li>Send exactly <strong className="text-foreground">€{order.amountEur.toFixed(2)}</strong>.</li>
+              <li>Payments without the code or with a wrong amount can&apos;t be matched automatically.</li>
+            </ul>
+          </div>
+
+          <a
+            href={`https://www.paypal.com/myaccount/transfer/homepage/pay`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-accent py-3 text-center text-sm font-semibold text-background transition-opacity hover:opacity-90"
+          >
+            Open PayPal
+          </a>
+        </div>
+
+        <div className="flex items-center justify-center gap-2 text-sm text-muted">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+          Waiting for payment confirmation…
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -360,7 +510,7 @@ function PaymentScreen({
             </span>
             <button
               type="button"
-              onClick={copyAddress}
+              onClick={() => copyText(order.address ?? "")}
               className="shrink-0 text-xs font-semibold text-accent transition-opacity hover:opacity-80"
             >
               {copied ? "Copied" : "Copy"}

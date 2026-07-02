@@ -59,6 +59,7 @@ export async function POST(
         prev: tenantOrders.status,
         payAddress: tenantOrders.ltcAddress,
         amountLtc: tenantOrders.amountLtc,
+        method: tenantOrders.method,
       })
       .from(tenantOrders)
       .where(eq(tenantOrders.id, orderId))
@@ -78,7 +79,9 @@ export async function POST(
     // Defense in depth: independently confirm the temp wallet actually received
     // the expected amount before marking the order paid/delivered. Skipped only
     // if BlockCypher is unavailable (then we trust the bot's sweep).
-    if (status === "paid" || status === "delivered") {
+    // PayPal orders have no on-chain trail — the bot verified the PayPal
+    // notification email, so we trust its verdict there.
+    if ((status === "paid" || status === "delivered") && order.method !== "paypal") {
       const received = await getAddressReceived("ltc", order.payAddress);
       if (received) {
         const required = (order.amountLtc ?? 0) * (1 - AMOUNT_TOLERANCE);

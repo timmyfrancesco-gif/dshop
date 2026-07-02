@@ -34,6 +34,7 @@ export default async function TenantCheckoutPage({
         theme: tenant.theme,
         discordInvite: tenant.discordInvite ?? "",
         hasWallet: !!tenant.ltcAddress,
+        paypalEmail: tenant.paypalEmail ?? null,
       }}
     />
   );

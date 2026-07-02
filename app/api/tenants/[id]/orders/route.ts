@@ -5,6 +5,7 @@ import { eq, and, gt, sql } from "drizzle-orm";
 import { generateWallet, getLtcPriceEur } from "@/lib/crypto/wallet";
 import { encryptSecret } from "@/lib/crypto/secrets";
 import { serverError } from "@/lib/http";
+import { randomBytes } from "crypto";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -18,10 +19,11 @@ export async function POST(
 
   try {
     const body = await req.json();
-    const { productId, variantId, email } = body as {
+    const { productId, variantId, email, method } = body as {
       productId?: string;
       variantId?: string;
       email?: string;
+      method?: string;
     };
 
     if (!productId || !email || !EMAIL_RE.test(email) || email.length > 254) {
@@ -30,6 +32,8 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    const payMethod = method === "paypal" ? "paypal" : "ltc";
 
     // Tenant + its main wallet (sweep destination)
     const tenantRows = await db
@@ -44,9 +48,15 @@ export async function POST(
     if (!tenant.active) {
       return NextResponse.json({ error: "shop is not active" }, { status: 403 });
     }
-    if (!tenant.ltcAddress) {
+    if (payMethod === "ltc" && !tenant.ltcAddress) {
       return NextResponse.json(
         { error: "this shop has not finished wallet setup" },
+        { status: 409 }
+      );
+    }
+    if (payMethod === "paypal" && !tenant.paypalEmail) {
+      return NextResponse.json(
+        { error: "this shop does not accept PayPal" },
         { status: 409 }
       );
     }
@@ -78,15 +88,19 @@ export async function POST(
       amountEur = variant.price;
     }
 
-    const ltcPrice = await getLtcPriceEur();
-    if (!ltcPrice) {
-      return NextResponse.json(
-        { error: "price feed unavailable, try again shortly" },
-        { status: 503 }
-      );
-    }
-    const amountLtc = Number((amountEur / ltcPrice).toFixed(8));
     const feeEur = Number((amountEur * (tenant.feePct / 100)).toFixed(2));
+
+    let amountLtc: number | null = null;
+    if (payMethod === "ltc") {
+      const ltcPrice = await getLtcPriceEur();
+      if (!ltcPrice) {
+        return NextResponse.json(
+          { error: "price feed unavailable, try again shortly" },
+          { status: 503 }
+        );
+      }
+      amountLtc = Number((amountEur / ltcPrice).toFixed(8));
+    }
 
     // Atomically reserve one unit of stock so finite digital goods can't oversell.
     const reserved = await reserveStock(tenantId, productId, variantId);
@@ -96,6 +110,40 @@ export async function POST(
 
     // From here, if anything fails we must release the reserved unit.
     try {
+      if (payMethod === "paypal") {
+        // Unique code the buyer puts in the PayPal note; the bot matches the
+        // incoming PayPal notification email on this code + amount.
+        const paypalNote = `DS-${randomBytes(4).toString("hex").toUpperCase()}`;
+
+        const [order] = await db
+          .insert(tenantOrders)
+          .values({
+            tenantId,
+            productId,
+            variantId: variantId ?? null,
+            buyerEmail: email,
+            amountEur,
+            amountLtc: null,
+            feePct: tenant.feePct,
+            feeEur,
+            method: "paypal",
+            paypalNote,
+            ltcAddress: "",
+            payoutAddress: null,
+            status: "pending",
+          })
+          .returning();
+
+        return NextResponse.json({
+          orderId: order.id,
+          method: "paypal",
+          paypalEmail: tenant.paypalEmail,
+          paypalNote: order.paypalNote,
+          amountEur: order.amountEur,
+          status: order.status,
+        });
+      }
+
       const payWallet = await generateWallet("ltc");
       if (!payWallet) {
         await releaseStock(tenantId, productId, variantId);
@@ -116,6 +164,7 @@ export async function POST(
           amountLtc,
           feePct: tenant.feePct,
           feeEur,
+          method: "ltc",
           ltcAddress: payWallet.address,
           payPrivateKey: encryptSecret(payWallet.privateKey),
           payoutAddress: tenant.ltcAddress,
@@ -125,6 +174,7 @@ export async function POST(
 
       return NextResponse.json({
         orderId: order.id,
+        method: "ltc",
         address: order.ltcAddress,
         amountLtc: order.amountLtc,
         amountEur: order.amountEur,

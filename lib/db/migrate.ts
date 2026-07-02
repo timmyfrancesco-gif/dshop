@@ -145,6 +145,9 @@ export async function runMigrations() {
       "ALTER TABLE users DROP CONSTRAINT IF EXISTS users_username_key",
       "ALTER TABLE tenant_orders ADD COLUMN IF NOT EXISTS pay_private_key TEXT",
       "ALTER TABLE tenant_orders ADD COLUMN IF NOT EXISTS payout_address TEXT",
+      "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS paypal_email TEXT",
+      "ALTER TABLE tenant_orders ADD COLUMN IF NOT EXISTS method TEXT NOT NULL DEFAULT 'ltc'",
+      "ALTER TABLE tenant_orders ADD COLUMN IF NOT EXISTS paypal_note TEXT",
     ];
     for (const stmt of alterStatements) {
       try { await client.query(stmt); } catch { /* column may already exist */ }

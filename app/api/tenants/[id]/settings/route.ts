@@ -6,6 +6,7 @@ import { verifySession, readSessionCookie } from "@/lib/tenant/session";
 import { serverError } from "@/lib/http";
 
 const LTC_ADDRESS_RE = /^([LM3][a-km-zA-HJ-NP-Z1-9]{25,39}|ltc1[a-z0-9]{20,90})$/;
+const PAYPAL_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const THEMES = new Set(["heaven", "hyper"]);
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 
@@ -73,6 +74,14 @@ function validateSettings(
     }
     updates.ltcAddress = v;
   }
+  if ("paypalEmail" in body) {
+    const v = asString(body.paypalEmail)?.trim() ?? null;
+    if (v === null) return { error: "invalid PayPal email" };
+    if (v !== "" && (!PAYPAL_EMAIL_RE.test(v) || v.length > 254)) {
+      return { error: "invalid PayPal email" };
+    }
+    updates.paypalEmail = v || null;
+  }
 
   return { updates };
 }
@@ -104,6 +113,7 @@ export async function GET(
       accentColor: tenant.accentColor,
       discordInvite: tenant.discordInvite,
       ltcAddress: tenant.ltcAddress,
+      paypalEmail: tenant.paypalEmail,
       feePct: tenant.feePct,
       active: tenant.active,
     });
