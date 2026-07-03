@@ -45,18 +45,27 @@ export function fairFloat(serverSeed: string, clientSeed: string, nonce: number)
  * Fisher-Yates shuffle driven entirely by the seed triple, so the deck order
  * is reproducible from the revealed serverSeed.
  */
+const UINT32 = 4294967296; // 2^32
+
 export function fairShuffle<T>(items: T[], serverSeed: string, clientSeed: string, nonce: number): T[] {
   const arr = items.slice();
   const gen = byteStream(serverSeed, clientSeed, nonce);
   for (let i = arr.length - 1; i > 0; i--) {
-    // Rejection sampling over whole bytes to avoid modulo bias.
     const max = i + 1;
-    const limit = Math.floor(256 / max) * max;
-    let b: number;
+    // Draw a full 32-bit value with rejection sampling to avoid modulo bias.
+    // (A single byte breaks for max > 256, e.g. a 312-card 6-deck shoe, where
+    // the old floor(256/max)*max became 0 and looped forever.)
+    const limit = Math.floor(UINT32 / max) * max;
+    let r: number;
     do {
-      b = gen.next().value;
-    } while (b >= limit);
-    const j = b % max;
+      r =
+        ((gen.next().value << 24) |
+          (gen.next().value << 16) |
+          (gen.next().value << 8) |
+          gen.next().value) >>>
+        0;
+    } while (r >= limit);
+    const j = r % max;
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
