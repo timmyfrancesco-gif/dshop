@@ -235,6 +235,37 @@ body {
   transform: scaleX(1);
 }
 
+/* ── Casino playing cards ── */
+.card {
+  position: relative;
+  width: 64px;
+  height: 92px;
+  border-radius: 8px;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.5);
+  animation: card-deal 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.card-red { color: #dc2626; }
+.card-black { color: #18181b; }
+.card-back {
+  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  padding: 5px;
+}
+.card-back-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.12) 0 6px, transparent 6px 12px);
+}
+@keyframes card-deal {
+  from { opacity: 0; transform: translateY(-24px) rotate(-8deg) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

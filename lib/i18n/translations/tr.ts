@@ -1,6 +1,7 @@
 const tr: Record<string, string> = {
   // Navigation
   "nav.home": "Ana Sayfa",
+  "nav.casino": "Casino",
   "nav.products": "Ürünler",
   "nav.features": "Özellikler",
   "nav.faq": "SSS",

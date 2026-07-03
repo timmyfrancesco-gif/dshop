@@ -126,6 +126,37 @@ export const tenantOrders = pgTable("tenant_orders", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ── Casino: per-user balance (bot user id, amounts in EUR cents) ────
+export const casinoBalances = pgTable("casino_balances", {
+  userId: text("user_id").primaryKey(), // main-site (bot) user id
+  username: text("username"),
+  balanceCents: integer("balance_cents").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ── Casino: bet history / provably-fair audit trail ────────────────
+export const casinoBets = pgTable("casino_bets", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  game: text("game").notNull(), // "coinflip" | "blackjack"
+  betCents: integer("bet_cents").notNull(),
+  payoutCents: integer("payout_cents").default(0).notNull(),
+  outcome: jsonb("outcome").$type<Record<string, unknown>>(),
+  serverSeed: text("server_seed"),
+  serverSeedHash: text("server_seed_hash"),
+  clientSeed: text("client_seed"),
+  nonce: integer("nonce"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ── Casino: active blackjack game state (one per user) ─────────────
+export const casinoBlackjack = pgTable("casino_blackjack", {
+  userId: text("user_id").primaryKey(),
+  state: jsonb("state").$type<Record<string, unknown>>().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // ── Main site storefront config (single row) ───────────────────────
 export const siteConfig = pgTable("site_config", {
   id: integer("id").primaryKey().default(1),

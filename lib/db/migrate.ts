@@ -115,6 +115,43 @@ export async function runMigrations() {
       )
     `);
     await client.query(`
+      CREATE TABLE IF NOT EXISTS casino_balances (
+        user_id TEXT PRIMARY KEY,
+        username TEXT,
+        balance_cents INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS casino_bets (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id TEXT NOT NULL,
+        game TEXT NOT NULL,
+        bet_cents INTEGER NOT NULL,
+        payout_cents INTEGER NOT NULL DEFAULT 0,
+        outcome JSONB,
+        server_seed TEXT,
+        server_seed_hash TEXT,
+        client_seed TEXT,
+        nonce INTEGER,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS casino_bets_user_idx ON casino_bets (user_id, created_at DESC)
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS casino_blackjack (
+        user_id TEXT PRIMARY KEY,
+        state JSONB NOT NULL,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS site_config (
         id INTEGER PRIMARY KEY DEFAULT 1,
         config JSONB NOT NULL DEFAULT '{}',

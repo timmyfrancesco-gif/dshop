@@ -1,6 +1,7 @@
 const ar: Record<string, string> = {
   // Navigation
   "nav.home": "الرئيسية",
+  "nav.casino": "Casino",
   "nav.products": "المنتجات",
   "nav.features": "المزايا",
   "nav.faq": "الأسئلة الشائعة",
