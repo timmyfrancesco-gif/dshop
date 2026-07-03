@@ -4,6 +4,7 @@ import { tenantOrders, tenants } from "@/lib/db/schema";
 import { eq, and, gte } from "drizzle-orm";
 import { checkPlatformHeader } from "@/lib/platform/auth";
 import { decryptSecret } from "@/lib/crypto/secrets";
+import { expireStaleOrders } from "@/lib/platform/expireStale";
 import { serverError } from "@/lib/http";
 
 // Orders older than this with no payment are considered expired and dropped
@@ -25,6 +26,15 @@ export async function GET(req: Request) {
   }
 
   try {
+    // Opportunistic sweep: the bot polls this endpoint frequently, so this is
+    // where abandoned orders actually get expired and their stock released
+    // (the daily Vercel Cron is only a backstop on the Hobby plan).
+    try {
+      await expireStaleOrders();
+    } catch {
+      // never let cleanup failure block the pending-orders response
+    }
+
     const cutoff = new Date(Date.now() - ORDER_TTL_MS);
     const rows = await db
       .select({
