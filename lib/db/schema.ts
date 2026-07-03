@@ -157,6 +157,20 @@ export const casinoBlackjack = pgTable("casino_blackjack", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ── Casino: withdrawal requests ────────────────────────────────────
+export const casinoWithdrawals = pgTable("casino_withdrawals", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  chain: text("chain").notNull(),
+  toAddress: text("to_address").notNull(),
+  amountCents: integer("amount_cents").notNull(),
+  amountCrypto: text("amount_crypto").notNull(), // coin amount at request time
+  status: text("status").default("pending").notNull(), // pending | sent | failed
+  txHash: text("tx_hash"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+});
+
 // ── Casino: per-user crypto deposit addresses (persistent) ─────────
 export const casinoWallets = pgTable(
   "casino_wallets",

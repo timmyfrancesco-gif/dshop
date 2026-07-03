@@ -15,10 +15,9 @@ const CHAIN_COLORS: Record<string, string> = {
   dash: "#008ce7",
 };
 
-export default function DepositWallet() {
+export default function DepositWallet({ wallets }: { wallets: WalletView[] | null }) {
   const { user } = useAuth();
   const { balanceCents, setBalance } = useCasinoBalance();
-  const [wallets, setWallets] = useState<WalletView[] | null>(null);
   const [selected, setSelected] = useState<string>("ltc");
   const [qr, setQr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -27,15 +26,8 @@ export default function DepositWallet() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    casino
-      .wallets()
-      .then((r) => {
-        setWallets(r.wallets);
-        if (r.wallets[0]) setSelected(r.wallets[0].chain);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Errore"));
-  }, [user]);
+    if (wallets?.[0]) setSelected(wallets[0].chain);
+  }, [wallets]);
 
   const current = wallets?.find((w) => w.chain === selected) ?? null;
 

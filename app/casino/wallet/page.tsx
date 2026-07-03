@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
-import DepositWallet from "@/components/casino/DepositWallet";
+import WalletTabs from "@/components/casino/WalletTabs";
 
 export const metadata: Metadata = {
   title: "Deposita — Dshop Casino",
@@ -17,8 +17,8 @@ export default function WalletPage() {
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             Casino
           </Link>
-          <h1 className="mb-6 text-2xl font-black text-foreground">Deposita</h1>
-          <DepositWallet />
+          <h1 className="mb-6 text-2xl font-black text-foreground">Portafoglio</h1>
+          <WalletTabs />
         </div>
       </section>
     </PageShell>

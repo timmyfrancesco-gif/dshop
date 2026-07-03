@@ -114,3 +114,19 @@ export function atomicToEurCents(chain: Chain, atomic: bigint, priceEur: number)
   const coins = Number(atomic) / 10 ** CHAINS[chain].decimals;
   return Math.floor(coins * priceEur * 100);
 }
+
+const ADDRESS_RE: Record<Chain, RegExp> = {
+  btc: /^(bc1[a-z0-9]{20,90}|[13][a-km-zA-HJ-NP-Z1-9]{25,39})$/,
+  ltc: /^(ltc1[a-z0-9]{20,90}|[LM3][a-km-zA-HJ-NP-Z1-9]{25,39})$/,
+  eth: /^0x[a-fA-F0-9]{40}$/,
+  doge: /^D[a-km-zA-HJ-NP-Z1-9]{25,34}$/,
+  dash: /^X[a-km-zA-HJ-NP-Z1-9]{25,34}$/,
+};
+
+export function isValidAddress(chain: Chain, address: string): boolean {
+  return ADDRESS_RE[chain]?.test(address) ?? false;
+}
+
+export function isChain(v: unknown): v is Chain {
+  return typeof v === "string" && v in CHAINS;
+}

@@ -75,7 +75,22 @@ export const casino = {
       body: JSON.stringify({ fixtureId, selection, stakeCents }),
     }),
   footballMyBets: () => call<{ bets: FootballBet[] }>("/api/casino/football/mybets"),
+  withdraw: (chain: string, toAddress: string, amountCents: number) =>
+    call<{ withdrawal: Withdrawal; balanceCents: number }>("/api/casino/withdraw", {
+      method: "POST",
+      body: JSON.stringify({ chain, toAddress, amountCents }),
+    }),
+  withdrawals: () => call<{ withdrawals: Withdrawal[] }>("/api/casino/withdrawals"),
 };
+
+export interface Withdrawal {
+  id: string;
+  chain: string;
+  toAddress: string;
+  amountCents: number;
+  amountCrypto: string;
+  status: string;
+}
 
 export interface FootballMatch {
   fixtureId: number;
