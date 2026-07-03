@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { footballBets } from "@/lib/db/schema";
 import { getCasinoUser, debitBalance } from "@/lib/casino/auth";
-import { getMatches } from "@/lib/football/api";
+import { getUpcomingFixtures, getFixtureOdds } from "@/lib/football/api";
 import { serverError } from "@/lib/http";
 
 const MIN_BET = 10;
@@ -26,17 +26,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "invalid stake" }, { status: 400 });
     }
 
-    // Lock the odds from the current (cached) market; reject if the match is
-    // no longer open for betting.
-    const matches = await getMatches();
+    // Match must be in the current upcoming list (not started) and have odds.
+    const matches = await getUpcomingFixtures();
     const match = matches.find((m) => m.fixtureId === fixtureId);
-    if (!match || !match.odds) {
+    if (!match) {
       return NextResponse.json({ error: "match not available" }, { status: 409 });
     }
     if (match.status !== "NS") {
       return NextResponse.json({ error: "betting closed for this match" }, { status: 409 });
     }
-    const odds = match.odds[selection as "home" | "draw" | "away"];
+    const market = await getFixtureOdds(fixtureId);
+    if (!market) {
+      return NextResponse.json({ error: "odds unavailable" }, { status: 409 });
+    }
+    const odds = market[selection as "home" | "draw" | "away"];
     if (!odds || odds <= 1) {
       return NextResponse.json({ error: "odds unavailable" }, { status: 409 });
     }

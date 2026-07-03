@@ -3,9 +3,11 @@ import { footballCache } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 /**
- * API-Football (api-sports.io) client. Free plan = 100 requests/day, so every
- * response is cached in the DB with a TTL to stay well under the limit even
- * across serverless instances.
+ * API-Football (api-sports.io) client. Free plan = 100 requests/day, so:
+ *  - the upcoming-fixtures list is ONE global call (all competitions, World
+ *    Cup included) cached for 15 min;
+ *  - odds are fetched per fixture, on demand, only when a user opens a match,
+ *    and cached — so we never pay for odds on matches nobody bets on.
  */
 
 const HOST = "https://v3.football.api-sports.io";
@@ -14,18 +16,17 @@ function key(): string {
   return process.env.API_FOOTBALL_KEY ?? "";
 }
 
-// Configurable so you can point at any league/season without a code change.
-export function leagueId(): number {
-  return Number(process.env.FOOTBALL_LEAGUE ?? "135"); // default: Serie A
-}
-export function season(): number {
-  return Number(process.env.FOOTBALL_SEASON ?? "2024");
+/** Optional comma-separated league-id allowlist; empty = show every league. */
+function leagueFilter(): number[] {
+  return (process.env.FOOTBALL_LEAGUES ?? "")
+    .split(",")
+    .map((s) => Number(s.trim()))
+    .filter((n) => Number.isFinite(n) && n > 0);
 }
 
 async function cached<T>(cacheKey: string, ttlMs: number, fetcher: () => Promise<T>): Promise<T> {
   const rows = await db.select().from(footballCache).where(eq(footballCache.key, cacheKey)).limit(1);
-  const now = Date.now();
-  if (rows.length > 0 && now - rows[0].fetchedAt.getTime() < ttlMs) {
+  if (rows.length > 0 && Date.now() - rows[0].fetchedAt.getTime() < ttlMs) {
     return rows[0].data as T;
   }
   const data = await fetcher();
@@ -48,66 +49,74 @@ async function apiGet(path: string): Promise<Record<string, unknown>> {
 export interface Match {
   fixtureId: number;
   league: string;
+  leagueId: number;
   home: string;
   away: string;
   kickoff: string;
   status: string;
-  odds: { home: number; draw: number; away: number } | null;
 }
 
-/** Upcoming fixtures for the configured league with 1X2 (Match Winner) odds. */
-export async function getMatches(): Promise<Match[]> {
+/** Next upcoming fixtures across ALL competitions (World Cup included). */
+export async function getUpcomingFixtures(): Promise<Match[]> {
   if (!key()) return [];
-  const lid = leagueId();
-  const s = season();
+  const count = Number(process.env.FOOTBALL_MAX ?? "60");
+  const data = await cached(`fixtures:next:${count}`, 15 * 60_000, () =>
+    apiGet(`/fixtures?next=${count}`)
+  );
 
-  // Cache both calls for 15 minutes → at most ~192 calls/day even if polled hard.
-  const [fixturesRes, oddsRes] = await Promise.all([
-    cached(`fixtures:${lid}:${s}`, 15 * 60_000, () =>
-      apiGet(`/fixtures?league=${lid}&season=${s}&next=20`)
-    ),
-    cached(`odds:${lid}:${s}`, 15 * 60_000, () =>
-      apiGet(`/odds?league=${lid}&season=${s}&bet=1`)
-    ),
-  ]);
-
-  const oddsByFixture = new Map<number, { home: number; draw: number; away: number }>();
-  for (const o of (oddsRes.response as unknown[]) ?? []) {
-    const rec = o as {
-      fixture?: { id?: number };
-      bookmakers?: { bets?: { id?: number; values?: { value?: string; odd?: string }[] }[] }[];
-    };
-    const fid = rec.fixture?.id;
-    if (!fid) continue;
-    const bet = rec.bookmakers?.[0]?.bets?.find((b) => b.id === 1);
-    if (!bet?.values) continue;
-    const get = (v: string) => Number(bet.values!.find((x) => x.value === v)?.odd);
-    const home = get("Home");
-    const draw = get("Draw");
-    const away = get("Away");
-    if (home && draw && away) oddsByFixture.set(fid, { home, draw, away });
-  }
-
+  const allow = leagueFilter();
   const out: Match[] = [];
-  for (const f of (fixturesRes.response as unknown[]) ?? []) {
+  for (const f of (data.response as unknown[]) ?? []) {
     const rec = f as {
       fixture?: { id?: number; date?: string; status?: { short?: string } };
-      league?: { name?: string };
+      league?: { id?: number; name?: string; country?: string };
       teams?: { home?: { name?: string }; away?: { name?: string } };
     };
     const fid = rec.fixture?.id;
-    if (!fid) continue;
+    const lid = rec.league?.id;
+    if (!fid || !lid) continue;
+    if (allow.length > 0 && !allow.includes(lid)) continue;
+    const country = rec.league?.country ? `${rec.league.country} · ` : "";
     out.push({
       fixtureId: fid,
-      league: rec.league?.name ?? "",
+      league: `${country}${rec.league?.name ?? ""}`,
+      leagueId: lid,
       home: rec.teams?.home?.name ?? "",
       away: rec.teams?.away?.name ?? "",
       kickoff: rec.fixture?.date ?? "",
       status: rec.fixture?.status?.short ?? "NS",
-      odds: oddsByFixture.get(fid) ?? null,
     });
   }
   return out;
+}
+
+export interface Odds1x2 {
+  home: number;
+  draw: number;
+  away: number;
+}
+
+/** 1X2 (Match Winner) odds for a single fixture, fetched on demand + cached. */
+export async function getFixtureOdds(fixtureId: number): Promise<Odds1x2 | null> {
+  if (!key()) return null;
+  try {
+    const data = await cached(`odds:fx:${fixtureId}`, 20 * 60_000, () =>
+      apiGet(`/odds?fixture=${fixtureId}&bet=1`)
+    );
+    const rec = (data.response as unknown[])?.[0] as {
+      bookmakers?: { bets?: { id?: number; values?: { value?: string; odd?: string }[] }[] }[];
+    };
+    const bet = rec?.bookmakers?.[0]?.bets?.find((b) => b.id === 1);
+    if (!bet?.values) return null;
+    const get = (v: string) => Number(bet.values!.find((x) => x.value === v)?.odd);
+    const home = get("Home");
+    const draw = get("Draw");
+    const away = get("Away");
+    if (home && draw && away) return { home, draw, away };
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export interface FixtureResult {

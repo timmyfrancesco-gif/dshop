@@ -1,20 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { casino, eur, type FootballMatch, type FootballBet } from "@/lib/casino/client";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useCasinoBalance } from "@/lib/contexts/CasinoBalanceContext";
 
 type Sel = "home" | "draw" | "away";
+type Odds = { home: number; draw: number; away: number };
 
 export default function Football() {
   const { user } = useAuth();
-  const { balanceCents, setBalance } = useCasinoBalance();
+  const { setBalance } = useCasinoBalance();
   const [matches, setMatches] = useState<FootballMatch[] | null>(null);
   const [configured, setConfigured] = useState(true);
   const [bets, setBets] = useState<FootballBet[]>([]);
-  const [slip, setSlip] = useState<{ match: FootballMatch; sel: Sel } | null>(null);
+  const [query, setQuery] = useState("");
+
+  // Per-fixture odds loaded on demand.
+  const [odds, setOdds] = useState<Record<number, Odds | null>>({});
+  const [loadingOdds, setLoadingOdds] = useState<number | null>(null);
+  const [openFixture, setOpenFixture] = useState<number | null>(null);
+
+  const [slip, setSlip] = useState<{ match: FootballMatch; sel: Sel; odd: number } | null>(null);
   const [stake, setStake] = useState("1.00");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +39,26 @@ export default function Football() {
       .catch((e) => setError(e instanceof Error ? e.message : "Errore"));
     casino.footballMyBets().then((r) => setBets(r.bets)).catch(() => {});
   }, [user]);
+
+  async function toggleMatch(m: FootballMatch) {
+    setError(null);
+    if (openFixture === m.fixtureId) {
+      setOpenFixture(null);
+      return;
+    }
+    setOpenFixture(m.fixtureId);
+    if (odds[m.fixtureId] === undefined) {
+      setLoadingOdds(m.fixtureId);
+      try {
+        const r = await casino.footballOdds(m.fixtureId);
+        setOdds((o) => ({ ...o, [m.fixtureId]: r.odds }));
+      } catch {
+        setOdds((o) => ({ ...o, [m.fixtureId]: null }));
+      } finally {
+        setLoadingOdds(null);
+      }
+    }
+  }
 
   async function placeBet() {
     if (!slip) return;
@@ -54,6 +82,21 @@ export default function Football() {
       setBusy(false);
     }
   }
+
+  // Group matches by competition for an "all competitions" view.
+  const grouped = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const filtered = (matches ?? []).filter(
+      (m) => !q || m.home.toLowerCase().includes(q) || m.away.toLowerCase().includes(q) || m.league.toLowerCase().includes(q)
+    );
+    const map = new Map<string, FootballMatch[]>();
+    for (const m of filtered) {
+      const arr = map.get(m.league) ?? [];
+      arr.push(m);
+      map.set(m.league, arr);
+    }
+    return [...map.entries()];
+  }, [matches, query]);
 
   if (!user) {
     return (
@@ -79,49 +122,72 @@ export default function Football() {
       {flash && <p className="rounded-xl bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300">{flash}</p>}
       {error && <p className="text-sm text-rose-400">{error}</p>}
 
-      {/* Matches */}
-      <div className="flex flex-col gap-3">
-        {matches === null ? (
-          <p className="text-sm text-muted">Caricamento partite…</p>
-        ) : matches.length === 0 ? (
-          <p className="text-sm text-muted">Nessuna partita in programma al momento.</p>
-        ) : (
-          matches.map((m) => (
-            <div key={m.fixtureId} className="rounded-2xl border border-border bg-background-elevated/40 p-4">
-              <div className="mb-3 flex items-center justify-between text-xs text-muted">
-                <span>{m.league}</span>
-                <span>{m.kickoff ? new Date(m.kickoff).toLocaleString("it-IT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
-              </div>
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm font-bold text-foreground">{m.home}</span>
-                <span className="text-xs text-muted">vs</span>
-                <span className="text-sm font-bold text-foreground">{m.away}</span>
-              </div>
-              {m.odds ? (
-                <div className="grid grid-cols-3 gap-2">
-                  {(["home", "draw", "away"] as Sel[]).map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => { setSlip({ match: m, sel: s }); setError(null); }}
-                      className={`flex flex-col items-center rounded-xl border px-2 py-2 transition-colors ${
-                        slip?.match.fixtureId === m.fixtureId && slip.sel === s
-                          ? "border-accent bg-accent-soft"
-                          : "border-border bg-background/60 hover:border-accent/40"
-                      }`}
-                    >
-                      <span className="text-[10px] uppercase tracking-wide text-muted">{s === "home" ? "1" : s === "draw" ? "X" : "2"}</span>
-                      <span className="text-sm font-bold text-foreground">{m.odds![s].toFixed(2)}</span>
-                    </button>
-                  ))}
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Cerca squadra o competizione…"
+        className="w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted"
+      />
+
+      {matches === null ? (
+        <p className="text-sm text-muted">Caricamento partite…</p>
+      ) : grouped.length === 0 ? (
+        <p className="text-sm text-muted">Nessuna partita trovata.</p>
+      ) : (
+        grouped.map(([league, ms]) => (
+          <div key={league} className="flex flex-col gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted">{league}</h3>
+            {ms.map((m) => {
+              const o = odds[m.fixtureId];
+              const isOpen = openFixture === m.fixtureId;
+              return (
+                <div key={m.fixtureId} className="rounded-2xl border border-border bg-background-elevated/40 p-4">
+                  <button type="button" onClick={() => toggleMatch(m)} className="w-full text-left">
+                    <div className="mb-1 flex items-center justify-between text-[11px] text-muted">
+                      <span>{m.kickoff ? new Date(m.kickoff).toLocaleString("it-IT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                      <span>{isOpen ? "▲" : "▼"}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-foreground">{m.home}</span>
+                      <span className="px-2 text-xs text-muted">vs</span>
+                      <span className="text-sm font-bold text-foreground">{m.away}</span>
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="mt-3">
+                      {loadingOdds === m.fixtureId ? (
+                        <p className="text-center text-xs text-muted">Carico le quote…</p>
+                      ) : o ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {(["home", "draw", "away"] as Sel[]).map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => { setSlip({ match: m, sel: s, odd: o[s] }); setError(null); }}
+                              className={`flex flex-col items-center rounded-xl border px-2 py-2 transition-colors ${
+                                slip?.match.fixtureId === m.fixtureId && slip.sel === s
+                                  ? "border-accent bg-accent-soft"
+                                  : "border-border bg-background/60 hover:border-accent/40"
+                              }`}
+                            >
+                              <span className="text-[10px] uppercase tracking-wide text-muted">{s === "home" ? "1" : s === "draw" ? "X" : "2"}</span>
+                              <span className="text-sm font-bold text-foreground">{o[s].toFixed(2)}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-center text-xs text-muted">Quote non disponibili per questa partita</p>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p className="text-center text-xs text-muted">Quote non disponibili</p>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+              );
+            })}
+          </div>
+        ))
+      )}
 
       {/* Bet slip */}
       {slip && (
@@ -129,7 +195,7 @@ export default function Football() {
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-sm font-bold text-foreground">{selLabel(slip.match, slip.sel)}</p>
-              <p className="text-xs text-muted">{slip.match.home} vs {slip.match.away} · quota {slip.match.odds![slip.sel].toFixed(2)}</p>
+              <p className="text-xs text-muted">{slip.match.home} vs {slip.match.away} · quota {slip.odd.toFixed(2)}</p>
             </div>
             <button type="button" onClick={() => setSlip(null)} className="text-muted hover:text-foreground">✕</button>
           </div>
@@ -144,7 +210,7 @@ export default function Football() {
               className="w-full bg-transparent px-3 py-3 text-sm text-foreground outline-none"
             />
             <div className="flex items-center px-3 text-xs text-muted">
-              vincita {eur(Math.floor((parseFloat(stake) || 0) * 100 * slip.match.odds![slip.sel]))}
+              vincita {eur(Math.floor((parseFloat(stake) || 0) * 100 * slip.odd))}
             </div>
           </div>
           <button

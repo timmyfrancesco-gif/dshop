@@ -69,6 +69,10 @@ export const casino = {
     ),
   footballMatches: () =>
     call<{ matches: FootballMatch[]; configured: boolean }>("/api/casino/football/matches"),
+  footballOdds: (fixtureId: number) =>
+    call<{ odds: { home: number; draw: number; away: number } | null }>(
+      `/api/casino/football/odds?fixture=${fixtureId}`
+    ),
   footballBet: (fixtureId: number, selection: "home" | "draw" | "away", stakeCents: number) =>
     call<{ bet: FootballBetSlip; balanceCents: number }>("/api/casino/football/bet", {
       method: "POST",
@@ -95,11 +99,11 @@ export interface Withdrawal {
 export interface FootballMatch {
   fixtureId: number;
   league: string;
+  leagueId: number;
   home: string;
   away: string;
   kickoff: string;
   status: string;
-  odds: { home: number; draw: number; away: number } | null;
 }
 export interface FootballBetSlip {
   id: string;
