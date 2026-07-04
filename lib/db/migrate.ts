@@ -217,6 +217,37 @@ export async function runMigrations() {
     `);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS store_products (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        price REAL NOT NULL,
+        currency TEXT NOT NULL DEFAULT 'EUR',
+        image TEXT,
+        category TEXT NOT NULL DEFAULT 'Shop',
+        active BOOLEAN NOT NULL DEFAULT TRUE,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        total_sold INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS store_stock_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID NOT NULL REFERENCES store_products(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'available',
+        order_id TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        sold_at TIMESTAMP
+      )
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS store_stock_product_status_idx ON store_stock_items (product_id, status)
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS site_config (
         id INTEGER PRIMARY KEY DEFAULT 1,
         config JSONB NOT NULL DEFAULT '{}',

@@ -213,6 +213,41 @@ export const footballCache = pgTable("football_cache", {
   fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
 });
 
+// ── Store: platform-owned products (reliable, Postgres — not the bot) ──
+export const storeProducts = pgTable("store_products", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").default("").notNull(),
+  price: real("price").notNull(),
+  currency: text("currency").default("EUR").notNull(),
+  image: text("image"),
+  category: text("category").default("Shop").notNull(),
+  active: boolean("active").default(true).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  totalSold: integer("total_sold").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ── Store: one row per deliverable item — stock == count of available rows ──
+// This is the whole point of the rebuild: stock can never desync from a
+// separate counter, and it can only drop on a real, atomic sale.
+export const storeStockItems = pgTable(
+  "store_stock_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => storeProducts.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    status: text("status").default("available").notNull(), // available | sold
+    orderId: text("order_id"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    soldAt: timestamp("sold_at"),
+  },
+  (t) => [uniqueIndex("store_stock_product_status_idx").on(t.productId, t.status, t.id)]
+);
+
 // ── Main site storefront config (single row) ───────────────────────
 export const siteConfig = pgTable("site_config", {
   id: integer("id").primaryKey().default(1),
