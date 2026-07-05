@@ -8,7 +8,7 @@ import { serverError } from "@/lib/http";
 
 const MIN_CONFIRMATIONS = Number(process.env.LTC_MIN_CONFIRMATIONS ?? "1");
 const AMOUNT_TOLERANCE = 0.01; // 1% to absorb rounding/network fees
-const ORDER_TTL_MS = 1000 * 60 * 30; // abandoned unpaid orders expire after 30 min
+const ORDER_TTL_MS = 1000 * 60 * 15; // abandoned unpaid orders expire after 15 min
 
 /**
  * Polled by the checkout page. Bot-independent: checks the temp address

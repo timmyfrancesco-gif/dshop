@@ -9,7 +9,7 @@ import { serverError } from "@/lib/http";
 
 // Orders older than this with no payment are considered expired and dropped
 // from the watch list (the price quote is stale by then).
-const ORDER_TTL_MS = 1000 * 60 * 30; // 30 minutes
+const ORDER_TTL_MS = 1000 * 60 * 15; // 15 minutes
 
 /**
  * Bot-facing endpoint. Returns all pending tenant orders together with the

@@ -87,6 +87,7 @@ const NAV_TITLES: Record<string, string> = {
   tickets: "Tickets",
   transcripts: "Transcripts",
   "abandoned-checkouts": "Abandoned Checkouts",
+  verify: "Discord Verify",
   wallet: "Wallet",
   "storefront-configure": "Configure Storefront",
   "activity-logs": "Activity Logs",
@@ -109,6 +110,7 @@ type NavSection =
   | "tickets"
   | "transcripts"
   | "abandoned-checkouts"
+  | "verify"
   | "wallet"
   | "storefront-configure"
   | "activity-logs"
@@ -336,6 +338,15 @@ function IconCrypto({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <path d="M9.5 8h3.5a2 2 0 0 1 0 4H9.5zM9.5 12h4a2 2 0 0 1 0 4H9.5zM9.5 8v8M11 6v2M11 16v2M13 6v2M13 16v2" />
+    </svg>
+  );
+}
+
+function IconShieldCheck({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6z" />
+      <path d="M9 12l2 2 4-4" />
     </svg>
   );
 }
@@ -591,7 +602,23 @@ function AdminPanel() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [activeNav, setActiveNav] = useState<NavSection>("dashboard");
+  const DASH_NAV_KEY = "hm_dashboard_nav";
+  const [activeNav, setActiveNavState] = useState<NavSection>("dashboard");
+  const setActiveNav = useCallback((next: NavSection) => {
+    setActiveNavState(next);
+    // "product-edit" needs an editingProduct in memory to render — never
+    // restore into a blank edit form after a reload.
+    try {
+      if (next === "product-edit") sessionStorage.removeItem(DASH_NAV_KEY);
+      else sessionStorage.setItem(DASH_NAV_KEY, next);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(DASH_NAV_KEY) as NavSection | null;
+      if (saved) setActiveNavState(saved);
+    } catch {}
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ApiProduct | null>(null);
   const [modal, setModal] = useState<ModalKind | null>(null);
@@ -1119,6 +1146,16 @@ function AdminPanel() {
             />
           </SidebarGroup>
 
+          <SidebarGroup label="Discord">
+            <SidebarItem
+              icon={<IconShieldCheck className="h-4 w-4" />}
+              label="Verify"
+              active={activeNav === "verify"}
+              onClick={() => navigateTo("verify")}
+              indent
+            />
+          </SidebarGroup>
+
           <SidebarGroup label="Wallets">
             <SidebarItem
               icon={<IconCrypto className="h-4 w-4" />}
@@ -1339,6 +1376,7 @@ function AdminPanel() {
           {activeNav === "transcripts" && (
             <TranscriptsView />
           )}
+          {activeNav === "verify" && <VerifyView />}
           {activeNav === "wallet" && (
             <WalletView
               wallet={wallet}
@@ -3570,18 +3608,15 @@ function OrdersView({
 }
 
 function OrderStatusBadge({ status }: { status: string }) {
+  // Simplified 3-state model: paid/delivered = Completed, expired/failed/
+  // cancelled = Cancelled (order wasn't paid within the 15-min window),
+  // everything else (pending/confirming) = Pending.
   const config =
-    status === "paid"
-      ? { bg: "bg-emerald-500/10", text: "text-emerald-400", dot: "bg-emerald-400", label: "Paid" }
-      : status === "delivered"
-        ? { bg: "bg-emerald-500/10", text: "text-emerald-400", dot: "bg-emerald-400", label: "Delivered" }
-        : status === "pending"
-          ? { bg: "bg-amber-500/10", text: "text-amber-400", dot: "bg-amber-400", label: "Pending" }
-          : status === "confirming"
-            ? { bg: "bg-blue-500/10", text: "text-blue-400", dot: "bg-blue-400", label: "Confirming" }
-            : status === "expired"
-              ? { bg: "bg-zinc-500/10", text: "text-zinc-400", dot: "bg-zinc-400", label: "Expired" }
-              : { bg: "bg-rose-500/10", text: "text-rose-400", dot: "bg-rose-400", label: "Failed" };
+    status === "paid" || status === "delivered"
+      ? { bg: "bg-emerald-500/10", text: "text-emerald-400", dot: "bg-emerald-400", label: "Completed" }
+      : status === "expired" || status === "failed" || status === "cancelled"
+        ? { bg: "bg-rose-500/10", text: "text-rose-400", dot: "bg-rose-400", label: "Cancelled" }
+        : { bg: "bg-amber-500/10", text: "text-amber-400", dot: "bg-amber-400", label: "Pending" };
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${config.bg} ${config.text}`}
@@ -3870,6 +3905,281 @@ function TranscriptsView() {
 /*  Wallet View                                                        */
 /* ================================================================== */
 
+/* ================================================================== */
+/*  Verify View — Discord verification management                     */
+/* ================================================================== */
+
+interface VerifiedUser {
+  id: string;
+  discordUserId: string;
+  guildId: string;
+  username: string | null;
+  globalName: string | null;
+  avatar: string | null;
+  verifiedAt: string;
+  ip: string | null;
+}
+interface VerifyStats {
+  total: number;
+  todayCount: number;
+  uniqueUsers: number;
+  uniqueGuilds: number;
+  guilds: { guildId: string; count: number }[];
+}
+
+function verifyAvatarUrl(userId: string, avatar: string | null) {
+  if (!avatar) return `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> BigInt(22)) % 6}.png`;
+  return `https://cdn.discordapp.com/avatars/${userId}/${avatar}.png?size=64`;
+}
+function verifyDisplayName(u: VerifiedUser) {
+  return u.globalName || u.username || u.discordUserId;
+}
+
+function VerifyView() {
+  const [stats, setStats] = useState<VerifyStats | null>(null);
+  const [users, setUsers] = useState<VerifiedUser[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [guildFilter, setGuildFilter] = useState("");
+  const [modal, setModal] = useState<{ user: VerifiedUser } | null>(null);
+  const [targetGuild, setTargetGuild] = useState("");
+  const [addStatus, setAddStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [addError, setAddError] = useState("");
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [statsRes, usersRes] = await Promise.all([
+        fetch("/api/admin/verify/stats"),
+        fetch(`/api/admin/verify/users?limit=200${guildFilter ? `&guild=${guildFilter}` : ""}${search ? `&search=${encodeURIComponent(search)}` : ""}`),
+      ]);
+      if (statsRes.ok) setStats(await statsRes.json());
+      if (usersRes.ok) setUsers((await usersRes.json()).users);
+    } finally {
+      setLoading(false);
+    }
+  }, [guildFilter, search]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  async function addToGuild() {
+    if (!modal || !targetGuild.trim()) return;
+    setAddStatus("loading");
+    setAddError("");
+    try {
+      const res = await fetch("/api/admin/verify/add-to-guild", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discordUserId: modal.user.discordUserId, guildId: targetGuild.trim() }),
+      });
+      if (res.ok) {
+        setAddStatus("ok");
+      } else {
+        const d = await res.json();
+        setAddError(d.error || "Unknown error.");
+        setAddStatus("error");
+      }
+    } catch {
+      setAddError("Network error.");
+      setAddStatus("error");
+    }
+  }
+
+  function closeModal() {
+    setModal(null);
+    setTargetGuild("");
+    setAddStatus("idle");
+    setAddError("");
+  }
+
+  return (
+    <div className="space-y-5">
+      <ViewHeader
+        title="Discord Verify"
+        subtitle={`${users.length} verified users`}
+        action={
+          <button
+            type="button"
+            onClick={fetchData}
+            className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:border-[#90C6FF]/40"
+          >
+            {loading ? "⟳" : "↺ Refresh"}
+          </button>
+        }
+      />
+
+      {stats && (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[
+            { label: "Total verifications", value: stats.total, icon: "✅" },
+            { label: "Today", value: stats.todayCount, icon: "📅" },
+            { label: "Unique users", value: stats.uniqueUsers, icon: "👤" },
+            { label: "Unique servers", value: stats.uniqueGuilds, icon: "🏠" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+              <div className="mb-2 text-xl">{s.icon}</div>
+              <div className="text-2xl font-bold text-white">{s.value.toLocaleString()}</div>
+              <div className="mt-1 text-xs text-zinc-500">{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-3">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && fetchData()}
+          placeholder="Search by username or ID..."
+          className="flex-1 rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50"
+          style={{ backgroundColor: "#161619", minWidth: 200 }}
+        />
+        <select
+          value={guildFilter}
+          onChange={(e) => setGuildFilter(e.target.value)}
+          className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none"
+          style={{ backgroundColor: "#161619", minWidth: 180 }}
+        >
+          <option value="">All servers</option>
+          {stats?.guilds.map((g) => (
+            <option key={g.guildId} value={g.guildId}>{g.guildId} ({g.count})</option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={fetchData}
+          className="rounded-lg bg-[#90C6FF] px-5 py-2.5 text-sm font-semibold text-black"
+        >
+          Search
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-white/5" style={{ backgroundColor: "#121214" }}>
+        {loading ? (
+          <div className="p-10 text-center text-sm text-zinc-500">Loading...</div>
+        ) : users.length === 0 ? (
+          <div className="p-10 text-center text-sm text-zinc-500">No users found.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-white/5">
+                  {["User", "Discord ID", "Server (Guild ID)", "Verified at", "IP", "Actions"].map((h) => (
+                    <th key={h} className="whitespace-nowrap px-4 py-3 text-xs font-semibold text-zinc-500">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} className="border-b border-white/5 last:border-0">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={verifyAvatarUrl(u.discordUserId, u.avatar)} alt="" className="h-8 w-8 rounded-full bg-white/5" />
+                        <div>
+                          <div className="text-sm font-semibold text-white">{verifyDisplayName(u)}</div>
+                          {u.username && u.globalName && u.username !== u.globalName && (
+                            <div className="text-[11px] text-zinc-500">@{u.username}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-zinc-400">{u.discordUserId}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-zinc-400">{u.guildId}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-zinc-500">
+                      {new Date(u.verifiedAt).toLocaleString("en-US", { dateStyle: "short", timeStyle: "short" })}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-zinc-500">{u.ip ?? "—"}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        onClick={() => { setModal({ user: u }); setAddStatus("idle"); }}
+                        className="rounded-md border border-[#90C6FF]/30 px-3 py-1.5 text-xs font-semibold text-[#90C6FF] hover:bg-[#90C6FF]/10"
+                      >
+                        + Add to server
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {modal && (
+        <div
+          onClick={closeModal}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl border border-white/10 p-8"
+            style={{ backgroundColor: "#111" }}
+          >
+            {addStatus === "ok" ? (
+              <div className="text-center">
+                <div className="mb-4 text-5xl">✅</div>
+                <h2 className="mb-2 text-lg font-bold text-white">Done!</h2>
+                <p className="text-sm text-zinc-400">{verifyDisplayName(modal.user)} was added to the server.</p>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="mt-5 rounded-lg border border-white/10 px-6 py-2 text-sm text-white"
+                  style={{ backgroundColor: "#222" }}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="mb-5 flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={verifyAvatarUrl(modal.user.discordUserId, modal.user.avatar)} alt="" className="h-10 w-10 rounded-full" />
+                  <div>
+                    <div className="font-bold text-white">{verifyDisplayName(modal.user)}</div>
+                    <div className="text-xs text-zinc-500">{modal.user.discordUserId}</div>
+                  </div>
+                </div>
+                <h2 className="mb-1.5 text-base font-bold text-white">Add to another server</h2>
+                <p className="mb-4 text-xs text-zinc-500">Enter the target Discord server&apos;s Guild ID. The bot must already be in that server.</p>
+                <input
+                  value={targetGuild}
+                  onChange={(e) => setTargetGuild(e.target.value)}
+                  placeholder="Guild ID (e.g. 123456789012345678)"
+                  className="w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none"
+                  style={{ backgroundColor: "#0a0a0a" }}
+                />
+                {addStatus === "error" && <p className="mt-2 text-xs text-rose-400">{addError}</p>}
+                <div className="mt-5 flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="flex-1 rounded-lg border border-white/10 py-2.5 text-sm text-zinc-400"
+                    style={{ backgroundColor: "#1a1a1a" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={addToGuild}
+                    disabled={addStatus === "loading" || !targetGuild.trim()}
+                    className="flex-1 rounded-lg bg-[#5865F2] py-2.5 text-sm font-bold text-white disabled:opacity-70"
+                  >
+                    {addStatus === "loading" ? "Adding…" : "Add"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function WalletView({
   wallet,
   platWallet,
@@ -3941,6 +4251,17 @@ function WalletView({
           {!wallet && platWallet?.configured && (
             <p className="mt-2 text-[11px] text-zinc-500">
               Platform fee wallet {platWallet.txCount !== undefined ? `— ${platWallet.txCount} transactions` : ""}
+            </p>
+          )}
+          {!wallet && platWallet && !platWallet.configured && (
+            <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-[11px] text-amber-300">
+              Not configured: add <code className="font-mono">PLATFORM_LTC_ADDRESS</code> (your LTC wallet) as an
+              environment variable on Vercel and redeploy to see a balance here.
+            </div>
+          )}
+          {!wallet && platWallet?.configured && balance === null && (
+            <p className="mt-2 text-[11px] text-amber-400">
+              Couldn&apos;t reach BlockCypher to check the balance — try refreshing shortly.
             </p>
           )}
           {canTransfer && (

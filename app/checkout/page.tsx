@@ -279,20 +279,29 @@ function CheckoutContent() {
     }
 
     setLoading(true);
-    const res = isPlatform
-      ? await createStoreOrder({ productId: currentItem.id, email: email.trim() })
-      : await createProductOrder({
-          productId: currentItem.id,
-          discord: email.trim(),
-          ...(currentEntry.variantId ? { variantId: currentEntry.variantId } : {}),
-          method: paymentMethod === "paypal" ? "paypal" : "ltc",
-        });
-    setLoading(false);
-
-    if (!res) {
-      setError(t("checkout.orderError"));
-      return;
+    let res: ProductOrderResponse | null;
+    if (isPlatform) {
+      const storeRes = await createStoreOrder({ productId: currentItem.id, email: email.trim() });
+      res = storeRes.data;
+      if (!res) {
+        setLoading(false);
+        setError(storeRes.error || t("checkout.orderError"));
+        return;
+      }
+    } else {
+      res = await createProductOrder({
+        productId: currentItem.id,
+        discord: email.trim(),
+        ...(currentEntry.variantId ? { variantId: currentEntry.variantId } : {}),
+        method: paymentMethod === "paypal" ? "paypal" : "ltc",
+      });
+      if (!res) {
+        setLoading(false);
+        setError(t("checkout.orderError"));
+        return;
+      }
     }
+    setLoading(false);
 
     setOrderSource(isPlatform ? "platform" : "bot");
     setOrder(res);

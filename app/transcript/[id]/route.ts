@@ -81,7 +81,10 @@ function wrapPage(
             <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span class="brand-name">Transcript</span>
           </div>
-          ${category}
+          <div class="header-actions">
+            ${category}
+            <a class="download-btn" href="?download=1" download>⬇ Download</a>
+          </div>
         </div>
         <h1 class="ticket-title">${esc(meta.ticketName ?? title)}</h1>
         <div class="meta-grid">
@@ -111,6 +114,7 @@ function wrapPage(
             <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span class="brand-name">Transcript</span>
           </div>
+          <a class="download-btn" href="?download=1" download>⬇ Download</a>
         </div>
         <h1 class="ticket-title">${esc(title)}</h1>
       </div>
@@ -153,6 +157,9 @@ function wrapPage(
     .logo-icon { width: 18px; height: 18px; color: var(--accent-light); }
     .brand-name { font-size: 13px; font-weight: 600; color: var(--text-muted); letter-spacing: .03em; text-transform: uppercase; }
     .badge { background: rgba(99,102,241,.15); color: var(--accent-light); border: 1px solid rgba(99,102,241,.3); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .download-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; font-size: 12px; font-weight: 600; text-decoration: none; transition: background .15s ease; }
+    .download-btn:hover { background: rgba(255,255,255,.12); }
     .ticket-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
     .meta-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
     .meta-item { display: flex; flex-direction: column; gap: 2px; }

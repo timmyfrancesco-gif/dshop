@@ -7,7 +7,7 @@ type Variant = { id: string; title: string; price: number; stock: number; stockI
 // Matches the pending-orders TTL: after this the bot has stopped watching the
 // temp wallet, so the order can never be paid and its reserved stock is safe
 // to release.
-const ORDER_TTL_MS = 1000 * 60 * 30;
+const ORDER_TTL_MS = 1000 * 60 * 15;
 
 /**
  * Marks abandoned `pending` tenant orders as `expired` and releases the unit

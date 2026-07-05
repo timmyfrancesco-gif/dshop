@@ -211,17 +211,18 @@ export function getProductOrder(
 export async function createStoreOrder(payload: {
   productId: string;
   email: string;
-}): Promise<ProductOrderResponse | null> {
+}): Promise<{ data: ProductOrderResponse | null; error?: string }> {
   try {
     const res = await fetch("/api/store/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) return null;
-    return (await res.json()) as ProductOrderResponse;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) return { data: null, error: json?.error || `Order failed (${res.status})` };
+    return { data: json as ProductOrderResponse };
   } catch {
-    return null;
+    return { data: null, error: "Network error. Please try again." };
   }
 }
 
