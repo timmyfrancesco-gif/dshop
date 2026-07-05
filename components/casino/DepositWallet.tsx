@@ -46,11 +46,11 @@ export default function DepositWallet({ wallets }: { wallets: WalletView[] | nul
       setBalance(r.balanceCents);
       if (r.credited.length > 0) {
         const total = r.credited.reduce((s, c) => s + c.eurCents, 0);
-        setFlash(`Depositi accreditati: +${eur(total)}`);
+        setFlash(`Deposits credited: +${eur(total)}`);
         setTimeout(() => setFlash(null), 6000);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Errore");
+      setError(e instanceof Error ? e.message : "Error");
     } finally {
       setChecking(false);
     }
@@ -68,8 +68,8 @@ export default function DepositWallet({ wallets }: { wallets: WalletView[] | nul
   if (!user) {
     return (
       <div className="rounded-2xl border border-border bg-background-elevated/40 p-8 text-center">
-        <p className="text-sm text-muted">Accedi per depositare.</p>
-        <Link href="/login" className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background">Accedi</Link>
+        <p className="text-sm text-muted">Sign in to deposit.</p>
+        <Link href="/login" className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background">Sign in</Link>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export default function DepositWallet({ wallets }: { wallets: WalletView[] | nul
           disabled={checking}
           className="rounded-full border border-accent/40 bg-accent-soft px-4 py-2 text-xs font-bold text-accent transition-colors hover:bg-accent hover:text-background disabled:opacity-50"
         >
-          {checking ? "Controllo…" : "Controlla depositi"}
+          {checking ? "Checking…" : "Check deposits"}
         </button>
       </div>
 
@@ -119,7 +119,7 @@ export default function DepositWallet({ wallets }: { wallets: WalletView[] | nul
             {w.symbol}
           </button>
         ))}
-        {!wallets && <p className="text-sm text-muted">Generazione indirizzi…</p>}
+        {!wallets && <p className="text-sm text-muted">Generating addresses…</p>}
       </div>
 
       {current && (
@@ -130,18 +130,18 @@ export default function DepositWallet({ wallets }: { wallets: WalletView[] | nul
           )}
           <div className="w-full">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted">
-              Il tuo indirizzo {current.label}
+              Your address {current.label}
             </p>
             <div className="mt-1 flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2">
               <span className="flex-1 break-all font-mono text-xs text-foreground">{current.address}</span>
               <button type="button" onClick={copy} className="shrink-0 text-xs font-semibold text-accent hover:opacity-80">
-                {copied ? "Copiato" : "Copia"}
+                {copied ? "Copied" : "Copia"}
               </button>
             </div>
           </div>
           <p className="text-center text-[11px] text-muted">
-            Invia solo {current.symbol} a questo indirizzo. Il saldo si aggiorna in automatico dopo la
-            conferma sulla blockchain (o premi &ldquo;Controlla depositi&rdquo;).
+            Send only {current.symbol} to this address. Your balance updates automatically after
+            blockchain confirmation (or press &ldquo;Check deposits&rdquo;).
           </p>
         </div>
       )}

@@ -12,7 +12,7 @@ export default function BetInput({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted">Importo della scommessa</span>
+        <span className="text-xs font-semibold uppercase tracking-widest text-muted">Bet amount</span>
       </div>
       <div className="flex items-stretch overflow-hidden rounded-xl border border-border bg-background/60">
         <span className="flex items-center pl-4 text-accent">€</span>

@@ -29,11 +29,11 @@ export default function CoinFlip() {
     setResult(null);
     const betCents = Math.round(parseFloat(bet) * 100);
     if (!Number.isFinite(betCents) || betCents < 10) {
-      setError("Puntata minima €0.10");
+      setError("Minimum bet €0.10");
       return;
     }
     if (balanceCents !== null && betCents > balanceCents) {
-      setError("Saldo insufficiente");
+      setError("Insufficient balance");
       return;
     }
 
@@ -59,7 +59,7 @@ export default function CoinFlip() {
     } catch (e) {
       controls.stop();
       controls.set({ rotateY: 0 });
-      setError(e instanceof Error ? e.message : "Errore");
+      setError(e instanceof Error ? e.message : "Error");
     } finally {
       setFlipping(false);
     }
@@ -68,8 +68,8 @@ export default function CoinFlip() {
   if (!user) {
     return (
       <div className="rounded-2xl border border-border bg-background-elevated/40 p-8 text-center">
-        <p className="text-sm text-muted">Accedi per giocare.</p>
-        <Link href="/login" className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background">Accedi</Link>
+        <p className="text-sm text-muted">Sign in to play.</p>
+        <Link href="/login" className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background">Sign in</Link>
       </div>
     );
   }
@@ -96,7 +96,7 @@ export default function CoinFlip() {
             animate={{ opacity: 1, y: 0 }}
             className={`absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full px-5 py-2 text-sm font-bold ${result.win ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"}`}
           >
-            {result.win ? `Hai vinto ${eur(result.payoutCents)}!` : "Hai perso"} · {result.result === "heads" ? "Testa" : "Croce"}
+            {result.win ? `You won ${eur(result.payoutCents)}!` : "You lost"} · {result.result === "heads" ? "Heads" : "Tails"}
           </motion.div>
         )}
       </div>
@@ -109,7 +109,7 @@ export default function CoinFlip() {
           disabled={flipping}
           className={`flex items-center justify-between rounded-2xl px-5 py-4 text-base font-bold text-white transition-all ${choice === "heads" ? "bg-[#3b82f6] ring-2 ring-white/40" : "bg-[#3b82f6]/70 hover:bg-[#3b82f6]"}`}
         >
-          Punta su Testa
+          Bet on Heads
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" /></svg>
         </button>
         <button
@@ -118,7 +118,7 @@ export default function CoinFlip() {
           disabled={flipping}
           className={`flex items-center justify-between rounded-2xl px-5 py-4 text-base font-bold text-white transition-all ${choice === "tails" ? "bg-[#f59e0b] ring-2 ring-white/40" : "bg-[#f59e0b]/70 hover:bg-[#f59e0b]"}`}
         >
-          Punta su Croce
+          Bet on Tails
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-black text-[#f59e0b]">1</span>
         </button>
       </div>
@@ -133,7 +133,7 @@ export default function CoinFlip() {
         disabled={flipping}
         className="rounded-full bg-accent py-4 text-base font-bold text-background shadow-[0_0_24px_-4px_var(--accent)] transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        {flipping ? "Lancio…" : "Lancia la moneta"}
+        {flipping ? "Flipping…" : "Flip the coin"}
       </button>
 
       {fairHash && <p className="text-center text-[11px] text-muted">Provably fair · hash {fairHash}</p>}

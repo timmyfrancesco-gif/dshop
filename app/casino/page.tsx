@@ -11,7 +11,7 @@ const GAMES = [
   {
     href: "/casino/blackjack",
     title: "Blackjack",
-    desc: "Batti il banco. Paga 3:2, dividi e raddoppia.",
+    desc: "Beat the dealer. Pays 3:2, split and double.",
     gradient: "from-emerald-500/20 to-emerald-900/10",
     icon: (
       <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor"><path d="M6 3h9a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6a3 3 0 013-3zm4.5 4L8 13h5l-2.5-6z" /></svg>
@@ -20,7 +20,7 @@ const GAMES = [
   {
     href: "/casino/coinflip",
     title: "Coinflip",
-    desc: "Testa o croce. 50/50, vincita quasi doppia.",
+    desc: "Heads or tails. 50/50, almost double payout.",
     gradient: "from-[#3b82f6]/20 to-[#1e3a8a]/10",
     icon: (
       <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" /></svg>
@@ -28,8 +28,8 @@ const GAMES = [
   },
   {
     href: "/casino/football",
-    title: "Scommesse Calcio",
-    desc: "Quote reali su partite di calcio. 1X2.",
+    title: "Football Betting",
+    desc: "Real odds on football matches. 1X2.",
     gradient: "from-emerald-500/20 to-teal-900/10",
     icon: (
       <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7l3 2.2-1.1 3.5h-3.8L9 9.2z" /></svg>
@@ -44,15 +44,15 @@ export default function CasinoHub() {
         <div className="mx-auto max-w-3xl">
           <div className="mb-8">
             <h1 className="text-3xl font-black text-foreground">Casino</h1>
-            <p className="mt-1 text-sm text-muted">Giochi provably fair. Gioca responsabilmente.</p>
+            <p className="mt-1 text-sm text-muted">Provably fair games. Play responsibly.</p>
           </div>
           <Link
             href="/casino/wallet"
             className="mb-4 flex items-center justify-between rounded-2xl border border-accent/30 bg-accent-soft px-6 py-4 transition-colors hover:bg-accent/15"
           >
             <div>
-              <p className="font-bold text-foreground">Deposita crypto</p>
-              <p className="text-sm text-muted">Ricarica il saldo con BTC, LTC, ETH e altre.</p>
+              <p className="font-bold text-foreground">Deposit crypto</p>
+              <p className="text-sm text-muted">Top up your balance with BTC, LTC, ETH and more.</p>
             </div>
             <svg viewBox="0 0 24 24" className="h-6 w-6 text-accent" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>
           </Link>

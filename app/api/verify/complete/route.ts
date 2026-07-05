@@ -50,11 +50,11 @@ export async function POST(req: NextRequest) {
     }),
   })
   const cfData = await cfRes.json()
-  if (!cfData.success) return NextResponse.json({ error: 'Captcha non valido. Riprova.' }, { status: 400 })
+  if (!cfData.success) return NextResponse.json({ error: 'Invalid captcha. Try again.' }, { status: 400 })
 
   // 2. Verify session
   const session = verifySession(sessionSigned, process.env.VERIFY_SESSION_SECRET!)
-  if (!session) return NextResponse.json({ error: 'Sessione non valida o scaduta.' }, { status: 401 })
+  if (!session) return NextResponse.json({ error: 'Session invalid or expired.' }, { status: 401 })
 
   // 3. Call bot API
   const botRes = await fetch(`${process.env.BOT_API_URL}/api/verify-grant`, {
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   })
   if (!botRes.ok) {
     const data = await botRes.json().catch(() => ({}))
-    return NextResponse.json({ error: (data as any).error || 'Errore del bot.' }, { status: 500 })
+    return NextResponse.json({ error: (data as any).error || 'Bot error.' }, { status: 500 })
   }
 
   // 4. Store verification in DB (best-effort)

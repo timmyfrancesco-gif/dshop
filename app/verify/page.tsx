@@ -10,8 +10,8 @@ export default async function VerifyPage({
     return (
       <div style={{ minHeight: '100vh', background: '#0f0f0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', color: '#fff' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>❌ Link non valido</h1>
-          <p style={{ color: '#aaa' }}>Questo link di verifica non è valido.</p>
+          <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>❌ Invalid link</h1>
+          <p style={{ color: '#aaa' }}>This verification link is not valid.</p>
         </div>
       </div>
     )

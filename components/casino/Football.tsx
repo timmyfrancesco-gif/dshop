@@ -36,7 +36,7 @@ export default function Football() {
         setMatches(r.matches);
         setConfigured(r.configured);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Errore"));
+      .catch((e) => setError(e instanceof Error ? e.message : "Error"));
     casino.footballMyBets().then((r) => setBets(r.bets)).catch(() => {});
   }, [user]);
 
@@ -65,19 +65,19 @@ export default function Football() {
     setError(null);
     const stakeCents = Math.round(parseFloat(stake) * 100);
     if (!Number.isFinite(stakeCents) || stakeCents < 10) {
-      setError("Puntata minima €0.10");
+      setError("Minimum bet €0.10");
       return;
     }
     setBusy(true);
     try {
       const r = await casino.footballBet(slip.match.fixtureId, slip.sel, stakeCents);
       setBalance(r.balanceCents);
-      setFlash(`Scommessa piazzata · possibile vincita ${eur(r.bet.potentialCents)}`);
+      setFlash(`Bet placed · potential win ${eur(r.bet.potentialCents)}`);
       setTimeout(() => setFlash(null), 6000);
       setSlip(null);
       casino.footballMyBets().then((res) => setBets(res.bets)).catch(() => {});
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Errore");
+      setError(e instanceof Error ? e.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -101,8 +101,8 @@ export default function Football() {
   if (!user) {
     return (
       <div className="rounded-2xl border border-border bg-background-elevated/40 p-8 text-center">
-        <p className="text-sm text-muted">Accedi per scommettere.</p>
-        <Link href="/login" className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background">Accedi</Link>
+        <p className="text-sm text-muted">Sign in to bet.</p>
+        <Link href="/login" className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background">Sign in</Link>
       </div>
     );
   }
@@ -110,12 +110,12 @@ export default function Football() {
   if (!configured) {
     return (
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-muted">
-        Le scommesse calcio non sono ancora configurate (manca la chiave API-Football).
+        Football betting is not configured yet (missing the API-Football key).
       </div>
     );
   }
 
-  const selLabel = (m: FootballMatch, s: Sel) => (s === "home" ? m.home : s === "away" ? m.away : "Pareggio");
+  const selLabel = (m: FootballMatch, s: Sel) => (s === "home" ? m.home : s === "away" ? m.away : "Draw");
 
   return (
     <div className="flex flex-col gap-5">
@@ -126,14 +126,14 @@ export default function Football() {
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Cerca squadra o competizione…"
+        placeholder="Search team or competition…"
         className="w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm text-foreground outline-none placeholder:text-muted"
       />
 
       {matches === null ? (
-        <p className="text-sm text-muted">Caricamento partite…</p>
+        <p className="text-sm text-muted">Loading matches…</p>
       ) : grouped.length === 0 ? (
-        <p className="text-sm text-muted">Nessuna partita trovata.</p>
+        <p className="text-sm text-muted">No matches found.</p>
       ) : (
         grouped.map(([league, ms]) => (
           <div key={league} className="flex flex-col gap-2">
@@ -158,7 +158,7 @@ export default function Football() {
                   {isOpen && (
                     <div className="mt-3">
                       {loadingOdds === m.fixtureId ? (
-                        <p className="text-center text-xs text-muted">Carico le quote…</p>
+                        <p className="text-center text-xs text-muted">Loading odds…</p>
                       ) : o ? (
                         <div className="grid grid-cols-3 gap-2">
                           {(["home", "draw", "away"] as Sel[]).map((s) => (
@@ -178,7 +178,7 @@ export default function Football() {
                           ))}
                         </div>
                       ) : (
-                        <p className="text-center text-xs text-muted">Quote non disponibili per questa partita</p>
+                        <p className="text-center text-xs text-muted">Odds unavailable for this match</p>
                       )}
                     </div>
                   )}
@@ -210,7 +210,7 @@ export default function Football() {
               className="w-full bg-transparent px-3 py-3 text-sm text-foreground outline-none"
             />
             <div className="flex items-center px-3 text-xs text-muted">
-              vincita {eur(Math.floor((parseFloat(stake) || 0) * 100 * slip.odd))}
+              win {eur(Math.floor((parseFloat(stake) || 0) * 100 * slip.odd))}
             </div>
           </div>
           <button
@@ -219,7 +219,7 @@ export default function Football() {
             disabled={busy}
             className="mt-3 w-full rounded-full bg-accent py-3 text-sm font-bold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {busy ? "…" : "Piazza scommessa"}
+            {busy ? "…" : "Place bet"}
           </button>
         </div>
       )}
@@ -227,7 +227,7 @@ export default function Football() {
       {/* My bets */}
       {bets.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Le tue scommesse</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Your bets</h3>
           <div className="flex flex-col gap-2">
             {bets.map((b) => (
               <div key={b.id} className="flex items-center justify-between rounded-xl border border-border bg-background-elevated/30 px-4 py-2.5 text-sm">
@@ -240,7 +240,7 @@ export default function Football() {
                   b.status === "lost" ? "bg-rose-500/15 text-rose-400" :
                   "bg-amber-500/15 text-amber-400"
                 }`}>
-                  {b.status === "won" ? `Vinta +${eur(b.payoutCents)}` : b.status === "lost" ? "Persa" : "In corso"}
+                  {b.status === "won" ? `Won ++${eur(b.payoutCents)}` : b.status === "lost" ? "Lost" : "In progress"}
                 </span>
               </div>
             ))}

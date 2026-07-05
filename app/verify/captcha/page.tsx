@@ -10,7 +10,7 @@ function CaptchaInner() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (!session) { setStatus('error'); setMessage('Sessione mancante. Ricomincia dal link Discord.'); return }
+    if (!session) { setStatus('error'); setMessage('Missing session. Start again from the Discord link.'); return }
     ;(window as any).__verifyCallback = async (token: string) => {
       setStatus('loading')
       try {
@@ -20,8 +20,8 @@ function CaptchaInner() {
           body: JSON.stringify({ token, session }),
         })
         if (res.ok) { setStatus('done') }
-        else { const d = await res.json(); setMessage(d.error || 'Verifica fallita.'); setStatus('error') }
-      } catch { setMessage('Errore di rete.'); setStatus('error') }
+        else { const d = await res.json(); setMessage(d.error || 'Verification failed.'); setStatus('error') }
+      } catch { setMessage('Network error.'); setStatus('error') }
     }
     return () => { delete (window as any).__verifyCallback }
   }, [session])
@@ -48,7 +48,7 @@ function CaptchaInner() {
                 data-theme="dark"
               />
             </div>
-            {status === 'loading' && <p style={{ color: '#aaa', marginTop: 16, fontSize: 14 }}>Verifica in corso...</p>}
+            {status === 'loading' && <p style={{ color: '#aaa', marginTop: 16, fontSize: 14 }}>Verifying...</p>}
           </>
         )}
       </div>

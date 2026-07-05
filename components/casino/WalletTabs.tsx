@@ -20,8 +20,8 @@ export default function WalletTabs() {
   if (!user) {
     return (
       <div className="rounded-2xl border border-border bg-background-elevated/40 p-8 text-center">
-        <p className="text-sm text-muted">Accedi per gestire i fondi.</p>
-        <Link href="/login" className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background">Accedi</Link>
+        <p className="text-sm text-muted">Sign in to manage funds.</p>
+        <Link href="/login" className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background">Sign in</Link>
       </div>
     );
   }
@@ -34,14 +34,14 @@ export default function WalletTabs() {
           onClick={() => setTab("deposit")}
           className={`rounded-full py-2 text-sm font-semibold transition-colors ${tab === "deposit" ? "bg-accent text-background" : "text-muted hover:text-foreground"}`}
         >
-          Deposita
+          Deposit
         </button>
         <button
           type="button"
           onClick={() => setTab("withdraw")}
           className={`rounded-full py-2 text-sm font-semibold transition-colors ${tab === "withdraw" ? "bg-accent text-background" : "text-muted hover:text-foreground"}`}
         >
-          Preleva
+          Withdraw
         </button>
       </div>
 

@@ -19,23 +19,23 @@ export async function POST(req: Request) {
 
     if (!isChain(chain)) return NextResponse.json({ error: "invalid chain" }, { status: 400 });
     if (!isValidAddress(chain, toAddress)) {
-      return NextResponse.json({ error: `indirizzo ${CHAINS[chain].symbol} non valido` }, { status: 400 });
+      return NextResponse.json({ error: `invalid ${CHAINS[chain].symbol} address` }, { status: 400 });
     }
     if (!Number.isFinite(amountCents) || amountCents < MIN_CENTS) {
-      return NextResponse.json({ error: "importo minimo €1.00" }, { status: 400 });
+      return NextResponse.json({ error: "minimum amount €1.00" }, { status: 400 });
     }
 
     const prices = await getPricesEur();
     const price = prices[chain as Chain];
     if (!price) {
-      return NextResponse.json({ error: "prezzo non disponibile, riprova" }, { status: 503 });
+      return NextResponse.json({ error: "price unavailable, try again" }, { status: 503 });
     }
     const amountCrypto = (amountCents / 100 / price).toFixed(CHAINS[chain as Chain].decimals === 18 ? 18 : 8);
 
     // Debit first (atomic — rejects if the balance can't cover it).
     const afterDebit = await debitBalance(user, amountCents);
     if (afterDebit === null) {
-      return NextResponse.json({ error: "saldo insufficiente" }, { status: 409 });
+      return NextResponse.json({ error: "insufficient balance" }, { status: 409 });
     }
 
     // Record the request. On-chain broadcast is a separate processing step

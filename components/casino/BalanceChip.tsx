@@ -51,7 +51,7 @@ export default function BalanceChip({ compact = false }: { compact?: boolean }) 
       {open && (
         <div className={`absolute z-50 mt-2 w-56 rounded-xl border border-border bg-background shadow-xl ${compact ? "left-1/2 -translate-x-1/2" : "right-0"}`}>
           <div className="border-b border-border px-4 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted">Saldo casino</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-muted">Casino balance</p>
             <p className="text-xl font-bold text-foreground">{balanceCents === null ? "…" : eur(balanceCents)}</p>
           </div>
           <div className="flex flex-col p-1.5">
@@ -60,7 +60,7 @@ export default function BalanceChip({ compact = false }: { compact?: boolean }) 
               onClick={() => setOpen(false)}
               className="rounded-lg px-3 py-2 text-sm font-semibold text-accent transition-colors hover:bg-background-elevated"
             >
-              Deposita
+              Deposit
             </Link>
             {testMode && (
               <button
@@ -77,7 +77,7 @@ export default function BalanceChip({ compact = false }: { compact?: boolean }) 
               onClick={() => setOpen(false)}
               className="rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-background-elevated"
             >
-              Vai al Casino
+              Go to Casino
             </Link>
           </div>
         </div>

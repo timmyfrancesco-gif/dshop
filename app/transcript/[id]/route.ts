@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { list } from "@vercel/blob";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const download = new URL(req.url).searchParams.get("download") === "1";
 
   if (!id || !/^[a-z0-9]+$/.test(id)) {
     return new NextResponse("Not Found", { status: 404 });
@@ -41,15 +42,18 @@ export async function GET(
   const { styles: transcriptStyles, body: transcriptBody } = extractTranscriptParts(htmlContent)
   const wrapped = wrapPage(title, id, meta, transcriptBody, transcriptStyles);
 
-  return new NextResponse(wrapped, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
-      "Content-Security-Policy":
-        "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src * data:;",
-    },
-  });
+  const headers: Record<string, string> = {
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "public, max-age=3600",
+    "Content-Security-Policy":
+      "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src * data:;",
+  };
+  if (download) {
+    const safe = String(title).replace(/[^a-z0-9-_]+/gi, "_").slice(0, 60);
+    headers["Content-Disposition"] = `attachment; filename="transcript-${safe}.html"`;
+  }
+
+  return new NextResponse(wrapped, { status: 200, headers });
 }
 
 function formatDate(iso: string): string {

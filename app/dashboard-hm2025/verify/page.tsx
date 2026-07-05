@@ -56,8 +56,8 @@ export default function VerifyDashboard() {
         body: JSON.stringify({ password }),
       })
       if (res.ok) { setAuthed(true) }
-      else { setPwError('Password errata.') }
-    } catch { setPwError('Errore di rete.') }
+      else { setPwError('Wrong password.') }
+    } catch { setPwError('Network error.') }
     setLogging(false)
   }
 
@@ -90,11 +90,11 @@ export default function VerifyDashboard() {
         setAddStatus('ok')
       } else {
         const d = await res.json()
-        setAddError(d.error || 'Errore sconosciuto.')
+        setAddError(d.error || 'Unknown error.')
         setAddStatus('error')
       }
     } catch {
-      setAddError('Errore di rete.')
+      setAddError('Network error.')
       setAddStatus('error')
     }
   }
@@ -127,9 +127,9 @@ export default function VerifyDashboard() {
             disabled={logging}
             style={{ marginTop: 16, width: '100%', padding: '10px 0', borderRadius: 8, background: '#5865F2', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer' }}
           >
-            {logging ? 'Accesso…' : 'Accedi'}
+            {logging ? 'Signing in…' : 'Sign in'}
           </button>
-          <a href="/dashboard-hm2025" style={{ display: 'block', marginTop: 16, color: '#555', fontSize: 12 }}>← Torna alla dashboard</a>
+          <a href="/dashboard-hm2025" style={{ display: 'block', marginTop: 16, color: '#555', fontSize: 12 }}>← Back to dashboard</a>
         </div>
       </div>
     )
@@ -143,10 +143,10 @@ export default function VerifyDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <a href="/dashboard-hm2025" style={{ color: '#555', fontSize: 13, textDecoration: 'none' }}>← Dashboard</a>
           <span style={{ color: '#333' }}>/</span>
-          <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>Verifica Discord</span>
+          <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>Discord Verify</span>
         </div>
         <button onClick={fetchData} style={{ background: '#1a1a1a', border: '1px solid #333', color: '#aaa', padding: '6px 14px', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
-          {loading ? '⟳' : '↺ Aggiorna'}
+          {loading ? '⟳' : '↺ Refresh'}
         </button>
       </div>
 
@@ -155,10 +155,10 @@ export default function VerifyDashboard() {
         {stats && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
             {[
-              { label: 'Totale verifiche', value: stats.total, icon: '✅' },
-              { label: 'Oggi', value: stats.todayCount, icon: '📅' },
-              { label: 'Utenti unici', value: stats.uniqueUsers, icon: '👤' },
-              { label: 'Server unici', value: stats.uniqueGuilds, icon: '🏠' },
+              { label: 'Total verifications', value: stats.total, icon: '✅' },
+              { label: 'Today', value: stats.todayCount, icon: '📅' },
+              { label: 'Unique users', value: stats.uniqueUsers, icon: '👤' },
+              { label: 'Unique servers', value: stats.uniqueGuilds, icon: '🏠' },
             ].map(s => (
               <div key={s.label} style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: 12, padding: '20px 24px' }}>
                 <div style={{ fontSize: 24, marginBottom: 8 }}>{s.icon}</div>
@@ -175,7 +175,7 @@ export default function VerifyDashboard() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && fetchData()}
-            placeholder="Cerca per username o ID..."
+            placeholder="Search by username or ID..."
             style={{ flex: 1, minWidth: 200, padding: '8px 14px', borderRadius: 8, border: '1px solid #2a2a2a', background: '#111', color: '#fff', fontSize: 14, outline: 'none' }}
           />
           <select
@@ -183,7 +183,7 @@ export default function VerifyDashboard() {
             onChange={e => setGuildFilter(e.target.value)}
             style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid #2a2a2a', background: '#111', color: '#fff', fontSize: 14, outline: 'none', minWidth: 180 }}
           >
-            <option value="">Tutti i server</option>
+            <option value="">All servers</option>
             {stats?.guilds.map(g => (
               <option key={g.guildId} value={g.guildId}>{g.guildId} ({g.count})</option>
             ))}
@@ -199,12 +199,12 @@ export default function VerifyDashboard() {
         {/* Table */}
         <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: 12, overflow: 'hidden' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid #1e1e1e', fontSize: 13, color: '#555', fontWeight: 600 }}>
-            {users.length} utenti verificati
+            {users.length} verified users
           </div>
           {loading ? (
-            <div style={{ padding: 40, textAlign: 'center', color: '#555' }}>Caricamento...</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#555' }}>Loading...</div>
           ) : users.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: '#555' }}>Nessun utente trovato.</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#555' }}>No users found.</div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -245,7 +245,7 @@ export default function VerifyDashboard() {
                           onClick={() => { setModal({ user: u }); setAddStatus('idle') }}
                           style={{ background: '#1a1a2e', border: '1px solid #5865F2', color: '#7289da', padding: '5px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600 }}
                         >
-                          + Aggiungi a server
+                          + Add to server
                         </button>
                       </td>
                     </tr>
@@ -286,8 +286,8 @@ export default function VerifyDashboard() {
                     <div style={{ color: '#555', fontSize: 12 }}>{modal.user.discordUserId}</div>
                   </div>
                 </div>
-                <h2 style={{ color: '#fff', fontWeight: 700, marginBottom: 6, fontSize: 16 }}>Aggiungi a un altro server</h2>
-                <p style={{ color: '#666', fontSize: 13, marginBottom: 16 }}>Inserisci il Guild ID del server Discord di destinazione. Il bot deve essere presente nel server.</p>
+                <h2 style={{ color: '#fff', fontWeight: 700, marginBottom: 6, fontSize: 16 }}>Add to another server</h2>
+                <p style={{ color: '#666', fontSize: 13, marginBottom: 16 }}>Enter the target Discord server's Guild ID. The bot must already be in that server.</p>
                 <input
                   value={targetGuild}
                   onChange={e => setTargetGuild(e.target.value)}
@@ -307,7 +307,7 @@ export default function VerifyDashboard() {
                     disabled={addStatus === 'loading' || !targetGuild.trim()}
                     style={{ flex: 1, padding: '10px 0', borderRadius: 8, background: '#5865F2', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', opacity: addStatus === 'loading' ? 0.7 : 1 }}
                   >
-                    {addStatus === 'loading' ? 'Aggiunta…' : 'Aggiungi'}
+                    {addStatus === 'loading' ? 'Adding…' : 'Add'}
                   </button>
                 </div>
               </>

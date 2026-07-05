@@ -32,11 +32,11 @@ export default function Blackjack() {
     setError(null);
     const betCents = Math.round(parseFloat(bet) * 100);
     if (!Number.isFinite(betCents) || betCents < 10) {
-      setError("Puntata minima €0.10");
+      setError("Minimum bet €0.10");
       return;
     }
     if (balanceCents !== null && betCents > balanceCents) {
-      setError("Saldo insufficiente");
+      setError("Insufficient balance");
       return;
     }
     setBusy(true);
@@ -45,7 +45,7 @@ export default function Blackjack() {
       setGame(r.state);
       setBalance(r.balanceCents);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Errore");
+      setError(e instanceof Error ? e.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -59,7 +59,7 @@ export default function Blackjack() {
       setGame(r.state);
       setBalance(r.balanceCents);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Errore");
+      setError(e instanceof Error ? e.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -73,9 +73,9 @@ export default function Blackjack() {
   if (!user) {
     return (
       <div className="rounded-2xl border border-border bg-background-elevated/40 p-8 text-center">
-        <p className="text-sm text-muted">Accedi per giocare.</p>
+        <p className="text-sm text-muted">Sign in to play.</p>
         <Link href="/login" className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-background">
-          Accedi
+          Sign in
         </Link>
       </div>
     );
@@ -88,8 +88,8 @@ export default function Blackjack() {
       {/* Table */}
       <div className="relative overflow-hidden rounded-2xl border border-border bg-[radial-gradient(circle_at_50%_0%,#12324a,#0a1622)] p-5">
         <div className="mb-4 flex flex-col items-center gap-1">
-          <span className="rounded-sm bg-black/30 px-3 py-0.5 text-[10px] font-bold tracking-widest text-zinc-400">BLACKJACK PAGA 3 A 2</span>
-          <span className="rounded-sm bg-black/30 px-3 py-0.5 text-[10px] font-bold tracking-widest text-zinc-500">ASSICURAZIONE PAGA 2 A 1</span>
+          <span className="rounded-sm bg-black/30 px-3 py-0.5 text-[10px] font-bold tracking-widest text-zinc-400">BLACKJACK PAYS 3 TO 2</span>
+          <span className="rounded-sm bg-black/30 px-3 py-0.5 text-[10px] font-bold tracking-widest text-zinc-500">INSURANCE PAYS 2 TO 1</span>
         </div>
 
         {/* Dealer */}
@@ -122,7 +122,7 @@ export default function Blackjack() {
                   {h.value}
                   {h.outcome && (
                     <span className={`ml-2 ${h.outcome === "lose" ? "text-rose-400" : h.outcome === "push" ? "text-zinc-400" : "text-emerald-400"}`}>
-                      {h.outcome === "blackjack" ? "BLACKJACK" : h.outcome === "win" ? "VINTA" : h.outcome === "push" ? "PARI" : "PERSA"}
+                      {h.outcome === "blackjack" ? "BLACKJACK" : h.outcome === "win" ? "WON" : h.outcome === "push" ? "PUSH" : "LOST"}
                     </span>
                   )}
                 </span>
@@ -131,7 +131,7 @@ export default function Blackjack() {
           ) : (
             <div className="flex flex-col items-center gap-2">
               <div className="flex gap-2"><EmptyCards /></div>
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">Tu</span>
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">You</span>
             </div>
           )}
         </div>
@@ -139,7 +139,7 @@ export default function Blackjack() {
         {game?.finished && (
           <div className="mt-5 text-center">
             <p className={`text-lg font-bold ${game.payoutCents > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-              {game.payoutCents > 0 ? `Vinci ${eur(game.payoutCents)}` : "Nessuna vincita"}
+              {game.payoutCents > 0 ? `You win ${eur(game.payoutCents)}` : "No win"}
             </p>
           </div>
         )}
@@ -148,10 +148,10 @@ export default function Blackjack() {
       {/* Actions */}
       {inHand ? (
         <div className="grid grid-cols-2 gap-3">
-          <ActionBtn label="Chiedi carta" onClick={() => act("hit")} disabled={busy} color="#22c55e" />
-          <ActionBtn label="Resta" onClick={() => act("stand")} disabled={busy} color="#ef4444" />
-          <ActionBtn label="Dividi" onClick={() => act("split")} disabled={busy || !game!.canSplit} color="#3b82f6" />
-          <ActionBtn label="Raddoppia" onClick={() => act("double")} disabled={busy || !game!.canDouble} color="#f59e0b" />
+          <ActionBtn label="Hit" onClick={() => act("hit")} disabled={busy} color="#22c55e" />
+          <ActionBtn label="Stand" onClick={() => act("stand")} disabled={busy} color="#ef4444" />
+          <ActionBtn label="Split" onClick={() => act("split")} disabled={busy || !game!.canSplit} color="#3b82f6" />
+          <ActionBtn label="Double" onClick={() => act("double")} disabled={busy || !game!.canDouble} color="#f59e0b" />
         </div>
       ) : (
         <>
@@ -162,7 +162,7 @@ export default function Blackjack() {
             disabled={busy}
             className="rounded-full bg-accent py-4 text-base font-bold text-background shadow-[0_0_24px_-4px_var(--accent)] transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {busy ? "…" : game?.finished ? "Nuova mano" : "Scommetti"}
+            {busy ? "…" : game?.finished ? "New hand" : "Bet"}
           </button>
         </>
       )}
@@ -170,7 +170,7 @@ export default function Blackjack() {
       {error && <p className="text-sm text-rose-400">{error}</p>}
       {game && (
         <p className="text-center text-[11px] text-muted">
-          Provably fair · hash {game.serverSeedHash.slice(0, 16)}…{game.serverSeed ? " · seed rivelato" : ""}
+          Provably fair · hash {game.serverSeedHash.slice(0, 16)}…{game.serverSeed ? " · seed revealed" : ""}
         </p>
       )}
     </div>

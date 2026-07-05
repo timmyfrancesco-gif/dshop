@@ -4,8 +4,8 @@ export default function WhyPage() {
       <div style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 16, padding: '40px 32px', maxWidth: 480, width: '100%', color: '#fff' }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>🔐 Perché dobbiamo verificarti?</h1>
         <p style={{ color: '#aaa', lineHeight: 1.7 }}>
-          La verifica serve a proteggere la community da bot e account falsi.<br /><br />
-          Il processo richiede solo il tuo account Discord (leggiamo solo il tuo ID, niente altro) e un captcha Cloudflare. Nessun dato viene condiviso con terze parti.
+          Verification protects the community from bots and fake accounts.<br /><br />
+          The process only needs your Discord account (we only read your ID, nothing else) and a Cloudflare captcha. No data is shared with third parties.
         </p>
       </div>
     </div>

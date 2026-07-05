@@ -26,28 +26,28 @@ export default function Withdraw({ wallets }: { wallets: WalletView[] | null }) 
     setError(null);
     const amountCents = Math.round(parseFloat(amount) * 100);
     if (!address.trim()) {
-      setError("Inserisci un indirizzo di destinazione");
+      setError("Enter a destination address");
       return;
     }
     if (!Number.isFinite(amountCents) || amountCents < 100) {
-      setError("Importo minimo €1.00");
+      setError("Minimum amount €1.00");
       return;
     }
     if (balanceCents !== null && amountCents > balanceCents) {
-      setError("Saldo insufficiente");
+      setError("Insufficient balance");
       return;
     }
     setBusy(true);
     try {
       const r = await casino.withdraw(chain, address.trim(), amountCents);
       setBalance(r.balanceCents);
-      setFlash(`Richiesta registrata: ${r.withdrawal.amountCrypto} ${r.withdrawal.chain.toUpperCase()} → ${eur(r.withdrawal.amountCents)}`);
+      setFlash(`Request recorded: ${r.withdrawal.amountCrypto} ${r.withdrawal.chain.toUpperCase()} → ${eur(r.withdrawal.amountCents)}`);
       setTimeout(() => setFlash(null), 8000);
       setAddress("");
       setAmount("");
       casino.withdrawals().then((res) => setHistory(res.withdrawals)).catch(() => {});
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Errore");
+      setError(e instanceof Error ? e.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -56,7 +56,7 @@ export default function Withdraw({ wallets }: { wallets: WalletView[] | null }) 
   return (
     <div className="flex flex-col gap-5">
       <div className="rounded-2xl border border-border bg-background-elevated/40 px-5 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted">Saldo disponibile</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted">Available balance</p>
         <p className="text-lg font-bold text-foreground">{balanceCents === null ? "…" : eur(balanceCents)}</p>
       </div>
 
@@ -76,17 +76,17 @@ export default function Withdraw({ wallets }: { wallets: WalletView[] | null }) 
           </select>
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted">Indirizzo di destinazione</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted">Destination address</label>
           <input
             type="text"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            placeholder="Indirizzo del wallet esterno"
+            placeholder="External wallet address"
             className="w-full rounded-xl border border-border bg-background/60 px-3 py-3 font-mono text-xs text-foreground outline-none"
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted">Importo (EUR)</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-muted">Amount (EUR)</label>
           <div className="flex items-stretch overflow-hidden rounded-xl border border-border bg-background/60">
             <span className="flex items-center pl-4 text-accent">€</span>
             <input
@@ -115,16 +115,16 @@ export default function Withdraw({ wallets }: { wallets: WalletView[] | null }) 
           disabled={busy}
           className="rounded-full bg-accent py-3 text-sm font-bold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {busy ? "…" : "Richiedi prelievo"}
+          {busy ? "…" : "Request withdrawal"}
         </button>
         <p className="text-[11px] text-muted">
-          I prelievi vengono registrati e processati manualmente durante la fase di test.
+          Withdrawals are recorded and processed manually during the test phase.
         </p>
       </div>
 
       {history.length > 0 && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-foreground">Storico prelievi</h3>
+          <h3 className="mb-2 text-sm font-semibold text-foreground">Withdrawal history</h3>
           <div className="flex flex-col gap-2">
             {history.map((w) => (
               <div key={w.id} className="flex items-center justify-between rounded-xl border border-border bg-background-elevated/30 px-4 py-2.5 text-sm">
@@ -137,7 +137,7 @@ export default function Withdraw({ wallets }: { wallets: WalletView[] | null }) 
                   w.status === "failed" ? "bg-rose-500/15 text-rose-400" :
                   "bg-amber-500/15 text-amber-400"
                 }`}>
-                  {w.status === "sent" ? "Inviato" : w.status === "failed" ? "Fallito" : "In attesa"}
+                  {w.status === "sent" ? "Sent" : w.status === "failed" ? "Failed" : "Pending"}
                 </span>
               </div>
             ))}

@@ -3710,14 +3710,23 @@ function TranscriptsView() {
                     })}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <a
-                      href={`/transcript/${t.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-all hover:border-[#90C6FF]/30 hover:text-[#90C6FF]"
-                    >
-                      View
-                    </a>
+                    <div className="flex items-center justify-end gap-2">
+                      <a
+                        href={`/transcript/${t.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-all hover:border-[#90C6FF]/30 hover:text-[#90C6FF]"
+                      >
+                        View
+                      </a>
+                      <a
+                        href={`/transcript/${t.id}?download=1`}
+                        download={`transcript-${(t.ticketName || t.id).replace(/[^a-z0-9-_]+/gi, "_")}.html`}
+                        className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-all hover:border-emerald-500/30 hover:text-emerald-400"
+                      >
+                        ⬇ Download
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -65,9 +65,9 @@ export default function InventoryPage() {
         body: JSON.stringify({ password }),
       });
       if (res.ok) setAuthed(true);
-      else setPwError("Password errata.");
+      else setPwError("Wrong password.");
     } catch {
-      setPwError("Errore di rete.");
+      setPwError("Network error.");
     } finally {
       setLogging(false);
     }
@@ -78,7 +78,7 @@ export default function InventoryPage() {
       <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ background: "#111", border: "1px solid #222", borderRadius: 16, padding: "40px 32px", maxWidth: 380, width: "100%", textAlign: "center" }}>
           <div style={{ fontSize: 34, marginBottom: 14 }}>📦</div>
-          <h1 style={{ color: "#fff", fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Magazzino</h1>
+          <h1 style={{ color: "#fff", fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Inventory</h1>
           <input
             type="password"
             value={password}
@@ -89,7 +89,7 @@ export default function InventoryPage() {
           />
           {pwError && <p style={{ color: "#ff6b6b", fontSize: 13, marginTop: 8 }}>{pwError}</p>}
           <button onClick={login} disabled={logging} style={{ marginTop: 16, width: "100%", padding: "10px 0", borderRadius: 8, background: "#90C6FF", color: "#001", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer" }}>
-            {logging ? "…" : "Accedi"}
+            {logging ? "…" : "Sign in"}
           </button>
         </div>
       </div>
@@ -101,11 +101,11 @@ export default function InventoryPage() {
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "28px 20px 80px" }}>
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black">Magazzino</h1>
-            <p className="text-sm text-zinc-500">Prodotti e stock — salvati su Postgres, affidabili.</p>
+            <h1 className="text-2xl font-black">Inventory</h1>
+            <p className="text-sm text-zinc-500">Products and stock — stored on Postgres, reliable.</p>
           </div>
           <button onClick={load} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:border-[#90C6FF]/40">
-            {loading ? "…" : "↻ Aggiorna"}
+            {loading ? "…" : "↻ Refresh"}
           </button>
         </div>
 
@@ -114,7 +114,7 @@ export default function InventoryPage() {
         <div className="mt-6 flex flex-col gap-3">
           {products.length === 0 ? (
             <p className="rounded-xl border border-white/5 p-8 text-center text-sm text-zinc-500" style={card}>
-              Nessun prodotto. Creane uno sopra.
+              No products. Create one above.
             </p>
           ) : (
             products.map((p) => <ProductRow key={p.id} product={p} onChange={load} showToast={showToast} />)
@@ -148,10 +148,10 @@ function CreateProduct({ onCreated, showToast }: { onCreated: () => void; showTo
       if (res.ok) {
         setName("");
         setPrice("");
-        showToast("Prodotto creato", true);
+        showToast("Product created", true);
         onCreated();
       } else {
-        showToast((await res.json()).error || "Errore", false);
+        showToast((await res.json()).error || "Error", false);
       }
     } finally {
       setSaving(false);
@@ -160,12 +160,12 @@ function CreateProduct({ onCreated, showToast }: { onCreated: () => void; showTo
 
   return (
     <div className="rounded-xl border border-white/5 p-4" style={card}>
-      <h3 className="mb-3 text-sm font-semibold">Nuovo prodotto</h3>
+      <h3 className="mb-3 text-sm font-semibold">New product</h3>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome" className={input} style={{ backgroundColor: "#161619" }} />
-        <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" step="0.01" min="0" placeholder="Prezzo €" className={`${input} sm:w-40`} style={{ backgroundColor: "#161619" }} />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className={input} style={{ backgroundColor: "#161619" }} />
+        <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" step="0.01" min="0" placeholder="Price €" className={`${input} sm:w-40`} style={{ backgroundColor: "#161619" }} />
         <button onClick={create} disabled={saving} className="rounded-lg bg-[#90C6FF] px-6 py-2.5 text-sm font-bold text-black disabled:opacity-50">
-          {saving ? "…" : "Crea"}
+          {saving ? "…" : "Create"}
         </button>
       </div>
     </div>
@@ -200,12 +200,12 @@ function ProductRow({ product, onChange, showToast }: { product: Product; onChan
       });
       if (res.ok) {
         setDraft("");
-        showToast(`Stock aggiornato: ${(await res.json()).stock} disponibili`, true);
+        showToast(`Stock updated: ${(await res.json()).stock}available`, true);
         const r = await fetch(`/api/store/admin/products/${product.id}`);
         if (r.ok) setItems((await r.json()).items);
         onChange();
       } else {
-        showToast((await res.json()).error || "Errore", false);
+        showToast((await res.json()).error || "Error", false);
       }
     } finally {
       setBusy(false);
@@ -213,10 +213,10 @@ function ProductRow({ product, onChange, showToast }: { product: Product; onChan
   }
 
   async function remove() {
-    if (!confirm(`Eliminare "${product.name}"?`)) return;
+    if (!confirm(`Delete "${product.name}"?`)) return;
     const res = await fetch(`/api/store/admin/products/${product.id}`, { method: "DELETE" });
     if (res.ok) {
-      showToast("Prodotto eliminato", true);
+      showToast("Product deleted", true);
       onChange();
     }
   }
@@ -237,13 +237,13 @@ function ProductRow({ product, onChange, showToast }: { product: Product; onChan
       <div className="flex items-center justify-between gap-3 p-4">
         <button onClick={toggle} className="flex-1 text-left">
           <p className="font-semibold text-white">{product.name}</p>
-          <p className="text-xs text-zinc-500">€{product.price.toFixed(2)} · {product.totalSold} venduti</p>
+          <p className="text-xs text-zinc-500">€{product.price.toFixed(2)} · {product.totalSold} sold</p>
         </button>
         <span className={`rounded-full px-3 py-1 text-xs font-bold ${product.stock > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-400"}`}>
           {product.stock} in stock
         </span>
         <button onClick={toggleActive} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${product.active ? "border-emerald-500/30 text-emerald-400" : "border-white/10 text-zinc-500"}`}>
-          {product.active ? "Attivo" : "Nascosto"}
+          {product.active ? "Active" : "Hidden"}
         </button>
         <button onClick={toggle} className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-zinc-300">{open ? "▲" : "Stock ▼"}</button>
       </div>
@@ -251,25 +251,25 @@ function ProductRow({ product, onChange, showToast }: { product: Product; onChan
       {open && (
         <div className="border-t border-white/5 p-4">
           <div className="mb-3 flex gap-2">
-            <button onClick={() => setMode("add")} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${mode === "add" ? "bg-[#90C6FF]/20 text-[#90C6FF]" : "text-zinc-500"}`}>Aggiungi</button>
-            <button onClick={() => setMode("replace")} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${mode === "replace" ? "bg-[#90C6FF]/20 text-[#90C6FF]" : "text-zinc-500"}`}>Sostituisci</button>
+            <button onClick={() => setMode("add")} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${mode === "add" ? "bg-[#90C6FF]/20 text-[#90C6FF]" : "text-zinc-500"}`}>Add</button>
+            <button onClick={() => setMode("replace")} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${mode === "replace" ? "bg-[#90C6FF]/20 text-[#90C6FF]" : "text-zinc-500"}`}>Replace</button>
           </div>
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             rows={5}
-            placeholder={"Un articolo per riga\nSERIAL-001\nSERIAL-002"}
+            placeholder={"One item per line\nSERIAL-001\nSERIAL-002"}
             className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none focus:border-[#90C6FF]/50"
             style={{ backgroundColor: "#161619" }}
           />
           <div className="mt-2 flex items-center justify-between">
             <span className="text-xs text-zinc-500">
-              {draft.trim() ? `${draft.trim().split("\n").filter((l) => l.trim()).length} righe` : `${available} disponibili ora`}
+              {draft.trim() ? `${draft.trim().split("\n").filter((l) => l.trim()).length}rows` : `${available} available now`}
             </span>
             <div className="flex gap-2">
-              <button onClick={remove} className="rounded-lg border border-rose-500/30 px-3 py-1.5 text-xs font-semibold text-rose-400">Elimina</button>
+              <button onClick={remove} className="rounded-lg border border-rose-500/30 px-3 py-1.5 text-xs font-semibold text-rose-400">Delete</button>
               <button onClick={submitStock} disabled={busy} className="rounded-lg bg-emerald-500/15 px-4 py-1.5 text-xs font-semibold text-emerald-400 disabled:opacity-50">
-                {busy ? "…" : mode === "replace" ? "Sostituisci stock" : "Aggiungi allo stock"}
+                {busy ? "…" : mode === "replace" ? "Replace stock" : "Add to stock"}
               </button>
             </div>
           </div>
@@ -279,7 +279,7 @@ function ProductRow({ product, onChange, showToast }: { product: Product; onChan
               {items.map((it) => (
                 <div key={it.id} className="flex items-center justify-between py-1 font-mono text-[11px]">
                   <span className={it.status === "sold" ? "text-zinc-600 line-through" : "text-zinc-300"}>{it.content}</span>
-                  <span className={it.status === "sold" ? "text-zinc-600" : "text-emerald-500"}>{it.status === "sold" ? "venduto" : "disp."}</span>
+                  <span className={it.status === "sold" ? "text-zinc-600" : "text-emerald-500"}>{it.status === "sold" ? "sold" : "avail."}</span>
                 </div>
               ))}
             </div>
