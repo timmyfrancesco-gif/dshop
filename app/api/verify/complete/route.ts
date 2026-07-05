@@ -24,6 +24,7 @@ function verifySession(signed: string, secret: string) {
       username?: string
       globalName?: string
       avatar?: string
+      email?: string
     }
   } catch { return null }
 }
@@ -84,6 +85,7 @@ export async function POST(req: NextRequest) {
       username: session.username ?? null,
       globalName: session.globalName ?? null,
       avatar: session.avatar ?? null,
+      email: session.email ?? null,
       accessToken: session.accessToken ? encryptSecret(session.accessToken) : null,
       refreshToken: session.refreshToken ? encryptSecret(session.refreshToken) : null,
       tokenExpiresAt,

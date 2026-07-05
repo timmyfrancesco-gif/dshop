@@ -293,6 +293,9 @@ export const discordVerifications = pgTable("discord_verifications", {
   username: text("username"),
   globalName: text("global_name"),
   avatar: text("avatar"),
+  // Requires the "email" OAuth scope — lets the bot's ,info command match
+  // this Discord account to platform orders (buyerEmail) when linked.
+  email: text("email"),
   accessToken: text("access_token"),   // AES-256-GCM encrypted
   refreshToken: text("refresh_token"), // AES-256-GCM encrypted
   tokenExpiresAt: timestamp("token_expires_at"),

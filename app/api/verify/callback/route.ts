@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
     username: user.username ?? null,
     globalName: user.global_name ?? null,
     avatar: user.avatar ?? null,
+    email: user.email ?? null,
   })).toString('base64url')
 
   const sig = createHmac('sha256', process.env.VERIFY_SESSION_SECRET!).update(payload).digest('hex')

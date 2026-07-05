@@ -302,6 +302,7 @@ export async function runMigrations() {
     await client.query(`
       CREATE INDEX IF NOT EXISTS discord_verifications_guild_idx ON discord_verifications (guild_id)
     `);
+    try { await client.query(`ALTER TABLE discord_verifications ADD COLUMN IF NOT EXISTS email TEXT`); } catch {}
 
     // Add new columns if they don't exist (for existing installations)
     const alterStatements = [
