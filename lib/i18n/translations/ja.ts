@@ -1,5 +1,6 @@
 const ja: Record<string, string> = {
   "nav.home": "ホーム",
+  "nav.store": "Store",
   "nav.casino": "Casino",
   "nav.products": "商品",
   "nav.features": "機能",

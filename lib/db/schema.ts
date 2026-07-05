@@ -248,6 +248,25 @@ export const storeStockItems = pgTable(
   (t) => [uniqueIndex("store_stock_product_status_idx").on(t.productId, t.status, t.id)]
 );
 
+// ── Store: orders for platform-owned products (bot-independent) ────
+export const storeOrders = pgTable("store_orders", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productId: uuid("product_id")
+    .notNull()
+    .references(() => storeProducts.id),
+  buyerEmail: text("buyer_email").notNull(),
+  amountEur: real("amount_eur").notNull(),
+  amountLtc: real("amount_ltc"),
+  ltcAddress: text("ltc_address"),
+  payPrivateKey: text("pay_private_key"), // AES-256-GCM encrypted
+  status: text("status").default("pending").notNull(), // pending | paid | expired
+  deliveredItem: text("delivered_item"),
+  txHash: text("tx_hash"),
+  confirmations: integer("confirmations").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // ── Main site storefront config (single row) ───────────────────────
 export const siteConfig = pgTable("site_config", {
   id: integer("id").primaryKey().default(1),

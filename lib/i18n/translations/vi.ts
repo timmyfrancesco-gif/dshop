@@ -1,6 +1,7 @@
 const vi: Record<string, string> = {
   // Navigation
   "nav.home": "Trang chủ",
+  "nav.store": "Store",
   "nav.casino": "Casino",
   "nav.products": "Sản phẩm",
   "nav.features": "Tính năng",

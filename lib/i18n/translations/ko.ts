@@ -1,6 +1,7 @@
 const ko: Record<string, string> = {
   // Navigation
   "nav.home": "홈",
+  "nav.store": "Store",
   "nav.casino": "Casino",
   "nav.products": "제품",
   "nav.features": "기능",

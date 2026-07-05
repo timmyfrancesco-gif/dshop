@@ -114,3 +114,54 @@ export async function consumeOne(productId: string, orderId: string): Promise<st
   }
   return content ?? null;
 }
+
+/**
+ * Reserves one available item for a pending order (checkout started, not yet
+ * paid) — takes it out of the available pool without a sale, so two buyers
+ * can't both reserve the last unit. Returns true if a unit was reserved.
+ */
+export async function reserveOne(productId: string, orderId: string): Promise<boolean> {
+  const rows = await db.execute(sql`
+    UPDATE store_stock_items
+    SET status = 'reserved', order_id = ${orderId}
+    WHERE id = (
+      SELECT id FROM store_stock_items
+      WHERE product_id = ${productId} AND status = 'available'
+      ORDER BY created_at
+      FOR UPDATE SKIP LOCKED
+      LIMIT 1
+    )
+    RETURNING id
+  `);
+  const list = (rows as unknown as { rows?: { id: string }[] }).rows ?? (rows as unknown as { id: string }[]);
+  return Array.isArray(list) && list.length > 0;
+}
+
+/** Confirms payment: the reserved item for this order becomes sold. Returns the delivered content. */
+export async function markReservedSold(orderId: string): Promise<string | null> {
+  const rows = await db.execute(sql`
+    UPDATE store_stock_items
+    SET status = 'sold', sold_at = NOW()
+    WHERE order_id = ${orderId} AND status = 'reserved'
+    RETURNING content, product_id
+  `);
+  const list =
+    (rows as unknown as { rows?: { content: string; product_id: string }[] }).rows ??
+    (rows as unknown as { content: string; product_id: string }[]);
+  const row = Array.isArray(list) ? list[0] : undefined;
+  if (row) {
+    await db
+      .update(storeProducts)
+      .set({ totalSold: sql`${storeProducts.totalSold} + 1` })
+      .where(eq(storeProducts.id, row.product_id));
+  }
+  return row?.content ?? null;
+}
+
+/** Releases a reserved item back to available (order expired/failed unpaid). */
+export async function releaseReserved(orderId: string): Promise<void> {
+  await db
+    .update(storeStockItems)
+    .set({ status: "available", orderId: null })
+    .where(and(eq(storeStockItems.orderId, orderId), eq(storeStockItems.status, "reserved")));
+}

@@ -1,6 +1,7 @@
 const hi: Record<string, string> = {
   // Navigation
   "nav.home": "होम",
+  "nav.store": "Store",
   "nav.casino": "Casino",
   "nav.products": "उत्पाद",
   "nav.features": "सुविधाएँ",

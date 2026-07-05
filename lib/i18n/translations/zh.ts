@@ -1,5 +1,6 @@
 const zh: Record<string, string> = {
   "nav.home": "首页",
+  "nav.store": "Store",
   "nav.casino": "Casino",
   "nav.products": "产品",
   "nav.features": "功能",

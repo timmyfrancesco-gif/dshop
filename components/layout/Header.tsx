@@ -16,6 +16,7 @@ const NAV_KEYS = [
   { href: "/#services", key: "nav.features", tenantVisible: false },
   { href: "/#faq", key: "nav.faq", tenantVisible: true },
   { href: "/#vouches", key: "nav.reviews", tenantVisible: false },
+  { href: "/store", key: "nav.store", tenantVisible: false },
   { href: "/casino", key: "nav.casino", tenantVisible: false },
   { href: "/track", key: "nav.trackOrder", tenantVisible: false },
   { href: "/terms", key: "nav.terms", tenantVisible: false },

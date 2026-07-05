@@ -248,6 +248,27 @@ export async function runMigrations() {
     `);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS store_orders (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID NOT NULL REFERENCES store_products(id),
+        buyer_email TEXT NOT NULL,
+        amount_eur REAL NOT NULL,
+        amount_ltc REAL,
+        ltc_address TEXT,
+        pay_private_key TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        delivered_item TEXT,
+        tx_hash TEXT,
+        confirmations INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS store_orders_status_idx ON store_orders (status, created_at)
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS site_config (
         id INTEGER PRIMARY KEY DEFAULT 1,
         config JSONB NOT NULL DEFAULT '{}',

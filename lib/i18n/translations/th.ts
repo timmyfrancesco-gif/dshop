@@ -1,6 +1,7 @@
 const th: Record<string, string> = {
   // Navigation
   "nav.home": "หน้าหลัก",
+  "nav.store": "Store",
   "nav.casino": "Casino",
   "nav.products": "สินค้า",
   "nav.features": "ฟีเจอร์",
