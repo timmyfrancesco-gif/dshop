@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { uploadImage } from "@/lib/uploadImage";
 
 export default function CreateShopPage() {
   const [step, setStep] = useState(1);
@@ -45,21 +46,12 @@ export default function CreateShopPage() {
     setUploading(true);
     setError("");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Upload failed");
+      const result = await uploadImage(file);
+      if ("error" in result) {
+        setError(result.error);
         return;
       }
-
-      setForm((prev) => ({ ...prev, shopLogo: data.url }));
+      setForm((prev) => ({ ...prev, shopLogo: result.url }));
     } catch {
       setError("Upload failed. Try again.");
     } finally {
@@ -341,7 +333,7 @@ export default function CreateShopPage() {
                       </button>
                     )}
                     <p className="mt-1.5 text-xs text-white/30">
-                      PNG, JPG, WebP or GIF — max 2MB
+                      PNG, JPG, WebP or GIF — max 20MB
                     </p>
                   </div>
 

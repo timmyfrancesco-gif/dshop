@@ -19,6 +19,7 @@ import {
   setProductStockCount,
 } from "@/lib/api";
 import { formatCurrency, formatEur, formatRelativeTime } from "@/lib/format";
+import { uploadImage } from "@/lib/uploadImage";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useTheme, type ThemeId } from "@/lib/contexts/ThemeContext";
 import dynamic from "next/dynamic";
@@ -2050,6 +2051,7 @@ function ProductEditView({
   const [images, setImages] = useState<string[]>(
     product?.images?.length ? product.images : product?.image ? [product.image] : [],
   );
+  const [imagesUploading, setImagesUploading] = useState(false);
   const [instructions, setInstructions] = useState(product?.instructions ?? "");
   const [deliverableType, setDeliverableType] = useState<
     "serials" | "service" | "dynamic" | "files" | "smm-panels"
@@ -2110,21 +2112,24 @@ function ProductEditView({
     setUrlPath(val);
   }
 
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
     if (!files) return;
     const remaining = 5 - images.length;
     const toProcess = Array.from(files).slice(0, remaining);
-    for (const file of toProcess) {
-      if (file.size > 2 * 1024 * 1024) continue;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        setImages((prev) => (prev.length < 5 ? [...prev, result] : prev));
-      };
-      reader.readAsDataURL(file);
-    }
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (toProcess.length === 0) return;
+    setImagesUploading(true);
+    try {
+      for (const file of toProcess) {
+        const result = await uploadImage(file);
+        if ("url" in result) {
+          setImages((prev) => (prev.length < 5 ? [...prev, result.url] : prev));
+        }
+      }
+    } finally {
+      setImagesUploading(false);
+    }
   }
 
   function removeImage(idx: number) {
@@ -2410,7 +2415,7 @@ function ProductEditView({
             <label className="text-sm font-semibold text-white">
               Images{" "}
               <span className="font-normal text-zinc-500">
-                ({images.length}/5, max 2MB each)
+                ({images.length}/5, max 20MB each)
               </span>
             </label>
             <div className="flex flex-wrap gap-3">
@@ -2440,10 +2445,11 @@ function ProductEditView({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-dashed border-white/10 text-zinc-500 transition-colors hover:border-[#90C6FF]/30 hover:text-[#90C6FF]"
+                  disabled={imagesUploading}
+                  className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-dashed border-white/10 text-zinc-500 transition-colors hover:border-[#90C6FF]/30 hover:text-[#90C6FF] disabled:opacity-50"
                 >
-                  <span className="text-2xl leading-none">+</span>
-                  <span className="mt-1 text-[10px]">Upload</span>
+                  <span className="text-2xl leading-none">{imagesUploading ? "…" : "+"}</span>
+                  <span className="mt-1 text-[10px]">{imagesUploading ? "Uploading" : "Upload"}</span>
                 </button>
               )}
             </div>
@@ -3239,21 +3245,14 @@ function StorefrontConfigureView({
   }
 
   async function handleLogoUpload(file: File) {
-    if (file.size > 2 * 1024 * 1024) {
-      showToast("Image too large (max 2MB)", false);
-      return;
-    }
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.url) {
-        update("logoUrl", data.url);
+      const result = await uploadImage(file);
+      if ("url" in result) {
+        update("logoUrl", result.url);
         showToast("Logo uploaded", true);
       } else {
-        showToast(data.error || "Upload failed", false);
+        showToast(result.error, false);
       }
     } catch {
       showToast("Upload failed", false);
