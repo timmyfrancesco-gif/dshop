@@ -175,12 +175,18 @@ export const storeOrders = pgTable("store_orders", {
   amountEur: real("amount_eur").notNull(),
   amountLtc: real("amount_ltc"),
   ltcAddress: text("ltc_address"),
-  payPrivateKey: text("pay_private_key"), // AES-256-GCM encrypted
+  payPrivateKey: text("pay_private_key"), // AES-256-GCM encrypted, null for fallback-address orders
   // pending | paid | expired | oversold_refunding | refunded | refund_failed
+  // | oversold_manual_refund (fallback-address orders — no key to auto-refund)
   status: text("status").default("pending").notNull(),
   deliveredItem: text("delivered_item"),
   txHash: text("tx_hash"),
   confirmations: integer("confirmations").default(0),
+  // Snapshot of the shared fallback address's total+unconfirmed received LTC
+  // at order creation time, used to detect new activity before asking the
+  // buyer to confirm which payment (via txid) was theirs. Null for orders
+  // with their own generated wallet.
+  fallbackBaselineLtc: real("fallback_baseline_ltc"),
   // Populated only when the order is oversold and must be refunded.
   refundAddress: text("refund_address"),
   refundTxHash: text("refund_tx_hash"),

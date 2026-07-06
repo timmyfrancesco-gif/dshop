@@ -26,6 +26,16 @@ interface LtcPaymentProps {
    * webhook push on payment, so they can poll less often than bot orders,
    * which have no fast path and rely on this interval alone. */
   pollIntervalMs?: number;
+  /** True when this order pays into the shared fallback address instead of
+   * a freshly generated one (per-order wallet generation failed). */
+  isFallback?: boolean;
+  /** Submits the buyer-confirmed txid for a fallback-address order. Required
+   * when isFallback is true. */
+  onSubmitTxid?: (orderId: string, txHash: string) => Promise<ProductOrderStatusResponse | null>;
+  /** Fired when a fallback-address order sold out before it could be
+   * matched — no private key exists to auto-refund, so it needs manual
+   * handling. Falls back to onCancelled if not provided. */
+  onManualRefund?: () => void;
 }
 
 type PaymentPhase = "waiting" | "confirming" | "done";
@@ -115,19 +125,25 @@ function CircularProgress({ percentage }: { percentage: number }) {
   );
 }
 
-export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelled, onRefunded, pollFn = getProductOrder, pollIntervalMs = POLL_INTERVAL_MS }: LtcPaymentProps) {
+export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelled, onRefunded, pollFn = getProductOrder, pollIntervalMs = POLL_INTERVAL_MS, isFallback, onSubmitTxid, onManualRefund }: LtcPaymentProps) {
   const { t } = useLocale();
   const [ltcEur, setLtcEur] = useState<number | null>(null);
   const [ltcUsd, setLtcUsd] = useState<number | null>(null);
   const [phase, setPhase] = useState<PaymentPhase>("waiting");
   const [confirmations, setConfirmations] = useState(0);
   const [requiredConfirmations, setRequiredConfirmations] = useState(1);
+  const [awaitingTxid, setAwaitingTxid] = useState(false);
+  const [txidInput, setTxidInput] = useState("");
+  const [txidError, setTxidError] = useState<string | null>(null);
+  const [submittingTxid, setSubmittingTxid] = useState(false);
   const onPaidRef = useRef(onPaid);
   const onCancelledRef = useRef(onCancelled);
   const onRefundedRef = useRef(onRefunded);
+  const onManualRefundRef = useRef(onManualRefund);
   onPaidRef.current = onPaid;
   onCancelledRef.current = onCancelled;
   onRefundedRef.current = onRefunded;
+  onManualRefundRef.current = onManualRefund;
   const [createdAt] = useState(() => new Date().toLocaleString());
 
   useEffect(() => {
@@ -169,9 +185,17 @@ export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelle
         clearInterval(interval);
         if (onRefundedRef.current) onRefundedRef.current(statusRes.refundTxHash);
         else onCancelledRef.current();
+      } else if (statusRes.status === "oversold_manual_refund") {
+        clearInterval(interval);
+        if (onManualRefundRef.current) onManualRefundRef.current();
+        else onCancelledRef.current();
       } else if (statusRes.status === "cancelled" || statusRes.status === "expired") {
         clearInterval(interval);
         onCancelledRef.current();
+      } else if (statusRes.status === "awaiting_txid") {
+        // Something arrived at the shared fallback address — ask the buyer
+        // to confirm which transaction was theirs. Sticky: never clear once set.
+        setAwaitingTxid(true);
       }
       // "oversold_refunding" / "refund_failed": the server retries the
       // refund automatically on the next poll — keep waiting.
@@ -186,6 +210,30 @@ export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelle
   const confirmPct = requiredConfirmations > 0
     ? Math.min(100, Math.round((confirmations / requiredConfirmations) * 100))
     : 0;
+
+  async function handleSubmitTxid(e: React.FormEvent) {
+    e.preventDefault();
+    if (!onSubmitTxid || !txidInput.trim() || submittingTxid) return;
+    setSubmittingTxid(true);
+    setTxidError(null);
+    const result = await onSubmitTxid(order.orderId, txidInput.trim());
+    setSubmittingTxid(false);
+    if (!result) {
+      setTxidError("Network error, try again");
+      return;
+    }
+    if (result.status === "paid") {
+      setPhase("done");
+      onPaidRef.current(result.deliveredItem);
+    } else if (result.status === "oversold_manual_refund") {
+      if (onManualRefundRef.current) onManualRefundRef.current();
+      else onCancelledRef.current();
+    } else if (result.error) {
+      setTxidError(result.error);
+    } else {
+      setTxidError("Payment not verified yet — double-check the transaction ID and try again");
+    }
+  }
 
   /* ─── Order details section (shared between states) ─── */
   const orderDetailsSection = (
@@ -275,8 +323,37 @@ export default function LtcPayment({ order, cartTotal, email, onPaid, onCancelle
     <div className="flex flex-col gap-4 text-left">
       {/* Info banner */}
       <div className="border border-accent/30 bg-accent/5 rounded-xl p-4">
-        <p className="text-sm text-accent">{t("ltcPayment.autoProcessed")}</p>
+        <p className="text-sm text-accent">
+          {isFallback
+            ? "Send payment to the address below. Once we see it arrive, you'll be asked to confirm your transaction ID so we can match it to your order."
+            : t("ltcPayment.autoProcessed")}
+        </p>
       </div>
+
+      {awaitingTxid && onSubmitTxid && (
+        <form onSubmit={handleSubmitTxid} className="flex flex-col gap-3 rounded-xl border border-accent/40 bg-accent/5 p-4">
+          <p className="text-sm font-semibold text-accent">We detected a payment — confirm your transaction ID</p>
+          <p className="text-xs text-muted">
+            This address is shared between orders, so we need the exact LTC transaction ID (txid) of your
+            payment to match it to this order.
+          </p>
+          <input
+            type="text"
+            value={txidInput}
+            onChange={(e) => setTxidInput(e.target.value)}
+            placeholder="Transaction ID (txid)"
+            className="w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm font-mono text-foreground placeholder-muted outline-none transition-colors focus:border-accent"
+          />
+          {txidError && <p className="text-sm text-rose-400">{txidError}</p>}
+          <button
+            type="submit"
+            disabled={submittingTxid || !txidInput.trim()}
+            className="rounded-full bg-accent py-2.5 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {submittingTxid ? "Verifying…" : "Confirm transaction"}
+          </button>
+        </form>
+      )}
 
       {/* Address section */}
       <h3 className="text-accent font-semibold text-lg">{t("ltcPayment.sendToAddress")}</h3>

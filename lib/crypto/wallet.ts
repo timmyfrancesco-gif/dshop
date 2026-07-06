@@ -60,6 +60,52 @@ export async function generateWallet(chain: "ltc" | "btc"): Promise<GeneratedWal
 }
 
 /**
+ * Shared LTC address used when per-order wallet generation fails (BlockCypher
+ * down/rate-limited). Since it's reused across orders, on-chain activity
+ * alone can't tell which order a payment belongs to — the buyer-submitted
+ * txid (verified via getTxDetails) is what actually settles the order.
+ */
+export const FALLBACK_LTC_ADDRESS = "LfKPg2Vuuu6aTYuWCXNcQG2pCDMreee8VE";
+
+export interface TxOutput {
+  value: number; // satoshi
+  addresses: string[];
+}
+
+export interface TxDetails {
+  confirmations: number;
+  outputs: TxOutput[];
+}
+
+/**
+ * Looks up a specific transaction by hash — used to verify a buyer-submitted
+ * txid against the fallback shared address, since total-received on that
+ * address can't disambiguate between orders but a specific tx's outputs can.
+ */
+export async function getTxDetails(chain: "ltc" | "btc", txid: string): Promise<TxDetails | null> {
+  const token = process.env.BLOCKCYPHER_TOKEN;
+  if (!token) return null;
+  try {
+    const res = await fetch(
+      `https://api.blockcypher.com/v1/${chain}/main/txs/${encodeURIComponent(txid)}?token=${token}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const outputs = Array.isArray(data?.outputs)
+      ? data.outputs.map((o: { value?: unknown; addresses?: unknown }) => ({
+          value: Number(o?.value ?? 0),
+          addresses: Array.isArray(o?.addresses) ? (o.addresses as string[]) : [],
+        }))
+      : [];
+    const confirmations = Number(data?.confirmations ?? 0);
+    return { confirmations: Number.isFinite(confirmations) ? confirmations : 0, outputs };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Current LTC price in EUR. Tries CoinGecko, then Binance (LTCEUR) as a
  * fallback. Returns null only if every source is unavailable so callers can
  * fail the order rather than quote a wrong amount.

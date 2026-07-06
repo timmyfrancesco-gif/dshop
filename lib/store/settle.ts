@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { storeOrders } from "@/lib/db/schema";
 import { and, eq, lt } from "drizzle-orm";
-import { getAddressReceived } from "@/lib/crypto/wallet";
+import { getAddressReceived, getTxDetails, FALLBACK_LTC_ADDRESS } from "@/lib/crypto/wallet";
 import { decryptSecret } from "@/lib/crypto/secrets";
 import { getPayerAddress, sendFromTempWallet } from "@/lib/crypto/ltcSend";
 import { consumeOne } from "./inventory";
@@ -25,6 +25,7 @@ export interface SettleResult {
   confirmations?: number;
   requiredConfirmations?: number;
   refundTxHash?: string | null;
+  error?: string;
 }
 
 /**
@@ -59,6 +60,14 @@ export async function settleStoreOrder(orderId: string): Promise<SettleResult | 
   }
 
   if (!order.ltcAddress || !order.amountLtc) return { status: "pending" };
+
+  // Shared fallback address: on-chain activity alone can't tell which order
+  // a payment belongs to. Just signal once something new shows up so the
+  // client can ask the buyer for the txid — confirmFallbackPayment does the
+  // actual settlement.
+  if (order.ltcAddress === FALLBACK_LTC_ADDRESS) {
+    return checkFallbackPending(order);
+  }
 
   const received = await getAddressReceived("ltc", order.ltcAddress);
   if (!received) return { status: "pending" };
@@ -107,6 +116,112 @@ export async function settleStoreOrder(orderId: string): Promise<SettleResult | 
     .where(eq(storeOrders.id, orderId));
   const [fresh] = await db.select().from(storeOrders).where(eq(storeOrders.id, orderId)).limit(1);
   return retryRefund(fresh);
+}
+
+async function checkFallbackPending(order: typeof storeOrders.$inferSelect): Promise<SettleResult> {
+  if (!order.amountLtc) return { status: "pending" };
+  const received = await getAddressReceived("ltc", FALLBACK_LTC_ADDRESS);
+  if (!received) return { status: "pending" };
+  const current = received.receivedLtc + received.unconfirmedLtc;
+  const baseline = order.fallbackBaselineLtc ?? 0;
+  const required = order.amountLtc * (1 - AMOUNT_TOLERANCE);
+  if (current - baseline >= required) {
+    return { status: "awaiting_txid" };
+  }
+  return { status: "pending" };
+}
+
+/**
+ * Settles a fallback-address order once the buyer submits the txid of their
+ * payment. Unlike the per-order-wallet path, this is the only way such an
+ * order can move past "awaiting_txid" — the shared address's balance alone
+ * can never disambiguate which order a given payment belongs to.
+ */
+export async function confirmFallbackPayment(orderId: string, txHash: string): Promise<SettleResult | null> {
+  const [order] = await db.select().from(storeOrders).where(eq(storeOrders.id, orderId)).limit(1);
+  if (!order) return null;
+  if (order.ltcAddress !== FALLBACK_LTC_ADDRESS) {
+    return { status: order.status, error: "This order doesn't use the fallback address" };
+  }
+  if (order.status !== "pending") {
+    return {
+      status: order.status,
+      deliveredItem: order.status === "paid" ? order.deliveredItem : undefined,
+    };
+  }
+  if (Date.now() - order.createdAt.getTime() > ORDER_TTL_MS) {
+    await db
+      .update(storeOrders)
+      .set({ status: "expired", updatedAt: new Date() })
+      .where(and(eq(storeOrders.id, orderId), eq(storeOrders.status, "pending")));
+    return { status: "expired" };
+  }
+
+  const trimmedHash = txHash.trim();
+  if (!trimmedHash) return { status: "pending", error: "Enter a transaction ID" };
+
+  // A given txid can only ever settle one order — stops the same payment
+  // being submitted for multiple orders sharing the fallback address.
+  const [dupe] = await db
+    .select({ id: storeOrders.id })
+    .from(storeOrders)
+    .where(and(eq(storeOrders.txHash, trimmedHash), eq(storeOrders.status, "paid")))
+    .limit(1);
+  if (dupe) return { status: "pending", error: "This transaction ID was already used for a different order" };
+
+  const tx = await getTxDetails("ltc", trimmedHash);
+  if (!tx) return { status: "pending", error: "Transaction not found — double-check the ID and try again" };
+
+  const paidSatoshi = tx.outputs
+    .filter((o) => o.addresses.includes(FALLBACK_LTC_ADDRESS))
+    .reduce((sum, o) => sum + o.value, 0);
+  const paidLtc = paidSatoshi / 1e8;
+
+  const requiredConfirmations = order.amountEur < ZERO_CONF_THRESHOLD_EUR ? 0 : MIN_CONFIRMATIONS;
+  const requiredLtc = (order.amountLtc ?? 0) * (1 - AMOUNT_TOLERANCE);
+
+  if (paidLtc < requiredLtc) {
+    return { status: "pending", error: "That transaction doesn't pay the required amount to our address" };
+  }
+  if (tx.confirmations < requiredConfirmations) {
+    return {
+      status: "pending",
+      confirmations: tx.confirmations,
+      requiredConfirmations,
+      error: "Waiting for the transaction to confirm",
+    };
+  }
+
+  // Exclusively claim this order before touching stock, same as the
+  // per-order-wallet path.
+  const claimed = await db
+    .update(storeOrders)
+    .set({ status: "settling", confirmations: tx.confirmations, txHash: trimmedHash, updatedAt: new Date() })
+    .where(and(eq(storeOrders.id, orderId), eq(storeOrders.status, "pending")))
+    .returning({ id: storeOrders.id });
+
+  if (claimed.length === 0) {
+    const [fresh] = await db.select().from(storeOrders).where(eq(storeOrders.id, orderId)).limit(1);
+    return { status: fresh?.status ?? "pending", deliveredItem: fresh?.deliveredItem };
+  }
+
+  const deliveredItem = await consumeOne(order.productId, order.id);
+  if (deliveredItem) {
+    await db
+      .update(storeOrders)
+      .set({ status: "paid", deliveredItem, updatedAt: new Date() })
+      .where(eq(storeOrders.id, orderId));
+    return { status: "paid", deliveredItem };
+  }
+
+  // Oversold — the fallback address is the owner's own wallet, not one we
+  // generated, so there's no private key to auto-refund with. Flag it for
+  // manual refund instead.
+  await db
+    .update(storeOrders)
+    .set({ status: "oversold_manual_refund", updatedAt: new Date() })
+    .where(eq(storeOrders.id, orderId));
+  return { status: "oversold_manual_refund" };
 }
 
 async function retryRefund(order: typeof storeOrders.$inferSelect): Promise<SettleResult> {

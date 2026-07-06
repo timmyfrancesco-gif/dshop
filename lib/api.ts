@@ -226,6 +226,19 @@ export async function createStoreOrder(payload: {
   }
 }
 
+export async function confirmFallbackTx(orderId: string, txHash: string): Promise<ProductOrderStatusResponse | null> {
+  try {
+    const res = await fetch(`/api/store/orders/${encodeURIComponent(orderId)}/confirm-tx`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ txHash }),
+    });
+    return (await res.json()) as ProductOrderStatusResponse;
+  } catch {
+    return null;
+  }
+}
+
 export async function getStoreOrder(id: string): Promise<ProductOrderStatusResponse | null> {
   try {
     const res = await fetch(`/api/store/orders/${encodeURIComponent(id)}`, { cache: "no-store" });

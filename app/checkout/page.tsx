@@ -6,7 +6,7 @@ import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
 import LtcPayment from "@/components/shop/LtcPayment";
 import PaypalPayment from "@/components/shop/PaypalPayment";
-import { createProductOrder, createStoreOrder, getStoreOrder, isApiConfigured, submitReview } from "@/lib/api";
+import { confirmFallbackTx, createProductOrder, createStoreOrder, getStoreOrder, isApiConfigured, submitReview } from "@/lib/api";
 import { useCart } from "@/lib/hooks/useCart";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { useProducts } from "@/lib/hooks/useProducts";
@@ -154,9 +154,10 @@ function CheckoutContent() {
   const [index, setIndex] = useState(0);
   const [order, setOrder] = useState<ProductOrderResponse | null>(null);
   const [orderSource, setOrderSource] = useState<"bot" | "platform">("bot");
+  const [isFallbackOrder, setIsFallbackOrder] = useState(false);
   const [finished, setFinished] = useState(false);
   const [cancelled, setCancelled] = useState(false);
-  const [refunded, setRefunded] = useState<{ txHash?: string } | null>(null);
+  const [refunded, setRefunded] = useState<{ txHash?: string; manual?: boolean } | null>(null);
   const [deliveredItems, setDeliveredItems] = useState<(string | null | undefined)[]>([]);
   const [restoredFinished, setRestoredFinished] = useState<FinishedData | null>(null);
 
@@ -195,11 +196,12 @@ function CheckoutContent() {
       if (!productId) return;
       const raw = sessionStorage.getItem(ORDER_STORAGE_KEY);
       if (!raw) return;
-      const stored = JSON.parse(raw) as { order: ProductOrderResponse; orderSource?: "bot" | "platform"; productId: string; email: string; ts: number };
+      const stored = JSON.parse(raw) as { order: ProductOrderResponse; orderSource?: "bot" | "platform"; isFallback?: boolean; productId: string; email: string; ts: number };
       if (stored.productId === productId && Date.now() - stored.ts < 3_600_000) {
         setEmail(stored.email);
         setOrder(stored.order);
         setOrderSource(stored.orderSource ?? "bot");
+        setIsFallbackOrder(!!stored.isFallback);
       } else {
         sessionStorage.removeItem(ORDER_STORAGE_KEY);
       }
@@ -259,10 +261,13 @@ function CheckoutContent() {
           </svg>
         </div>
         <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-bold text-blue-400">Sold out — refunded</h2>
+          <h2 className="text-2xl font-bold text-blue-400">
+            {refunded.manual ? "Sold out — refund pending" : "Sold out — refunded"}
+          </h2>
           <p className="text-sm text-muted">
-            This item sold out just as your payment arrived. Your payment has been sent back
-            automatically to the address it came from.
+            {refunded.manual
+              ? "This item sold out just as your payment arrived. Our team will process your refund manually — contact support with your order ID if you don't hear back soon."
+              : "This item sold out just as your payment arrived. Your payment has been sent back automatically to the address it came from."}
           </p>
           {refunded.txHash && (
             <p className="mt-1 break-all font-mono text-xs text-muted">TX: {refunded.txHash}</p>
@@ -332,12 +337,15 @@ function CheckoutContent() {
     }
     setLoading(false);
 
+    const fallback = isPlatform && !!res.isFallback;
     setOrderSource(isPlatform ? "platform" : "bot");
+    setIsFallbackOrder(fallback);
     setOrder(res);
     try {
       sessionStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify({
         order: res,
         orderSource: isPlatform ? "platform" : "bot",
+        isFallback: fallback,
         productId: currentItem.id,
         email: email.trim(),
         ts: Date.now(),
@@ -382,6 +390,11 @@ function CheckoutContent() {
   function handleRefunded(txHash?: string) {
     sessionStorage.removeItem(ORDER_STORAGE_KEY);
     setRefunded({ txHash });
+  }
+
+  function handleManualRefund() {
+    sessionStorage.removeItem(ORDER_STORAGE_KEY);
+    setRefunded({ manual: true });
   }
 
   return (
@@ -525,8 +538,11 @@ function CheckoutContent() {
               onPaid={handlePaid}
               onCancelled={handleCancelled}
               onRefunded={orderSource === "platform" ? handleRefunded : undefined}
+              onManualRefund={orderSource === "platform" ? handleManualRefund : undefined}
+              onSubmitTxid={orderSource === "platform" ? confirmFallbackTx : undefined}
               pollFn={orderSource === "platform" ? getStoreOrder : undefined}
-              pollIntervalMs={orderSource === "platform" ? 12000 : undefined}
+              pollIntervalMs={orderSource === "platform" ? (isFallbackOrder ? 5000 : 12000) : undefined}
+              isFallback={isFallbackOrder}
             />
           )}
         </div>

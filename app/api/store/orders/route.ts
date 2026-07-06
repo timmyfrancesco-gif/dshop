@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { storeOrders, storeProducts } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { generateWalletVerbose, getLtcPriceEur } from "@/lib/crypto/wallet";
+import { generateWalletVerbose, getLtcPriceEur, getAddressReceived, FALLBACK_LTC_ADDRESS } from "@/lib/crypto/wallet";
 import { encryptSecret } from "@/lib/crypto/secrets";
 import { availableCount } from "@/lib/store/inventory";
 import { serverError } from "@/lib/http";
@@ -77,12 +77,25 @@ export async function POST(req: Request) {
     const amountLtc = Number((product.price / ltcPrice).toFixed(8));
 
     const { wallet, error: walletError } = await generateWalletVerbose("ltc");
-    if (!wallet) {
-      console.error("[store/orders] wallet generation failed:", walletError);
-      return NextResponse.json(
-        { error: walletError ? `Payment wallet error: ${walletError}` : "could not create payment wallet, try again" },
-        { status: 503 }
-      );
+
+    let ltcAddress: string;
+    let payPrivateKey: string | null = null;
+    let fallbackBaselineLtc: number | null = null;
+    const isFallback = !wallet;
+
+    if (wallet) {
+      ltcAddress = wallet.address;
+      payPrivateKey = encryptSecret(wallet.privateKey);
+    } else {
+      // Per-order wallet generation is unavailable (BlockCypher down/rate-
+      // limited) — fall back to a shared address the owner already controls.
+      // Since it's shared, on-chain activity alone can't attribute a payment
+      // to this specific order, so settlement instead waits for the buyer to
+      // submit the txid (see /api/store/orders/[id]/confirm-tx).
+      console.error("[store/orders] wallet generation failed, using fallback address:", walletError);
+      ltcAddress = FALLBACK_LTC_ADDRESS;
+      const baseline = await getAddressReceived("ltc", FALLBACK_LTC_ADDRESS);
+      fallbackBaselineLtc = (baseline?.receivedLtc ?? 0) + (baseline?.unconfirmedLtc ?? 0);
     }
 
     const [order] = await db
@@ -92,14 +105,19 @@ export async function POST(req: Request) {
         buyerEmail: email,
         amountEur: product.price,
         amountLtc,
-        ltcAddress: wallet.address,
-        payPrivateKey: encryptSecret(wallet.privateKey),
+        ltcAddress,
+        payPrivateKey,
+        fallbackBaselineLtc,
         status: "pending",
       })
       .returning();
 
-    // Real-time payment detection (best-effort; the client poll is the fallback).
-    await registerOrderWebhook(wallet.address, order.id);
+    // Real-time payment detection (best-effort; the client poll is the
+    // fallback). Skipped for the shared address — a webhook there can't tell
+    // which order it belongs to either.
+    if (!isFallback) {
+      await registerOrderWebhook(ltcAddress, order.id);
+    }
 
     return NextResponse.json({
       orderId: order.id,
@@ -107,6 +125,7 @@ export async function POST(req: Request) {
       amountLtc: order.amountLtc,
       amountEur: order.amountEur,
       status: order.status,
+      isFallback,
     });
   } catch (e) {
     return serverError("store/orders POST", e);

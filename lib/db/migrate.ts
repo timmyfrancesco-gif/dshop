@@ -178,6 +178,7 @@ export async function runMigrations() {
     `);
     try { await client.query(`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS refund_address TEXT`); } catch {}
     try { await client.query(`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS refund_tx_hash TEXT`); } catch {}
+    try { await client.query(`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS fallback_baseline_ltc REAL`); } catch {}
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS site_config (

@@ -154,6 +154,10 @@ export interface ProductOrderResponse {
   method?: "ltc" | "paypal";
   paypalEmail?: string;
   paypalNote?: string;
+  // Platform store orders only: true if per-order wallet generation failed
+  // and this order uses the shared fallback address instead — the buyer
+  // will need to submit their txid to confirm payment.
+  isFallback?: boolean;
 }
 
 export interface ProductOrderStatusResponse {
@@ -166,7 +170,10 @@ export interface ProductOrderStatusResponse {
     | "expired"
     | "oversold_refunding"
     | "refunded"
-    | "refund_failed";
+    | "refund_failed"
+    // Fallback-address orders only:
+    | "awaiting_txid"
+    | "oversold_manual_refund";
   orderId?: string;
   productId?: string;
   amountEur?: number;
@@ -175,6 +182,7 @@ export interface ProductOrderStatusResponse {
   confirmations?: number;
   requiredConfirmations?: number;
   refundTxHash?: string;
+  error?: string;
 }
 
 export interface WalletInfo {
