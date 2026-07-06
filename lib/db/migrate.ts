@@ -114,107 +114,14 @@ export async function runMigrations() {
         ts TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS casino_balances (
-        user_id TEXT PRIMARY KEY,
-        username TEXT,
-        balance_cents INTEGER NOT NULL DEFAULT 0,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS casino_bets (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id TEXT NOT NULL,
-        game TEXT NOT NULL,
-        bet_cents INTEGER NOT NULL,
-        payout_cents INTEGER NOT NULL DEFAULT 0,
-        outcome JSONB,
-        server_seed TEXT,
-        server_seed_hash TEXT,
-        client_seed TEXT,
-        nonce INTEGER,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )
-    `);
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS casino_bets_user_idx ON casino_bets (user_id, created_at DESC)
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS casino_blackjack (
-        user_id TEXT PRIMARY KEY,
-        state JSONB NOT NULL,
-        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS casino_withdrawals (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id TEXT NOT NULL,
-        chain TEXT NOT NULL,
-        to_address TEXT NOT NULL,
-        amount_cents INTEGER NOT NULL,
-        amount_crypto TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending',
-        tx_hash TEXT,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        processed_at TIMESTAMP
-      )
-    `);
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS casino_withdrawals_user_idx ON casino_withdrawals (user_id, created_at DESC)
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS casino_wallets (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id TEXT NOT NULL,
-        chain TEXT NOT NULL,
-        address TEXT NOT NULL,
-        private_key TEXT,
-        credited_atomic TEXT NOT NULL DEFAULT '0',
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )
-    `);
-    await client.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS casino_wallets_user_chain_idx ON casino_wallets (user_id, chain)
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS football_bets (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id TEXT NOT NULL,
-        fixture_id INTEGER NOT NULL,
-        league TEXT,
-        home TEXT NOT NULL,
-        away TEXT NOT NULL,
-        kickoff TIMESTAMP,
-        selection TEXT NOT NULL,
-        odds REAL NOT NULL,
-        stake_cents INTEGER NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending',
-        payout_cents INTEGER NOT NULL DEFAULT 0,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        settled_at TIMESTAMP
-      )
-    `);
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS football_bets_user_idx ON football_bets (user_id, created_at DESC)
-    `);
-    await client.query(`
-      CREATE INDEX IF NOT EXISTS football_bets_status_idx ON football_bets (status)
-    `);
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS football_cache (
-        key TEXT PRIMARY KEY,
-        data JSONB NOT NULL,
-        fetched_at TIMESTAMP NOT NULL DEFAULT NOW()
-      )
-    `);
+    // Casino/football feature was removed — drop tables from earlier deploys.
+    await client.query(`DROP TABLE IF EXISTS casino_bets`);
+    await client.query(`DROP TABLE IF EXISTS casino_blackjack`);
+    await client.query(`DROP TABLE IF EXISTS casino_withdrawals`);
+    await client.query(`DROP TABLE IF EXISTS casino_wallets`);
+    await client.query(`DROP TABLE IF EXISTS casino_balances`);
+    await client.query(`DROP TABLE IF EXISTS football_bets`);
+    await client.query(`DROP TABLE IF EXISTS football_cache`);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS store_products (

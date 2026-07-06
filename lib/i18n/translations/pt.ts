@@ -1,7 +1,6 @@
 const pt: Record<string, string> = {
   "nav.home": "Início",
   "nav.store": "Store",
-  "nav.casino": "Casino",
   "nav.products": "Produtos",
   "nav.features": "Funcionalidades",
   "nav.faq": "FAQ",

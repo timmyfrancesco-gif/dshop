@@ -2,7 +2,6 @@ const sv: Record<string, string> = {
   // Navigation
   "nav.home": "Hem",
   "nav.store": "Store",
-  "nav.casino": "Casino",
   "nav.products": "Produkter",
   "nav.features": "Funktioner",
   "nav.faq": "FAQ",

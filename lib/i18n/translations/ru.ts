@@ -1,7 +1,6 @@
 const ru: Record<string, string> = {
   "nav.home": "Главная",
   "nav.store": "Store",
-  "nav.casino": "Casino",
   "nav.products": "Товары",
   "nav.features": "Возможности",
   "nav.faq": "FAQ",

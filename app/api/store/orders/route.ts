@@ -10,7 +10,7 @@ import { serverError } from "@/lib/http";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function webhookSecret(): string {
-  return process.env.CASINO_WEBHOOK_SECRET || process.env.BOT_API_SECRET || process.env.PLATFORM_SECRET || "";
+  return process.env.STORE_WEBHOOK_SECRET || process.env.BOT_API_SECRET || process.env.PLATFORM_SECRET || "";
 }
 
 function baseUrl(): string {

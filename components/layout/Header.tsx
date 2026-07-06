@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Logo from "@/components/ui/Logo";
 import LocaleSelector from "@/components/ui/LocaleSelector";
-import BalanceChip from "@/components/casino/BalanceChip";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { useSiteConfig } from "@/lib/contexts/SiteConfigContext";
@@ -16,7 +15,6 @@ const NAV_KEYS = [
   { href: "/#services", key: "nav.features", tenantVisible: false },
   { href: "/#faq", key: "nav.faq", tenantVisible: true },
   { href: "/#vouches", key: "nav.reviews", tenantVisible: false },
-  { href: "/casino", key: "nav.casino", tenantVisible: false },
   { href: "/track", key: "nav.trackOrder", tenantVisible: false },
   { href: "/terms", key: "nav.terms", tenantVisible: false },
 ];
@@ -169,7 +167,6 @@ export default function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <BalanceChip />
           <LocaleSelector />
           <UserMenu />
           <a
@@ -235,7 +232,6 @@ export default function Header() {
             })}
           </nav>
           <div className="mt-4 flex flex-col gap-2">
-            {user && <BalanceChip compact />}
             <div className="flex justify-center">
               <LocaleSelector />
             </div>

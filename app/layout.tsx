@@ -4,7 +4,6 @@ import { AuthProvider } from "@/lib/contexts/AuthContext";
 import { LocaleProvider } from "@/lib/contexts/LocaleContext";
 import { ThemeProvider } from "@/lib/contexts/ThemeContext";
 import { SiteConfigProvider, type SiteConfig } from "@/lib/contexts/SiteConfigContext";
-import { CasinoBalanceProvider } from "@/lib/contexts/CasinoBalanceContext";
 import { CartProvider } from "@/lib/hooks/useCart";
 import { SITE } from "@/lib/config";
 import "./globals.css";
@@ -80,9 +79,7 @@ export default async function RootLayout({
           <AuthProvider>
             <LocaleProvider>
               <SiteConfigProvider config={storefront}>
-                <CasinoBalanceProvider>
-                  <CartProvider>{children}</CartProvider>
-                </CasinoBalanceProvider>
+                <CartProvider>{children}</CartProvider>
               </SiteConfigProvider>
             </LocaleProvider>
           </AuthProvider>

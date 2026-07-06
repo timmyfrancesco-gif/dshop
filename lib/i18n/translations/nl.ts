@@ -2,7 +2,6 @@ const nl: Record<string, string> = {
   // Navigation
   "nav.home": "Home",
   "nav.store": "Store",
-  "nav.casino": "Casino",
   "nav.products": "Producten",
   "nav.features": "Functies",
   "nav.faq": "FAQ",

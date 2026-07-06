@@ -2,7 +2,6 @@ const pl: Record<string, string> = {
   // Navigation
   "nav.home": "Strona główna",
   "nav.store": "Store",
-  "nav.casino": "Casino",
   "nav.products": "Produkty",
   "nav.features": "Funkcje",
   "nav.faq": "FAQ",
