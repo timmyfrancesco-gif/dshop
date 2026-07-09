@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
 import Sparkline from "@/components/ui/Sparkline";
+import DcnRecharge from "@/components/shop/DcnRecharge";
 import { getDcnBalance } from "@/lib/api";
 import { formatEur, formatRelativeTime } from "@/lib/format";
 import { useAuth } from "@/lib/hooks/useAuth";
@@ -140,33 +141,17 @@ function DcoinContent() {
       </div>
 
       {/* Buy / recharge */}
-      <div className="rounded-2xl border border-accent/30 bg-accent/5 p-6">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-accent">Buy D-Coin</p>
-        <p className="mt-2 text-sm text-muted">
-          Recharge your D-Coin balance by paying in LTC — minimum €5, credited automatically. Run this
-          command in our Discord server:
-        </p>
-        <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2">
-          <code className="flex-1 font-mono text-sm text-foreground">,dcnrecharge [amount]</code>
-        </div>
-        <a
-          href={SITE.discordInvite}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 block rounded-full bg-accent py-2.5 text-center text-sm font-semibold text-background transition-opacity hover:opacity-90"
-        >
-          Open Discord to recharge
-        </a>
-      </div>
+      <DcnRecharge discordId={user?.discordId} />
 
       {/* How it works */}
       <div className="rounded-2xl border border-border bg-background-elevated/40 p-6">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-muted">How it works</p>
         <ul className="mt-3 flex flex-col gap-2 text-sm text-muted">
           <li>
-            <span className="text-foreground">Recharge:</span> run{" "}
+            <span className="text-foreground">Recharge:</span> pay in LTC right here — minimum €5,
+            credited to your D-Coin balance automatically. Also works via{" "}
             <code className="rounded bg-background/60 px-1.5 py-0.5 text-xs">,dcnrecharge [amount]</code> on
-            Discord — minimum €5, paid in LTC, credited to your D-Coin balance automatically.
+            Discord.
           </li>
           <li>
             <span className="text-foreground">Spend:</span> pay with D-Coin at checkout for 10% off any

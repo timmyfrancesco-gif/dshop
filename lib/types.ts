@@ -40,6 +40,19 @@ export interface DcnBalanceResponse {
   price: number;
 }
 
+export interface DcnRechargeResponse {
+  rechargeId: string;
+  address: string;
+  amountLtc: number;
+  amountEur: number;
+}
+
+export interface DcnRechargeStatusResponse {
+  status: "pending" | "crediting" | "paid" | "expired";
+  creditedDcn?: number;
+  balance?: number;
+}
+
 export type FeedItemType = "order" | "escrow" | "mm" | "slot" | "exchange";
 
 export interface FeedItem {

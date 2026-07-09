@@ -5,6 +5,8 @@ import type {
   DcnBalanceResponse,
   DcnHistoryResponse,
   DcnPriceResponse,
+  DcnRechargeResponse,
+  DcnRechargeStatusResponse,
   FeedResponse,
   HealthResponse,
   LoginRequest,
@@ -164,6 +166,18 @@ export function getDcnHistory(limit = 200): Promise<DcnHistoryResponse | null> {
 /** 404s (no wallet) resolve to null just like any other apiFetch miss. */
 export function getDcnBalance(discordUserId: string): Promise<DcnBalanceResponse | null> {
   return apiFetch<DcnBalanceResponse>(`/api/dcn/balance/${encodeURIComponent(discordUserId)}`);
+}
+
+/** Starts a D-Coin recharge: generates a one-off LTC payment address for the given amount (min €5). */
+export function createDcnRecharge(discordUserId: string, amountEur: number): Promise<DcnRechargeResponse | null> {
+  return apiFetch<DcnRechargeResponse>("/api/dcn/recharge", {
+    method: "POST",
+    body: JSON.stringify({ discordUserId, amountEur }),
+  });
+}
+
+export function getDcnRechargeStatus(rechargeId: string): Promise<DcnRechargeStatusResponse | null> {
+  return apiFetch<DcnRechargeStatusResponse>(`/api/dcn/recharge/${encodeURIComponent(rechargeId)}`);
 }
 
 /**
