@@ -19,6 +19,28 @@ export interface LtcResponse {
   changePct: number;
 }
 
+export interface DcnPriceResponse {
+  price: number | null;
+  ltcPrice: number | null;
+  updatedAt: number | null;
+}
+
+export interface DcnHistoryPoint {
+  t: number;
+  price: number;
+}
+
+export interface DcnHistoryResponse {
+  points: DcnHistoryPoint[];
+}
+
+export interface DcnBalanceResponse {
+  address: string;
+  balance: number;
+  balanceEur: number;
+  price: number;
+}
+
 export type FeedItemType = "order" | "escrow" | "mm" | "slot" | "exchange";
 
 export interface FeedItem {

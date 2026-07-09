@@ -5,6 +5,7 @@ import ActivityFeed from "@/components/ui/ActivityFeed";
 import ConnectionBadge from "@/components/ui/ConnectionBadge";
 import SectionHeading from "@/components/ui/SectionHeading";
 import StatCard from "@/components/ui/StatCard";
+import DcnWidget from "@/components/sections/DcnWidget";
 import { formatNumber } from "@/lib/format";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { useHomepageData } from "@/lib/contexts/HomepageDataContext";
@@ -58,6 +59,10 @@ export default function LiveDashboard() {
                 : undefined
             }
           />
+        </div>
+
+        <div className="mt-4">
+          <DcnWidget />
         </div>
 
         <motion.div

@@ -6,7 +6,9 @@ import Link from "next/link";
 import PageShell from "@/components/layout/PageShell";
 import LtcPayment from "@/components/shop/LtcPayment";
 import PaypalPayment from "@/components/shop/PaypalPayment";
+import DcnPayment from "@/components/shop/DcnPayment";
 import { confirmFallbackTx, createProductOrder, createStoreOrder, getStoreOrder, isApiConfigured, submitReview } from "@/lib/api";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { useCart } from "@/lib/hooks/useCart";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { useProducts } from "@/lib/hooks/useProducts";
@@ -64,6 +66,12 @@ const PAYMENT_METHODS_ICONS = {
       />
     </svg>
   ),
+  dcn: (
+    <svg viewBox="0 0 32 32" className="h-full w-full" aria-hidden>
+      <circle cx="16" cy="16" r="16" fill="currentColor" />
+      <text x="16" y="21" textAnchor="middle" fontSize="14" fontWeight="700" fill="white">D</text>
+    </svg>
+  ),
 };
 
 export default function CheckoutPage() {
@@ -94,6 +102,7 @@ function CheckoutContent() {
 
   const { items, loaded, refetch: refetchProducts } = useProducts();
   const cart = useCart();
+  const { user } = useAuth();
 
   // PayPal availability comes from the admin Configure page (site_config).
   const [paypalEnabled, setPaypalEnabled] = useState(false);
@@ -111,13 +120,20 @@ function CheckoutContent() {
     { id: "ltc", label: t("checkout.litecoin"), sub: t("checkout.viaLtcNetwork"), available: true, icon: PAYMENT_METHODS_ICONS.ltc },
     { id: "btc", label: t("checkout.bitcoin"), sub: t("checkout.comingSoon"), available: false, icon: PAYMENT_METHODS_ICONS.btc },
     {
+      id: "dcn",
+      label: "D-Coin (10% off)",
+      sub: user?.discordId ? "Pay via Discord, 10% discount" : "Sign in with Discord to use",
+      available: true,
+      icon: PAYMENT_METHODS_ICONS.dcn,
+    },
+    {
       id: "paypal",
       label: t("checkout.cardPaypal"),
       sub: paypalEnabled ? "PayPal Friends & Family" : t("checkout.comingSoon"),
       available: paypalEnabled,
       icon: PAYMENT_METHODS_ICONS.card,
     },
-  ], [t, paypalEnabled]);
+  ], [t, paypalEnabled, user?.discordId]);
 
   const buyNowProduct = productId ? items.find((item) => String(item.id) === productId) : null;
   const buyNowVariant = buyNowProduct && variantId
@@ -155,6 +171,7 @@ function CheckoutContent() {
   const [order, setOrder] = useState<ProductOrderResponse | null>(null);
   const [orderSource, setOrderSource] = useState<"bot" | "platform">("bot");
   const [isFallbackOrder, setIsFallbackOrder] = useState(false);
+  const [dcnMode, setDcnMode] = useState(false);
   const [finished, setFinished] = useState(false);
   const [cancelled, setCancelled] = useState(false);
   const [refunded, setRefunded] = useState<{ txHash?: string; manual?: boolean } | null>(null);
@@ -306,6 +323,14 @@ function CheckoutContent() {
 
     if (!currentItem || !currentEntry) return;
 
+    // D-Coin has no order-creation/charge API yet — the bot only supports
+    // debiting a purchase manually via staff in a ticket. Skip straight to
+    // the informational panel instead of creating a trackable order.
+    if (paymentMethod === "dcn") {
+      setDcnMode(true);
+      return;
+    }
+
     const isPlatform = currentItem.source === "platform";
     if (!isPlatform && !isApiConfigured()) {
       setError(t("checkout.unavailable"));
@@ -452,6 +477,14 @@ function CheckoutContent() {
           email={displayEmail}
           totalEur={displayTotal}
         />
+      ) : dcnMode ? (
+        <div className="rounded-2xl border border-border bg-background-elevated/40 p-4">
+          <DcnPayment
+            totalEur={displayTotal}
+            discordId={user?.discordId}
+            onBack={() => setDcnMode(false)}
+          />
+        </div>
       ) : !order && currentItem ? (
         <form onSubmit={startPayment} className="flex flex-col gap-5">
           {/* Contact section */}

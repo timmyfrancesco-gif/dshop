@@ -2,6 +2,9 @@ import type {
   ApiProduct,
   AuthResponse,
   AuthUser,
+  DcnBalanceResponse,
+  DcnHistoryResponse,
+  DcnPriceResponse,
   FeedResponse,
   HealthResponse,
   LoginRequest,
@@ -136,6 +139,23 @@ async function fetchInternalStats(): Promise<{ activeTickets?: number } | null> 
 
 export function getLtcPrice(): Promise<LtcResponse | null> {
   return apiFetch<LtcResponse>("/api/ltc");
+}
+
+/**
+ * D-Coin (DCN) — bot-managed internal currency. Price follows LTC/EUR with a
+ * platform margin (70% up / 130% down) and is recalculated bot-side every 5s.
+ */
+export function getDcnPrice(): Promise<DcnPriceResponse | null> {
+  return apiFetch<DcnPriceResponse>("/api/dcn/price");
+}
+
+export function getDcnHistory(limit = 200): Promise<DcnHistoryResponse | null> {
+  return apiFetch<DcnHistoryResponse>(`/api/dcn/history?limit=${limit}`);
+}
+
+/** 404s (no wallet) resolve to null just like any other apiFetch miss. */
+export function getDcnBalance(discordUserId: string): Promise<DcnBalanceResponse | null> {
+  return apiFetch<DcnBalanceResponse>(`/api/dcn/balance/${encodeURIComponent(discordUserId)}`);
 }
 
 /**
