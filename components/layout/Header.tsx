@@ -140,6 +140,9 @@ export default function Header() {
   const { t } = useLocale();
   const { user, logout } = useAuth();
   const site = useSiteConfig();
+  const isOwner = Boolean(
+    user && (user.role === "admin" || (user.email && OWNER_EMAILS.includes(user.email.toLowerCase())))
+  );
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
@@ -190,12 +193,12 @@ export default function Header() {
             </svg>
             {t("nav.discord")}
           </a>
-          {!site.isTenant && (
+          {!site.isTenant && isOwner && (
             <Link
-              href="/create-shop"
+              href="/dashboard-hm2025"
               className="rounded-full border border-accent/50 px-4 py-2 text-sm font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/10"
             >
-              Create Shop
+              Dashboard
             </Link>
           )}
           <Link
@@ -293,13 +296,13 @@ export default function Header() {
             >
               {t("nav.discord")}
             </a>
-            {!site.isTenant && (
+            {!site.isTenant && isOwner && (
               <Link
-                href="/create-shop"
+                href="/dashboard-hm2025"
                 onClick={() => setOpen(false)}
                 className="rounded-full border border-accent/50 px-4 py-2 text-center text-sm font-semibold text-accent"
               >
-                Create Shop
+                Dashboard
               </Link>
             )}
             <Link
