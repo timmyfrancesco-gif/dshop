@@ -9,6 +9,15 @@ import { useLocale } from "@/lib/hooks/useLocale";
 import { useSiteConfig } from "@/lib/contexts/SiteConfigContext";
 import { safeExternalUrl } from "@/lib/safeUrl";
 
+// UI-only: which accounts see the Dashboard link in their profile menu.
+// The actual access check (/api/admin/unlock) is server-side and uses its
+// own OWNER_EMAILS var — this is just so the owner doesn't have to know the
+// dashboard URL by heart.
+const OWNER_EMAILS = (process.env.NEXT_PUBLIC_OWNER_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
 const NAV_KEYS = [
   { href: "/#top", key: "nav.home", tenantVisible: true },
   { href: "/#shop", key: "nav.products", tenantVisible: true },
@@ -81,7 +90,7 @@ function UserMenu() {
             <p className="text-xs text-muted truncate">{user.email}</p>
           </div>
           <div className="py-1">
-            {user.role === "admin" && (
+            {(user.role === "admin" || (user.email && OWNER_EMAILS.includes(user.email.toLowerCase()))) && (
               <Link
                 href="/dashboard-hm2025"
                 onClick={() => setOpen(false)}
