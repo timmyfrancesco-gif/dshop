@@ -3168,6 +3168,7 @@ function AbandonedCheckoutsView() {
 type StorefrontConfig = {
   storeName: string;
   logoUrl: string;
+  faviconUrl: string;
   description: string;
   discordInvite: string;
   shopUrl: string;
@@ -3180,6 +3181,7 @@ type StorefrontConfig = {
 const DEFAULT_STOREFRONT_CONFIG: StorefrontConfig = {
   storeName: "Dshop",
   logoUrl: "",
+  faviconUrl: "",
   description: "",
   discordInvite: "",
   shopUrl: "",
@@ -3198,6 +3200,7 @@ function StorefrontConfigureView({
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/site-config")
@@ -3222,6 +3225,7 @@ function StorefrontConfigureView({
         body: JSON.stringify({
           storeName: config.storeName,
           logoUrl: config.logoUrl,
+          faviconUrl: config.faviconUrl,
           description: config.description,
           discordInvite: config.discordInvite,
           shopUrl: config.shopUrl,
@@ -3258,6 +3262,23 @@ function StorefrontConfigureView({
       showToast("Upload failed", false);
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleFaviconUpload(file: File) {
+    setUploadingFavicon(true);
+    try {
+      const result = await uploadImage(file);
+      if ("url" in result) {
+        update("faviconUrl", result.url);
+        showToast("Favicon uploaded", true);
+      } else {
+        showToast(result.error, false);
+      }
+    } catch {
+      showToast("Upload failed", false);
+    } finally {
+      setUploadingFavicon(false);
     }
   }
 
@@ -3330,6 +3351,56 @@ function StorefrontConfigureView({
                   <button
                     type="button"
                     onClick={() => update("logoUrl", "")}
+                    className="ml-auto rounded-lg p-1 text-zinc-500 hover:bg-white/5 hover:text-rose-400 transition-colors"
+                  >
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                      <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-zinc-400">Favicon</label>
+              <p className="text-[11px] text-zinc-600">The small icon shown in the browser tab. Square image recommended.</p>
+              <div className="flex items-center gap-3">
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#90C6FF]/30 bg-[#90C6FF]/10 px-4 py-2.5 text-sm font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/20">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  {uploadingFavicon ? "Uploading…" : "Upload from PC"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFaviconUpload(file);
+                    }}
+                  />
+                </label>
+                <span className="text-xs text-zinc-600">or paste URL below</span>
+              </div>
+              <input
+                type="text"
+                value={config.faviconUrl.startsWith("data:") ? "" : config.faviconUrl}
+                onChange={(e) => update("faviconUrl", e.target.value)}
+                placeholder="https://... (or upload above)"
+                className={`${inputClass} placeholder:text-zinc-600`}
+                style={{ backgroundColor: "#161619" }}
+              />
+              {config.faviconUrl.trim() && (
+                <div className="mt-1 flex items-start gap-3 rounded-lg border border-white/5 p-3" style={{ backgroundColor: "#161619" }}>
+                  <div>
+                    <p className="mb-2 text-[11px] text-zinc-500">Favicon Preview</p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={config.faviconUrl} alt="favicon" className="h-10 w-10 rounded object-contain" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => update("faviconUrl", "")}
                     className="ml-auto rounded-lg p-1 text-zinc-500 hover:bg-white/5 hover:text-rose-400 transition-colors"
                   >
                     <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">

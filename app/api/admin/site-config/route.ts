@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 export interface StorefrontConfig {
   storeName?: string;
   logoUrl?: string;
+  faviconUrl?: string;
   description?: string;
   discordInvite?: string;
   shopUrl?: string;
@@ -40,6 +41,11 @@ function sanitize(body: Record<string, unknown>): StorefrontConfig | { error: st
     const v = s(body.logoUrl) ?? "";
     if (v !== "" && !HTTPS_URL(v)) return { error: "logo must be an https URL (use Upload)" };
     out.logoUrl = v;
+  }
+  if ("faviconUrl" in body) {
+    const v = s(body.faviconUrl) ?? "";
+    if (v !== "" && !HTTPS_URL(v)) return { error: "favicon must be an https URL (use Upload)" };
+    out.faviconUrl = v;
   }
   if ("description" in body) {
     const v = s(body.description) ?? "";

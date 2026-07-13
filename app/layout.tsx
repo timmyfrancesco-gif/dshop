@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/contexts/AuthContext";
 import { LocaleProvider } from "@/lib/contexts/LocaleContext";
@@ -11,8 +12,10 @@ import "./globals.css";
 /**
  * Storefront settings saved from the admin dashboard (site_config table).
  * Loaded at render time so Configure changes are actually live on the site.
+ * Wrapped in React's cache() so generateMetadata() and RootLayout share one
+ * DB query per request instead of two.
  */
-async function loadStorefrontConfig(): Promise<SiteConfig> {
+const loadStorefrontConfig = cache(async (): Promise<SiteConfig> => {
   const base: SiteConfig = { ...SITE, isTenant: false };
   try {
     const { db } = await import("@/lib/db");
@@ -31,13 +34,14 @@ async function loadStorefrontConfig(): Promise<SiteConfig> {
           : base.discordInvite,
       shopUrl: typeof c.shopUrl === "string" && c.shopUrl ? c.shopUrl : base.shopUrl,
       tenantLogo: typeof c.logoUrl === "string" && c.logoUrl ? c.logoUrl : null,
+      faviconUrl: typeof c.faviconUrl === "string" && c.faviconUrl ? c.faviconUrl : null,
       bannerText: typeof c.bannerText === "string" ? c.bannerText : "",
       bannerEnabled: c.bannerEnabled === true,
     };
   } catch {
     return base;
   }
-}
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -49,17 +53,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Dshop — Crypto Escrow, Middleman & Exchange on Discord",
-  description:
-    "Dshop is a Discord-based crypto trading hub offering escrow, middleman services, exchange, advertising slots, a digital shop and a casino.",
-  openGraph: {
-    title: "Dshop",
+export async function generateMetadata(): Promise<Metadata> {
+  const storefront = await loadStorefrontConfig();
+  return {
+    title: "Dshop — Crypto Escrow, Middleman & Exchange on Discord",
     description:
-      "Crypto escrow, middleman, exchange, casino and more — all on Discord.",
-    type: "website",
-  },
-};
+      "Dshop is a Discord-based crypto trading hub offering escrow, middleman services, exchange, advertising slots, a digital shop and a casino.",
+    openGraph: {
+      title: "Dshop",
+      description:
+        "Crypto escrow, middleman, exchange, casino and more — all on Discord.",
+      type: "website",
+    },
+    // Falls back to the file-based app/icon.svg + app/favicon.ico when no
+    // custom favicon is set from the dashboard.
+    icons: storefront.faviconUrl ? { icon: storefront.faviconUrl } : undefined,
+  };
+}
 
 export default async function RootLayout({
   children,

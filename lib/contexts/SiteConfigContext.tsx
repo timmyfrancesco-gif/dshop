@@ -11,6 +11,7 @@ export interface SiteConfig {
   isTenant: boolean;
   tenantSlug?: string;
   tenantLogo?: string | null;
+  faviconUrl?: string | null;
   bannerText?: string;
   bannerEnabled?: boolean;
 }
