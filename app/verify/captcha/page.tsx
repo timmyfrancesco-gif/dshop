@@ -7,7 +7,7 @@ function CaptchaInner() {
   const session = searchParams.get('s')
   const [status, setStatus] = useState<'pending' | 'loading' | 'done' | 'error'>('pending')
   const [message, setMessage] = useState('')
-  const [challenge, setChallenge] = useState<{ a: number; b: number; challengeToken: string } | null>(null)
+  const [challenge, setChallenge] = useState<{ a: number; b: number; op: string; challengeToken: string } | null>(null)
   const [answer, setAnswer] = useState('')
 
   useEffect(() => {
@@ -61,7 +61,7 @@ function CaptchaInner() {
             {challenge ? (
               <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
                 <label style={{ color: '#fff', fontSize: 18, fontWeight: 600 }}>
-                  {challenge.a} + {challenge.b} = ?
+                  {challenge.a} {challenge.op} {challenge.b} = ?
                 </label>
                 <input
                   type="number"
