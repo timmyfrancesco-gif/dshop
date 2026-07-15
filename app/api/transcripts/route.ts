@@ -27,7 +27,15 @@ export async function POST(req: NextRequest) {
   if (!validateToken(req)) return unauthorized();
 
   let body: {
-    html: string;
+    html?: string;
+    // Alternative to `html`: a URL the caller already uploaded the HTML to
+    // (e.g. its own Vercel Blob put()). Vercel Serverless Functions cap
+    // inbound request bodies at ~4.5MB regardless of anything configured
+    // here — transcripts with several inlined base64 images can exceed
+    // that, so large ones should be pre-uploaded and passed as htmlUrl
+    // instead of inlined in the request body. Fetched server-to-server
+    // below, which has no such limit.
+    htmlUrl?: string;
     ticketId: string;
     ticketName: string;
     category?: string;
@@ -41,11 +49,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (!body.html || !body.ticketId || !body.ticketName || !body.ownerId || !body.ownerName) {
+  if ((!body.html && !body.htmlUrl) || !body.ticketId || !body.ticketName || !body.ownerId || !body.ownerName) {
     return NextResponse.json(
-      { error: "Missing required fields: html, ticketId, ticketName, ownerId, ownerName" },
+      { error: "Missing required fields: html (or htmlUrl), ticketId, ticketName, ownerId, ownerName" },
       { status: 400 }
     );
+  }
+
+  let html = body.html ?? "";
+  if (!html && body.htmlUrl) {
+    try {
+      const res = await fetch(body.htmlUrl);
+      if (!res.ok) throw new Error(String(res.status));
+      html = await res.text();
+    } catch {
+      return NextResponse.json({ error: "Could not fetch htmlUrl" }, { status: 400 });
+    }
   }
 
   const id = generateId();
@@ -63,7 +82,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await Promise.all([
-      put(`transcripts/${id}.html`, body.html, {
+      put(`transcripts/${id}.html`, html, {
         access: "public",
         addRandomSuffix: false,
         contentType: "text/html; charset=utf-8",
