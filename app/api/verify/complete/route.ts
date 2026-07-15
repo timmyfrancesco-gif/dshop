@@ -29,29 +29,46 @@ function verifySession(signed: string, secret: string) {
   } catch { return null }
 }
 
+function verifyChallenge(signed: string, secret: string): number | false {
+  try {
+    const lastDot = signed.lastIndexOf('.')
+    if (lastDot === -1) return false
+    const payload = signed.slice(0, lastDot)
+    const sig = signed.slice(lastDot + 1)
+    const expected = createHmac('sha256', secret).update(payload).digest('hex')
+    const a = Buffer.from(sig)
+    const b = Buffer.from(expected)
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return false
+    const { answer, exp } = JSON.parse(Buffer.from(payload, 'base64url').toString()) as {
+      answer: number
+      exp: number
+    }
+    if (Date.now() > exp) return false
+    return answer
+  } catch {
+    return false
+  }
+}
+
 export async function POST(req: NextRequest) {
-  let token: string, sessionSigned: string
+  let answer: number, challengeToken: string, sessionSigned: string
   try {
     const body = await req.json()
-    token = body?.token
+    answer = Number(body?.answer)
+    challengeToken = body?.challengeToken
     sessionSigned = body?.session
-    if (!token || !sessionSigned) return NextResponse.json({ error: 'Parametri mancanti.' }, { status: 400 })
+    if (!challengeToken || !sessionSigned || Number.isNaN(answer)) {
+      return NextResponse.json({ error: 'Parametri mancanti.' }, { status: 400 })
+    }
   } catch {
     return NextResponse.json({ error: 'Richiesta non valida.' }, { status: 400 })
   }
 
-  // 1. Validate Turnstile
-  const cfRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      secret: process.env.TURNSTILE_SECRET_KEY,
-      response: token,
-      remoteip: req.headers.get('cf-connecting-ip') ?? req.headers.get('x-forwarded-for'),
-    }),
-  })
-  const cfData = await cfRes.json()
-  if (!cfData.success) return NextResponse.json({ error: 'Invalid captcha. Try again.' }, { status: 400 })
+  // 1. Validate the challenge answer
+  const expectedAnswer = verifyChallenge(challengeToken, process.env.VERIFY_SESSION_SECRET!)
+  if (expectedAnswer === false || answer !== expectedAnswer) {
+    return NextResponse.json({ error: 'Incorrect answer. Try again.' }, { status: 400 })
+  }
 
   // 2. Verify session
   const session = verifySession(sessionSigned, process.env.VERIFY_SESSION_SECRET!)
