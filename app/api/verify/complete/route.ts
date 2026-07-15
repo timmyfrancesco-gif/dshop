@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createHash, createHmac, timingSafeEqual } from 'crypto'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { discordVerifications } from '@/lib/db/schema'
 import { encryptSecret } from '@/lib/crypto/secrets'
@@ -78,6 +79,22 @@ export async function POST(req: NextRequest) {
   // 2. Verify session
   const session = verifySession(sessionSigned, process.env.VERIFY_SESSION_SECRET!)
   if (!session) return NextResponse.json({ error: 'Session invalid or expired.' }, { status: 401 })
+
+  // 2.5. Already verified for this server? Don't re-trigger the bot's
+  // role-grant/DM — that's only for first-time verifications. Fail open
+  // (treat as new) if the DB check itself errors out.
+  try {
+    const existing = await db
+      .select({ id: discordVerifications.id })
+      .from(discordVerifications)
+      .where(and(eq(discordVerifications.discordUserId, session.userId), eq(discordVerifications.guildId, session.guildId)))
+      .limit(1)
+    if (existing.length > 0) {
+      return NextResponse.json({ ok: true, alreadyVerified: true })
+    }
+  } catch {
+    // DB unreachable — fall through and treat as a new verification.
+  }
 
   // 3. Call bot API
   const botRes = await fetch(`${process.env.BOT_API_URL}/api/verify-grant`, {
