@@ -75,7 +75,7 @@ function CaptchaInner() {
           <>
             <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
             <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Successfully verified!</h1>
-            <p style={{ color: '#888' }}>Puoi chiudere questa pagina e tornare su Discord.</p>
+            <p style={{ color: '#888' }}>You can close this page and return to Discord.</p>
           </>
         ) : (
           <>

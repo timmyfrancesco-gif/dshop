@@ -59,10 +59,10 @@ export async function POST(req: NextRequest) {
     challengeToken = body?.challengeToken
     sessionSigned = body?.session
     if (!challengeToken || !sessionSigned || !counter) {
-      return NextResponse.json({ error: 'Parametri mancanti.' }, { status: 400 })
+      return NextResponse.json({ error: 'Missing parameters.' }, { status: 400 })
     }
   } catch {
-    return NextResponse.json({ error: 'Richiesta non valida.' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
   // 1. Validate the proof-of-work
