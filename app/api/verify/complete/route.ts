@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHash, createHmac, timingSafeEqual } from 'crypto'
 import { db } from '@/lib/db'
 import { discordVerifications } from '@/lib/db/schema'
 import { encryptSecret } from '@/lib/crypto/secrets'
@@ -29,45 +29,50 @@ function verifySession(signed: string, secret: string) {
   } catch { return null }
 }
 
-function verifyChallenge(signed: string, secret: string): number | false {
+function verifyChallenge(signed: string, secret: string): { nonce: string; difficulty: number } | null {
   try {
     const lastDot = signed.lastIndexOf('.')
-    if (lastDot === -1) return false
+    if (lastDot === -1) return null
     const payload = signed.slice(0, lastDot)
     const sig = signed.slice(lastDot + 1)
     const expected = createHmac('sha256', secret).update(payload).digest('hex')
     const a = Buffer.from(sig)
     const b = Buffer.from(expected)
-    if (a.length !== b.length || !timingSafeEqual(a, b)) return false
-    const { answer, exp } = JSON.parse(Buffer.from(payload, 'base64url').toString()) as {
-      answer: number
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null
+    const { nonce, difficulty, exp } = JSON.parse(Buffer.from(payload, 'base64url').toString()) as {
+      nonce: string
+      difficulty: number
       exp: number
     }
-    if (Date.now() > exp) return false
-    return answer
+    if (Date.now() > exp) return null
+    return { nonce, difficulty }
   } catch {
-    return false
+    return null
   }
 }
 
 export async function POST(req: NextRequest) {
-  let answer: number, challengeToken: string, sessionSigned: string
+  let counter: string, challengeToken: string, sessionSigned: string
   try {
     const body = await req.json()
-    answer = Number(body?.answer)
+    counter = String(body?.counter ?? '')
     challengeToken = body?.challengeToken
     sessionSigned = body?.session
-    if (!challengeToken || !sessionSigned || Number.isNaN(answer)) {
+    if (!challengeToken || !sessionSigned || !counter) {
       return NextResponse.json({ error: 'Parametri mancanti.' }, { status: 400 })
     }
   } catch {
     return NextResponse.json({ error: 'Richiesta non valida.' }, { status: 400 })
   }
 
-  // 1. Validate the challenge answer
-  const expectedAnswer = verifyChallenge(challengeToken, process.env.VERIFY_SESSION_SECRET!)
-  if (expectedAnswer === false || answer !== expectedAnswer) {
-    return NextResponse.json({ error: 'Incorrect answer. Try again.' }, { status: 400 })
+  // 1. Validate the proof-of-work
+  const challenge = verifyChallenge(challengeToken, process.env.VERIFY_SESSION_SECRET!)
+  if (!challenge) {
+    return NextResponse.json({ error: 'Challenge expired. Try again.' }, { status: 400 })
+  }
+  const hash = createHash('sha256').update(challenge.nonce + counter).digest('hex')
+  if (!hash.startsWith('0'.repeat(challenge.difficulty))) {
+    return NextResponse.json({ error: 'Verification failed. Try again.' }, { status: 400 })
   }
 
   // 2. Verify session
