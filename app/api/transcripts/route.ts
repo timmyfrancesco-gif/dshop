@@ -9,14 +9,22 @@ function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
+// TEMP DIAGNOSTIC — remove after confirming the 401 root cause. Never logs
+// full token values, only a fingerprint (first/last 4 chars + length).
+function fingerprint(s: string): string {
+  return s ? `${s.slice(0, 4)}...${s.slice(-4)} (${s.length} chars)` : "EMPTY";
+}
+
 // The bot posts transcripts with the bearer token (server-to-server); the
 // dashboard reads them with the admin session cookie.
 function validateToken(req: NextRequest): boolean {
   if (hasAdminSession(req)) return true;
   const auth = req.headers.get("authorization");
+  const received = auth ? auth.replace(/^Bearer\s+/i, "") : "";
+  console.log("[transcripts] ADMIN_TOKEN fingerprint:", fingerprint(ADMIN_TOKEN));
+  console.log("[transcripts] received token fingerprint:", fingerprint(received));
   if (!auth || !ADMIN_TOKEN) return false;
-  const token = auth.replace(/^Bearer\s+/i, "");
-  return constantTimeEqual(token, ADMIN_TOKEN);
+  return constantTimeEqual(received, ADMIN_TOKEN);
 }
 
 function generateId(): string {
