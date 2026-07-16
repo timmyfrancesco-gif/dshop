@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import PageShell from "@/components/layout/PageShell";
 import { SITE } from "@/lib/config";
 import { useLocale } from "@/lib/hooks/useLocale";
@@ -35,6 +36,81 @@ const SECTIONS = [
   },
 ];
 
+interface TosEntry {
+  html: string;
+  updatedAt: string | null;
+  authorName: string | null;
+}
+
+type TosData = Record<"general" | "owner1" | "owner2", TosEntry>;
+
+const TOS_LABELS: Record<keyof TosData, string> = {
+  general: "General Server Rules",
+  owner1: "Owner 1's Terms",
+  owner2: "Owner 2's Terms",
+};
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
+function TosCategoryCard({ categoryKey, entry }: { categoryKey: keyof TosData; entry: TosEntry | undefined }) {
+  const label = entry?.authorName ? `${TOS_LABELS[categoryKey]} — ${entry.authorName}` : TOS_LABELS[categoryKey];
+  return (
+    <div className="rounded-2xl border border-border bg-background-elevated/40 p-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-base font-semibold text-foreground">{label}</h3>
+        {entry?.updatedAt && (
+          <span className="text-xs text-muted">Updated {formatDate(entry.updatedAt)}</span>
+        )}
+      </div>
+      <div className="mt-3">
+        {entry?.html ? (
+          <div className="discord-content" dangerouslySetInnerHTML={{ __html: entry.html }} />
+        ) : (
+          <p className="text-sm text-muted">Not set yet.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ServerRulesSection() {
+  const [tos, setTos] = useState<TosData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/tos")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d?.tos) setTos(d.tos);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="mt-16">
+      <h2 className="text-2xl font-bold text-foreground">Server Rules</h2>
+      <p className="mt-2 text-sm text-muted">
+        Set by the server owners directly on Discord — these govern conduct on the server itself, separate from
+        the purchase terms above.
+      </p>
+      <div className="mt-6 flex flex-col gap-4">
+        <TosCategoryCard categoryKey="general" entry={tos?.general} />
+        <TosCategoryCard categoryKey="owner1" entry={tos?.owner1} />
+        <TosCategoryCard categoryKey="owner2" entry={tos?.owner2} />
+      </div>
+    </div>
+  );
+}
+
 export default function TermsPage() {
   const { t } = useLocale();
   return (
@@ -52,6 +128,8 @@ export default function TermsPage() {
               </div>
             ))}
           </div>
+
+          <ServerRulesSection />
         </div>
       </section>
     </PageShell>
