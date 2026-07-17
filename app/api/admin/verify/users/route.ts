@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get('search')
   const limitParam = searchParams.get('limit')
   const limit = Math.min(Number(limitParam) || 100, 500)
+  const offset = Math.max(Number(searchParams.get('offset')) || 0, 0)
 
   let query = db
     .select({
@@ -27,6 +28,7 @@ export async function GET(req: NextRequest) {
     .from(discordVerifications)
     .orderBy(desc(discordVerifications.verifiedAt))
     .limit(limit)
+    .offset(offset)
 
   const rows = await (guild
     ? query.where(eq(discordVerifications.guildId, guild))

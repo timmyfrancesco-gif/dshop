@@ -4144,10 +4144,14 @@ function verifyDisplayName(u: VerifiedUser) {
   return u.globalName || u.username || u.discordUserId;
 }
 
+const VERIFY_PAGE_SIZE = 200;
+
 function VerifyView() {
   const [stats, setStats] = useState<VerifyStats | null>(null);
   const [users, setUsers] = useState<VerifiedUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [search, setSearch] = useState("");
   const [guildFilter, setGuildFilter] = useState("");
   const [modal, setModal] = useState<{ user: VerifiedUser } | null>(null);
@@ -4155,19 +4159,43 @@ function VerifyView() {
   const [addStatus, setAddStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [addError, setAddError] = useState("");
 
+  const usersUrl = useCallback(
+    (offset: number) =>
+      `/api/admin/verify/users?limit=${VERIFY_PAGE_SIZE}&offset=${offset}${guildFilter ? `&guild=${guildFilter}` : ""}${search ? `&search=${encodeURIComponent(search)}` : ""}`,
+    [guildFilter, search]
+  );
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [statsRes, usersRes] = await Promise.all([
         fetch("/api/admin/verify/stats"),
-        fetch(`/api/admin/verify/users?limit=200${guildFilter ? `&guild=${guildFilter}` : ""}${search ? `&search=${encodeURIComponent(search)}` : ""}`),
+        fetch(usersUrl(0)),
       ]);
       if (statsRes.ok) setStats(await statsRes.json());
-      if (usersRes.ok) setUsers((await usersRes.json()).users);
+      if (usersRes.ok) {
+        const data = (await usersRes.json()).users as VerifiedUser[];
+        setUsers(data);
+        setHasMore(data.length === VERIFY_PAGE_SIZE);
+      }
     } finally {
       setLoading(false);
     }
-  }, [guildFilter, search]);
+  }, [usersUrl]);
+
+  async function loadMore() {
+    setLoadingMore(true);
+    try {
+      const res = await fetch(usersUrl(users.length));
+      if (res.ok) {
+        const data = (await res.json()).users as VerifiedUser[];
+        setUsers((prev) => [...prev, ...data]);
+        setHasMore(data.length === VERIFY_PAGE_SIZE);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     fetchData();
@@ -4207,7 +4235,11 @@ function VerifyView() {
     <div className="space-y-5">
       <ViewHeader
         title="Discord Verify"
-        subtitle={`${users.length} verified users`}
+        subtitle={
+          stats && stats.total > users.length
+            ? `Showing ${users.length} of ${stats.total.toLocaleString()} verified users`
+            : `${users.length} verified users`
+        }
         action={
           <button
             type="button"
@@ -4317,6 +4349,19 @@ function VerifyView() {
           </div>
         )}
       </div>
+
+      {!loading && hasMore && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="rounded-lg border border-white/10 px-5 py-2.5 text-sm text-zinc-300 hover:border-[#90C6FF]/40 disabled:opacity-60"
+          >
+            {loadingMore ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      )}
 
       {modal && (
         <div
