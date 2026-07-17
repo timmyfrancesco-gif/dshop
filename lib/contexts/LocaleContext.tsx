@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { getTranslation, LANGUAGES } from "@/lib/i18n";
+import { getTranslation } from "@/lib/i18n";
 import type { CurrencyCode, Language } from "@/lib/i18n/types";
 
 interface LocaleContextValue {
@@ -91,14 +91,12 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const [rates, setRates] = useState<Record<string, number>>(FALLBACK_RATES);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Hydrate from localStorage
+  // Hydrate currency from localStorage. Language is locked to English --
+  // the picker UI is gone, so a stale "hm_language" from before that change
+  // should no longer take effect for returning visitors.
   useEffect(() => {
     try {
-      const savedLang = localStorage.getItem("hm_language") as Language | null;
       const savedCurrency = localStorage.getItem("hm_currency") as CurrencyCode | null;
-      if (savedLang && LANGUAGES.some((l) => l.code === savedLang)) {
-        setLanguageState(savedLang);
-      }
       if (savedCurrency) {
         setCurrencyState(savedCurrency);
       }
