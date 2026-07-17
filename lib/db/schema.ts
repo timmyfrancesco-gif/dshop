@@ -204,6 +204,30 @@ export const siteConfig = pgTable("site_config", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ── Vouches (parsed from +rep messages in the Discord vouch channel) ─
+export const vouches = pgTable(
+  "vouches",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    messageId: text("message_id").notNull(), // dedup key, unique index below
+    buyerId: text("buyer_id").notNull(),
+    buyerName: text("buyer_name"),
+    buyerAvatarUrl: text("buyer_avatar_url"),
+    sellerId: text("seller_id").notNull(),
+    sellerName: text("seller_name"),
+    quantity: integer("quantity").notNull(),
+    product: text("product").notNull(),
+    price: real("price").notNull(),
+    priceFlaggedCorrected: boolean("price_flagged_corrected").default(false).notNull(),
+    priceOriginalParsed: real("price_original_parsed"),
+    method: text("method").notNull(),
+    channelId: text("channel_id"),
+    postedAt: timestamp("posted_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("vouches_message_id_idx").on(t.messageId)]
+);
+
 // ── Discord verifications ───────────────────────────────────────────
 export const discordVerifications = pgTable("discord_verifications", {
   id: uuid("id").defaultRandom().primaryKey(),
