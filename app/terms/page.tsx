@@ -27,7 +27,15 @@ function formatDate(iso: string): string {
   }
 }
 
-function TosCategoryCard({ categoryKey, entry }: { categoryKey: keyof TosData; entry: TosEntry | undefined }) {
+function TosCategoryCard({
+  categoryKey,
+  entry,
+  title,
+}: {
+  categoryKey: keyof TosData;
+  entry: TosEntry | undefined;
+  title?: string;
+}) {
   const hasAuthor = Boolean(entry?.authorName || entry?.avatarUrl);
 
   return (
@@ -62,8 +70,7 @@ function TosCategoryCard({ categoryKey, entry }: { categoryKey: keyof TosData; e
       <div className={`p-6 ${hasAuthor ? "pt-16 sm:pt-20" : ""}`}>
         <div className={`flex flex-wrap gap-2 ${hasAuthor ? "flex-col items-center text-center" : "items-baseline justify-between"}`}>
           <div>
-            <h3 className="text-base font-semibold text-foreground">{TOS_LABELS[categoryKey]}</h3>
-            {entry?.authorName && <p className="text-xs text-muted">Set by {entry.authorName}</p>}
+            <h3 className="text-base font-semibold text-foreground">{title ?? TOS_LABELS[categoryKey]}</h3>
           </div>
           {entry?.updatedAt && (
             <span className="text-xs text-muted">Updated {formatDate(entry.updatedAt)}</span>
@@ -181,7 +188,11 @@ function ServerRulesSection() {
             </svg>
             Back
           </button>
-          <TosCategoryCard categoryKey={selectedOwner.key} entry={selectedOwner.entry} />
+          <TosCategoryCard
+            categoryKey={selectedOwner.key}
+            entry={selectedOwner.entry}
+            title={`${selectedOwner.name}'s Terms`}
+          />
         </>
       ) : (
         <>
