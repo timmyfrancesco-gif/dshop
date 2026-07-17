@@ -212,6 +212,48 @@ export async function runMigrations() {
     `);
     try { await client.query(`ALTER TABLE discord_verifications ADD COLUMN IF NOT EXISTS email TEXT`); } catch {}
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS login_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id TEXT,
+        email TEXT,
+        username TEXT,
+        method TEXT,
+        url TEXT,
+        referrer TEXT,
+        ip TEXT,
+        user_agent TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS vouches (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        message_id TEXT NOT NULL,
+        buyer_id TEXT NOT NULL,
+        buyer_name TEXT,
+        buyer_avatar_url TEXT,
+        seller_id TEXT NOT NULL,
+        seller_name TEXT,
+        quantity INTEGER NOT NULL,
+        product TEXT NOT NULL,
+        price REAL NOT NULL,
+        price_flagged_corrected BOOLEAN NOT NULL DEFAULT FALSE,
+        price_original_parsed REAL,
+        method TEXT NOT NULL,
+        channel_id TEXT,
+        posted_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS vouches_message_id_idx ON vouches (message_id)
+    `);
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS vouches_seller_id_idx ON vouches (seller_id)
+    `);
+
     // Add new columns if they don't exist (for existing installations)
     const alterStatements = [
       "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS btc_address TEXT",
