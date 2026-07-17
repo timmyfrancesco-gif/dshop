@@ -7,8 +7,11 @@ import {
 } from "@/lib/adminSession";
 
 const API_BASE = (process.env.NEXT_PUBLIC_ASTRO_API_URL ?? "").replace(/\/+$/, "");
+// Temporary fallback so the dashboard is reachable immediately without
+// waiting on a Vercel env var — set DASHBOARD_PASSWORD (which always wins)
+// and remove this literal once that's done.
 const DASHBOARD_PASSWORD =
-  process.env.DASHBOARD_PASSWORD ?? process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD ?? "";
+  process.env.DASHBOARD_PASSWORD ?? process.env.NEXT_PUBLIC_DASHBOARD_PASSWORD ?? "CIAO2025";
 // Site accounts (by email) that always get dashboard access, independent of
 // the bot's own "role" field — the owner shouldn't depend on the bot's user
 // database being set up correctly.
