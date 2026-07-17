@@ -44,18 +44,23 @@ function TosCategoryCard({ categoryKey, entry }: { categoryKey: keyof TosData; e
             />
           )}
           {entry?.avatarUrl && (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={entry.avatarUrl}
-              alt=""
-              className="absolute left-4 -bottom-6 h-14 w-14 rounded-full border-4 border-background-elevated object-cover sm:left-6"
-            />
+            <div className="absolute left-1/2 -bottom-14 -translate-x-1/2 sm:-bottom-16">
+              <div className="group relative">
+                <span className="absolute inset-0 animate-pulse rounded-full bg-accent/50 blur-md" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={entry.avatarUrl}
+                  alt=""
+                  className="relative h-28 w-28 rounded-full border-4 border-background-elevated object-cover shadow-xl transition-transform duration-300 ease-out hover:scale-110 sm:h-32 sm:w-32"
+                />
+              </div>
+            </div>
           )}
         </div>
       )}
 
-      <div className={`p-6 ${hasAuthor ? "pt-9 sm:pl-8" : ""}`}>
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
+      <div className={`p-6 ${hasAuthor ? "pt-16 sm:pt-20" : ""}`}>
+        <div className={`flex flex-wrap gap-2 ${hasAuthor ? "flex-col items-center text-center" : "items-baseline justify-between"}`}>
           <div>
             <h3 className="text-base font-semibold text-foreground">{TOS_LABELS[categoryKey]}</h3>
             {entry?.authorName && <p className="text-xs text-muted">Set by {entry.authorName}</p>}
