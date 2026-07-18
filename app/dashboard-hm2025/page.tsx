@@ -361,7 +361,7 @@ function IconShieldCheck({ className }: { className?: string }) {
 function BarChart({
   data,
   labels,
-  color = "#90C6FF",
+  color = "#D88DF8",
   height = 160,
 }: {
   data: number[];
@@ -423,7 +423,7 @@ function BarChart({
 
 function SparkLine({
   data,
-  color = "#90C6FF",
+  color = "#D88DF8",
   height = 40,
   width = 120,
 }: {
@@ -519,7 +519,7 @@ export default function SecretDashboardPage() {
     return (
       <main className="flex min-h-screen items-center justify-center" style={{ backgroundColor: "#09090b" }}>
         <div className="flex flex-col items-center gap-4">
-          <svg className="h-10 w-10 animate-spin text-[#90C6FF]" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <svg className="h-10 w-10 animate-spin text-[#D88DF8]" viewBox="0 0 24 24" fill="none" aria-hidden>
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
             <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
           </svg>
@@ -533,8 +533,8 @@ export default function SecretDashboardPage() {
     return (
       <main className="flex min-h-screen items-center justify-center px-4" style={{ backgroundColor: "#09090b" }}>
         <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-white/5 p-8 text-center" style={{ backgroundColor: "#121214" }}>
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#90C6FF]/10 ring-2 ring-[#90C6FF]/20">
-            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#90C6FF]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#D88DF8]/10 ring-2 ring-[#D88DF8]/20">
+            <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#D88DF8]" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
@@ -569,7 +569,7 @@ export default function SecretDashboardPage() {
               value={pwInput}
               onChange={(e) => { setPwInput(e.target.value); setPwError(false); }}
               placeholder="Dashboard password"
-              className={`w-full rounded-xl border bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-[#90C6FF] ${
+              className={`w-full rounded-xl border bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-[#D88DF8] ${
                 pwError ? "border-rose-500" : "border-white/10"
               }`}
             />
@@ -579,7 +579,7 @@ export default function SecretDashboardPage() {
             <button
               type="submit"
               disabled={pwBusy}
-              className="rounded-xl bg-[#90C6FF] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#6fb0f0] disabled:opacity-50"
+              className="rounded-xl bg-[#D88DF8] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#6fb0f0] disabled:opacity-50"
             >
               {pwBusy ? "Checking..." : "Enter Dashboard"}
             </button>
@@ -1080,8 +1080,8 @@ function AdminPanel() {
       >
         {/* Logo */}
         <div className="flex h-16 items-center gap-3 border-b border-white/5 px-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#90C6FF]/15">
-            <span className="text-sm font-bold text-[#90C6FF]">HM</span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D88DF8]/15">
+            <span className="text-sm font-bold text-[#D88DF8]">HM</span>
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-white">Easy Boost</span>
@@ -1245,7 +1245,7 @@ function AdminPanel() {
         {/* Bottom user profile + bot status */}
         <div className="border-t border-white/5 p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#90C6FF]/15 text-sm font-bold text-[#90C6FF]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#D88DF8]/15 text-sm font-bold text-[#D88DF8]">
               {authUser?.username?.charAt(0)?.toUpperCase() ?? "A"}
             </div>
             <div className="min-w-0 flex-1">
@@ -1303,7 +1303,7 @@ function AdminPanel() {
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="accent-[#90C6FF]"
+                className="accent-[#D88DF8]"
               />
               Auto
             </label>
@@ -1311,7 +1311,7 @@ function AdminPanel() {
               type="button"
               onClick={refresh}
               disabled={loading}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition-all hover:border-[#90C6FF]/50 hover:text-[#90C6FF] disabled:opacity-50"
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-300 transition-all hover:border-[#D88DF8]/50 hover:text-[#D88DF8] disabled:opacity-50"
             >
               {loading ? "..." : "Refresh"}
             </button>
@@ -1521,14 +1521,14 @@ function SidebarItem({
         indent ? "ml-2" : ""
       } ${
         active
-          ? "bg-[#90C6FF]/10 font-semibold text-[#90C6FF]"
+          ? "bg-[#D88DF8]/10 font-semibold text-[#D88DF8]"
           : "text-zinc-400 hover:bg-white/[0.03] hover:text-zinc-200"
       }`}
     >
-      <span className={active ? "text-[#90C6FF]" : "text-zinc-500"}>{icon}</span>
+      <span className={active ? "text-[#D88DF8]" : "text-zinc-500"}>{icon}</span>
       {label}
       {active && (
-        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#90C6FF]" />
+        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-[#D88DF8]" />
       )}
     </button>
   );
@@ -1620,7 +1620,7 @@ function DashboardView({
           <BarChart
             data={dailyRevenue}
             labels={dayLabels}
-            color="#90C6FF"
+            color="#D88DF8"
             height={160}
           />
         </div>
@@ -1655,8 +1655,8 @@ function DashboardView({
                 key={i}
                 className="flex items-center gap-3 border-b border-white/5 py-3 last:border-0"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#90C6FF]/10">
-                  <IconProducts className="h-4 w-4 text-[#90C6FF]" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#D88DF8]/10">
+                  <IconProducts className="h-4 w-4 text-[#D88DF8]" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-white">{item.label}</p>
@@ -1689,7 +1689,7 @@ function DashboardView({
             <ul className="space-y-3">
               {bestSelling.map(([name, count], i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#90C6FF]/10 text-xs font-bold text-[#90C6FF]">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#D88DF8]/10 text-xs font-bold text-[#D88DF8]">
                     {i + 1}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm text-zinc-300">{name}</span>
@@ -1742,7 +1742,7 @@ function DashboardView({
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
                       <div
-                        className="h-full rounded-full bg-[#90C6FF] transition-all"
+                        className="h-full rounded-full bg-[#D88DF8] transition-all"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -1792,7 +1792,7 @@ function StatCard({
         {sparkData && sparkData.length > 1 && (
           <SparkLine
             data={sparkData}
-            color={positive ? "#22c55e" : "#90C6FF"}
+            color={positive ? "#22c55e" : "#D88DF8"}
             width={80}
             height={32}
           />
@@ -1858,7 +1858,7 @@ function ProductsView({
           <button
             type="button"
             onClick={onNew}
-            className="rounded-lg bg-[#90C6FF] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#6fb0f0]"
+            className="rounded-lg bg-[#D88DF8] px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#6fb0f0]"
           >
             + Create Product
           </button>
@@ -1874,7 +1874,7 @@ function ProductsView({
             value={productSearch}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search by name..."
-            className="w-60 rounded-lg border border-white/10 py-2.5 pl-10 pr-4 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50 placeholder:text-zinc-600"
+            className="w-60 rounded-lg border border-white/10 py-2.5 pl-10 pr-4 text-sm text-white outline-none transition-all focus:border-[#D88DF8]/50 placeholder:text-zinc-600"
             style={{ backgroundColor: "#161619" }}
           />
         </div>
@@ -1917,7 +1917,7 @@ function ProductsView({
               >
                 {/* Product Image */}
                 <div className="relative h-44 w-full overflow-hidden">
-                  <span className={`absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${p.source === "platform" ? "bg-[#90C6FF]/90 text-black" : "bg-black/60 text-zinc-300"}`}>
+                  <span className={`absolute left-2 top-2 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${p.source === "platform" ? "bg-[#D88DF8]/90 text-black" : "bg-black/60 text-zinc-300"}`}>
                     {p.source === "platform" ? "Site" : "Bot"}
                   </span>
                   {p.image || (p.images && p.images[0]) ? (
@@ -1928,8 +1928,8 @@ function ProductsView({
                       className="h-full w-full object-cover transition-transform group-hover:scale-105"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#90C6FF]/20 to-sky-500/10">
-                      <IconProducts className="h-12 w-12 text-[#90C6FF]/40" />
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#D88DF8]/20 to-sky-500/10">
+                      <IconProducts className="h-12 w-12 text-[#D88DF8]/40" />
                     </div>
                   )}
                 </div>
@@ -1975,7 +1975,7 @@ function ProductsView({
                   <button
                     type="button"
                     onClick={() => onClone(p)}
-                    className="text-xs font-semibold text-[#90C6FF] transition-colors hover:text-[#b8dcff]"
+                    className="text-xs font-semibold text-[#D88DF8] transition-colors hover:text-[#b8dcff]"
                   >
                     Clone
                   </button>
@@ -2006,8 +2006,8 @@ function ProductsView({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.images?.[0] || p.image} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#90C6FF]/20 to-sky-500/10">
-                      <IconProducts className="h-5 w-5 text-[#90C6FF]/40" />
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#D88DF8]/20 to-sky-500/10">
+                      <IconProducts className="h-5 w-5 text-[#D88DF8]/40" />
                     </div>
                   )}
                 </div>
@@ -2027,7 +2027,7 @@ function ProductsView({
                   {stock <= 0 ? "Out of stock" : stock <= 5 ? `${stock} left` : `${stock} in stock`}
                 </span>
                 <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" onClick={() => onClone(p)} className="text-xs font-semibold text-[#90C6FF] hover:text-[#b8dcff]">Clone</button>
+                  <button type="button" onClick={() => onClone(p)} className="text-xs font-semibold text-[#D88DF8] hover:text-[#b8dcff]">Clone</button>
                   <button type="button" onClick={() => onDelete(p)} className="text-xs font-semibold text-rose-400 hover:text-rose-300">Delete</button>
                 </div>
               </div>
@@ -2263,7 +2263,7 @@ function ProductEditView({
   ];
 
   const inputCls =
-    "w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50";
+    "w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-[#D88DF8]/50";
 
   async function handleSaveAndExit() {
     await handleSave();
@@ -2279,7 +2279,7 @@ function ProductEditView({
             <h2 className="text-xl font-bold text-white">
               {product ? "Edit Product" : "Create Product"}
             </h2>
-            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${source === "platform" ? "bg-[#90C6FF]/15 text-[#90C6FF]" : "bg-zinc-500/15 text-zinc-400"}`}>
+            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${source === "platform" ? "bg-[#D88DF8]/15 text-[#D88DF8]" : "bg-zinc-500/15 text-zinc-400"}`}>
               {source === "platform" ? "Site product" : "Bot product"}
             </span>
           </div>
@@ -2297,7 +2297,7 @@ function ProductEditView({
             type="button"
             onClick={handleSaveAndExit}
             disabled={saving || !name.trim()}
-            className="rounded-lg border border-[#90C6FF]/30 px-4 py-2 text-xs font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/10 disabled:opacity-50"
+            className="rounded-lg border border-[#D88DF8]/30 px-4 py-2 text-xs font-semibold text-[#D88DF8] transition-all hover:bg-[#D88DF8]/10 disabled:opacity-50"
           >
             Save &amp; Exit
           </button>
@@ -2305,7 +2305,7 @@ function ProductEditView({
             type="button"
             onClick={handleSave}
             disabled={saving || !name.trim()}
-            className="rounded-lg bg-[#90C6FF] px-5 py-2 text-xs font-bold text-white transition-all hover:bg-[#6fb0f0] disabled:opacity-50"
+            className="rounded-lg bg-[#D88DF8] px-5 py-2 text-xs font-bold text-white transition-all hover:bg-[#6fb0f0] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>
@@ -2324,7 +2324,7 @@ function ProductEditView({
             onClick={() => setEditTab(tab.key)}
             className={`px-4 py-3 text-sm transition-colors ${
               editTab === tab.key
-                ? "border-b-2 border-[#90C6FF] font-semibold text-[#90C6FF]"
+                ? "border-b-2 border-[#D88DF8] font-semibold text-[#D88DF8]"
                 : "border-b-2 border-transparent text-zinc-400 hover:text-white"
             }`}
           >
@@ -2359,7 +2359,7 @@ function ProductEditView({
             type="button"
             onClick={handleSave}
             disabled={saving || !name.trim()}
-            className="rounded-lg border border-[#90C6FF]/30 px-4 py-2 text-xs font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/10 disabled:opacity-50"
+            className="rounded-lg border border-[#D88DF8]/30 px-4 py-2 text-xs font-semibold text-[#D88DF8] transition-all hover:bg-[#D88DF8]/10 disabled:opacity-50"
           >
             Save &amp; Exit
           </button>
@@ -2367,7 +2367,7 @@ function ProductEditView({
             type="button"
             onClick={handleSave}
             disabled={saving || !name.trim()}
-            className="rounded-lg bg-[#90C6FF] px-5 py-2 text-xs font-bold text-white transition-all hover:bg-[#6fb0f0] disabled:opacity-50"
+            className="rounded-lg bg-[#D88DF8] px-5 py-2 text-xs font-bold text-white transition-all hover:bg-[#6fb0f0] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Save"}
           </button>
@@ -2380,7 +2380,7 @@ function ProductEditView({
         style={{ backgroundColor: "#121214" }}
       >
         <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-white">
-          <IconFileTextInline className="h-4 w-4 text-[#90C6FF]" />
+          <IconFileTextInline className="h-4 w-4 text-[#D88DF8]" />
           General
         </h3>
         <div className="space-y-5">
@@ -2446,7 +2446,7 @@ function ProductEditView({
                     className="h-24 w-24 rounded-lg border border-white/10 object-cover"
                   />
                   {idx === 0 && (
-                    <span className="absolute left-1 top-1 rounded bg-[#90C6FF]/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    <span className="absolute left-1 top-1 rounded bg-[#D88DF8]/90 px-1.5 py-0.5 text-[10px] font-bold text-white">
                       Cover
                     </span>
                   )}
@@ -2464,7 +2464,7 @@ function ProductEditView({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={imagesUploading}
-                  className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-dashed border-white/10 text-zinc-500 transition-colors hover:border-[#90C6FF]/30 hover:text-[#90C6FF] disabled:opacity-50"
+                  className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-dashed border-white/10 text-zinc-500 transition-colors hover:border-[#D88DF8]/30 hover:text-[#D88DF8] disabled:opacity-50"
                 >
                   <span className="text-2xl leading-none">{imagesUploading ? "…" : "+"}</span>
                   <span className="mt-1 text-[10px]">{imagesUploading ? "Uploading" : "Upload"}</span>
@@ -2508,14 +2508,14 @@ function ProductEditView({
               onClick={() => setDeliverableType(opt.value)}
               className={`rounded-lg border p-4 text-left transition-all ${
                 deliverableType === opt.value
-                  ? "border-[#90C6FF] bg-[#90C6FF]/5"
+                  ? "border-[#D88DF8] bg-[#D88DF8]/5"
                   : "border-white/10 hover:border-white/20"
               }`}
               style={{ backgroundColor: deliverableType === opt.value ? undefined : "#161619" }}
             >
               <p
                 className={`text-sm font-semibold ${
-                  deliverableType === opt.value ? "text-[#90C6FF]" : "text-white"
+                  deliverableType === opt.value ? "text-[#D88DF8]" : "text-white"
                 }`}
               >
                 {opt.label}
@@ -2570,7 +2570,7 @@ function ProductEditView({
         style={{ backgroundColor: "#121214" }}
       >
         <h3 className="mb-5 flex items-center gap-2 text-sm font-semibold text-white">
-          <IconTag className="h-4 w-4 text-[#90C6FF]" />
+          <IconTag className="h-4 w-4 text-[#D88DF8]" />
           Pricing &amp; Stock
         </h3>
         <div className="space-y-3">
@@ -2605,7 +2605,7 @@ function ProductEditView({
                   </svg>
                   <span
                     className={`text-sm font-semibold ${
-                      expanded ? "text-[#90C6FF]" : "text-white"
+                      expanded ? "text-[#D88DF8]" : "text-white"
                     }`}
                   >
                     {variant.title || "Untitled Variant"}
@@ -2696,7 +2696,7 @@ function ProductEditView({
                       <button
                         type="button"
                         onClick={() => toggleStockMode(variant.id)}
-                        className="shrink-0 rounded-lg border border-[#90C6FF]/30 px-3 py-1.5 text-xs font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/10"
+                        className="shrink-0 rounded-lg border border-[#D88DF8]/30 px-3 py-1.5 text-xs font-semibold text-[#D88DF8] transition-all hover:bg-[#D88DF8]/10"
                       >
                         {getStockMode(variant.id) !== "add" ? "Close" : "Manage Stock"}
                       </button>
@@ -2712,7 +2712,7 @@ function ProductEditView({
                             onClick={() => switchStockMode(variant.id, "edit")}
                             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                               getStockMode(variant.id) === "edit"
-                                ? "bg-[#90C6FF]/20 text-[#90C6FF]"
+                                ? "bg-[#D88DF8]/20 text-[#D88DF8]"
                                 : "text-zinc-500 hover:text-white"
                             }`}
                           >
@@ -2723,7 +2723,7 @@ function ProductEditView({
                             onClick={() => switchStockMode(variant.id, "replace")}
                             className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
                               stockModes[variant.id] === "replace"
-                                ? "bg-[#90C6FF]/20 text-[#90C6FF]"
+                                ? "bg-[#D88DF8]/20 text-[#D88DF8]"
                                 : "text-zinc-500 hover:text-white"
                             }`}
                           >
@@ -2743,7 +2743,7 @@ function ProductEditView({
                           }}
                           rows={5}
                           placeholder={"SERIAL-001\nSERIAL-002\nSERIAL-003"}
-                          className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-[#90C6FF]/50 resize-none placeholder:text-zinc-700"
+                          className="w-full rounded-lg border border-white/10 px-3 py-2.5 font-mono text-xs text-white outline-none transition-all focus:border-[#D88DF8]/50 resize-none placeholder:text-zinc-700"
                           style={{ backgroundColor: "#121214" }}
                         />
 
@@ -2793,7 +2793,7 @@ function ProductEditView({
                       onChange={(e) =>
                         updateVariant(variant.id, "stock", Math.max(0, parseInt(e.target.value) || 0))
                       }
-                      className="w-32 rounded-lg border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#90C6FF]/50"
+                      className="w-32 rounded-lg border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-[#D88DF8]/50"
                       style={{ backgroundColor: "#1e1e22" }}
                     />
                   </div>
@@ -2835,7 +2835,7 @@ function ProductEditView({
           <button
             type="button"
             onClick={addVariant}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/10 py-3 text-xs font-semibold text-zinc-500 transition-all hover:border-[#90C6FF]/30 hover:text-[#90C6FF]"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-white/10 py-3 text-xs font-semibold text-zinc-500 transition-all hover:border-[#D88DF8]/30 hover:text-[#D88DF8]"
           >
             <span className="text-base leading-none">+</span> Create a New Variant
           </button>
@@ -2863,7 +2863,7 @@ function ToggleSwitch({
       type="button"
       onClick={() => onChange(!checked)}
       className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-        checked ? "bg-[#90C6FF]" : "bg-zinc-700"
+        checked ? "bg-[#D88DF8]" : "bg-zinc-700"
       }`}
     >
       <span
@@ -2929,7 +2929,7 @@ function PrimaryButton({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-lg bg-[#90C6FF] px-4 py-2 text-xs font-bold text-white transition-all hover:bg-[#6fb0f0]"
+      className="rounded-lg bg-[#D88DF8] px-4 py-2 text-xs font-bold text-white transition-all hover:bg-[#6fb0f0]"
     >
       {label}
     </button>
@@ -3102,7 +3102,7 @@ function FeedbacksView({ feed, reviews }: { feed: FeedItem[]; reviews: Review[] 
             <div key={i} className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#90C6FF]/10 text-sm font-bold text-[#90C6FF]">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D88DF8]/10 text-sm font-bold text-[#D88DF8]">
                     {r.orderId.charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -3301,7 +3301,7 @@ function StorefrontConfigureView({
   }
 
   const inputClass =
-    "rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50";
+    "rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-[#D88DF8]/50";
 
   if (!loaded) {
     return <p className="text-sm text-zinc-500">Loading...</p>;
@@ -3332,7 +3332,7 @@ function StorefrontConfigureView({
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-zinc-400">Store Logo</label>
               <div className="flex items-center gap-3">
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#90C6FF]/30 bg-[#90C6FF]/10 px-4 py-2.5 text-sm font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/20">
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#D88DF8]/30 bg-[#D88DF8]/10 px-4 py-2.5 text-sm font-semibold text-[#D88DF8] transition-all hover:bg-[#D88DF8]/20">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
@@ -3382,7 +3382,7 @@ function StorefrontConfigureView({
               <label className="text-xs font-semibold text-zinc-400">Favicon</label>
               <p className="text-[11px] text-zinc-600">The small icon shown in the browser tab. Square image recommended.</p>
               <div className="flex items-center gap-3">
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#90C6FF]/30 bg-[#90C6FF]/10 px-4 py-2.5 text-sm font-semibold text-[#90C6FF] transition-all hover:bg-[#90C6FF]/20">
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#D88DF8]/30 bg-[#D88DF8]/10 px-4 py-2.5 text-sm font-semibold text-[#D88DF8] transition-all hover:bg-[#D88DF8]/20">
                   <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
@@ -3510,7 +3510,7 @@ function StorefrontConfigureView({
               {config.bannerEnabled && config.bannerText.trim() && (
                 <div
                   className="rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-background"
-                  style={{ backgroundColor: "#90C6FF", color: "#050810" }}
+                  style={{ backgroundColor: "#D88DF8", color: "#050810" }}
                 >
                   {config.bannerText}
                 </div>
@@ -3570,7 +3570,7 @@ function ActivityLogsView({ feed }: { feed: FeedItem[] }) {
                         ? "bg-amber-400"
                         : item.type === "exchange"
                           ? "bg-cyan-400"
-                          : "bg-[#90C6FF]"
+                          : "bg-[#D88DF8]"
                   }`}
                 />
                 <div className="flex flex-wrap items-center gap-2">
@@ -3888,7 +3888,7 @@ function CustomersView({ customers: platformCustomers }: { customers: PlatformCu
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#90C6FF]/10 text-xs font-bold text-[#90C6FF]">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#D88DF8]/10 text-xs font-bold text-[#D88DF8]">
                         {name.charAt(0).toUpperCase()}
                       </div>
                       <span className="font-medium text-white">{name}</span>
@@ -4013,7 +4013,7 @@ function TranscriptsView() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by ticket name, owner, or ID..."
-            className="w-full rounded-lg border border-white/10 py-2.5 pl-9 pr-4 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50"
+            className="w-full rounded-lg border border-white/10 py-2.5 pl-9 pr-4 text-sm text-white outline-none transition-all focus:border-[#D88DF8]/50"
             style={{ backgroundColor: "#161619" }}
           />
         </div>
@@ -4064,7 +4064,7 @@ function TranscriptsView() {
                   </td>
                   <td className="px-4 py-3">
                     {t.category ? (
-                      <span className="rounded-full border border-[#90C6FF]/20 bg-[#90C6FF]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#90C6FF]">
+                      <span className="rounded-full border border-[#D88DF8]/20 bg-[#D88DF8]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#D88DF8]">
                         {t.category}
                       </span>
                     ) : (
@@ -4087,7 +4087,7 @@ function TranscriptsView() {
                         href={`/transcript/${t.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-all hover:border-[#90C6FF]/30 hover:text-[#90C6FF]"
+                        className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-all hover:border-[#D88DF8]/30 hover:text-[#D88DF8]"
                       >
                         View
                       </a>
@@ -4244,7 +4244,7 @@ function VerifyView() {
           <button
             type="button"
             onClick={fetchData}
-            className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:border-[#90C6FF]/40"
+            className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:border-[#D88DF8]/40"
           >
             {loading ? "⟳" : "↺ Refresh"}
           </button>
@@ -4274,7 +4274,7 @@ function VerifyView() {
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && fetchData()}
           placeholder="Search by username or ID..."
-          className="flex-1 rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50"
+          className="flex-1 rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none transition-all focus:border-[#D88DF8]/50"
           style={{ backgroundColor: "#161619", minWidth: 200 }}
         />
         <select
@@ -4291,7 +4291,7 @@ function VerifyView() {
         <button
           type="button"
           onClick={fetchData}
-          className="rounded-lg bg-[#90C6FF] px-5 py-2.5 text-sm font-semibold text-black"
+          className="rounded-lg bg-[#D88DF8] px-5 py-2.5 text-sm font-semibold text-black"
         >
           Search
         </button>
@@ -4337,7 +4337,7 @@ function VerifyView() {
                       <button
                         type="button"
                         onClick={() => { setModal({ user: u }); setAddStatus("idle"); }}
-                        className="rounded-md border border-[#90C6FF]/30 px-3 py-1.5 text-xs font-semibold text-[#90C6FF] hover:bg-[#90C6FF]/10"
+                        className="rounded-md border border-[#D88DF8]/30 px-3 py-1.5 text-xs font-semibold text-[#D88DF8] hover:bg-[#D88DF8]/10"
                       >
                         + Add to server
                       </button>
@@ -4356,7 +4356,7 @@ function VerifyView() {
             type="button"
             onClick={loadMore}
             disabled={loadingMore}
-            className="rounded-lg border border-white/10 px-5 py-2.5 text-sm text-zinc-300 hover:border-[#90C6FF]/40 disabled:opacity-60"
+            className="rounded-lg border border-white/10 px-5 py-2.5 text-sm text-zinc-300 hover:border-[#D88DF8]/40 disabled:opacity-60"
           >
             {loadingMore ? "Loading…" : "Load more"}
           </button>
@@ -4546,7 +4546,7 @@ function WalletView({
                   navigator.clipboard.writeText(address);
                   showToast("Address copied!", true);
                 }}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 transition-all hover:border-[#90C6FF]/50 hover:text-[#90C6FF]"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 transition-all hover:border-[#D88DF8]/50 hover:text-[#D88DF8]"
               >
                 <IconCopy className="h-4 w-4 text-zinc-400" />
               </button>
@@ -4579,7 +4579,7 @@ function WalletView({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00000000"
-              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50 placeholder:text-zinc-700"
+              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-[#D88DF8]/50 placeholder:text-zinc-700"
               style={{ backgroundColor: "#161619" }}
             />
           </div>
@@ -4590,7 +4590,7 @@ function WalletView({
               value={toAddress}
               onChange={(e) => setToAddress(e.target.value)}
               placeholder="ltc1q..."
-              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-[#90C6FF]/50 placeholder:text-zinc-700"
+              className="rounded-lg border border-white/10 px-3 py-2.5 font-mono text-sm text-white outline-none transition-all focus:border-[#D88DF8]/50 placeholder:text-zinc-700"
               style={{ backgroundColor: "#161619" }}
             />
           </div>
@@ -4647,7 +4647,7 @@ function WalletView({
                             ? "bg-cyan-500/10 text-cyan-400"
                             : item.type === "escrow"
                               ? "bg-emerald-500/10 text-emerald-400"
-                              : "bg-[#90C6FF]/10 text-[#90C6FF]"
+                              : "bg-[#D88DF8]/10 text-[#D88DF8]"
                         }`}
                       >
                         {item.type}
@@ -4708,7 +4708,7 @@ function SettingsView({
               onClick={() => setTheme(id)}
               className={`group relative flex flex-col overflow-hidden rounded-xl border-2 transition-all ${
                 theme === id
-                  ? "border-[#90C6FF] shadow-[0_0_20px_-4px_rgba(99,102,241,0.4)]"
+                  ? "border-[#D88DF8] shadow-[0_0_20px_-4px_rgba(99,102,241,0.4)]"
                   : "border-white/5 hover:border-white/15"
               }`}
             >
@@ -4731,7 +4731,7 @@ function SettingsView({
                   <span className="text-sm font-semibold text-white">{t.label}</span>
                 </div>
                 {theme === id && (
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#90C6FF]" fill="none" stroke="currentColor" strokeWidth={3}>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 text-[#D88DF8]" fill="none" stroke="currentColor" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
                 )}
@@ -4758,7 +4758,7 @@ function SettingsView({
                 onChange={(e) => onAutoRefreshChange(e.target.checked)}
                 className="peer sr-only"
               />
-              <div className="h-6 w-11 rounded-full bg-zinc-700 peer-checked:bg-[#90C6FF] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
+              <div className="h-6 w-11 rounded-full bg-zinc-700 peer-checked:bg-[#D88DF8] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-full" />
             </label>
           </div>
         </div>

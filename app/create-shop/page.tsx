@@ -141,7 +141,7 @@ export default function CreateShopPage() {
               <div className="mt-6 flex flex-col gap-3">
                 <Link
                   href={`/s/${result.tenant.slug}`}
-                  className="rounded-xl bg-gradient-to-r from-[#90C6FF] to-[#38bdf8] px-6 py-3 text-sm font-bold transition-all hover:opacity-90"
+                  className="rounded-xl bg-gradient-to-r from-[#D88DF8] to-[#38bdf8] px-6 py-3 text-sm font-bold transition-all hover:opacity-90"
                 >
                   Visit Your Shop
                 </Link>
@@ -168,7 +168,7 @@ export default function CreateShopPage() {
                   <div
                     key={s}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
-                      step >= s ? "bg-[#90C6FF]" : "bg-white/10"
+                      step >= s ? "bg-[#D88DF8]" : "bg-white/10"
                     }`}
                   />
                 ))}
@@ -238,7 +238,7 @@ export default function CreateShopPage() {
                       setError("");
                       setStep(2);
                     }}
-                    className="w-full rounded-xl bg-gradient-to-r from-[#90C6FF] to-[#38bdf8] py-3 text-sm font-bold transition-all hover:opacity-90"
+                    className="w-full rounded-xl bg-gradient-to-r from-[#D88DF8] to-[#38bdf8] py-3 text-sm font-bold transition-all hover:opacity-90"
                   >
                     Continue
                   </button>
@@ -295,7 +295,7 @@ export default function CreateShopPage() {
                         <img
                           src={form.shopLogo}
                           alt="Logo"
-                          className="h-16 w-16 rounded-full object-cover ring-2 ring-[#90C6FF]/50"
+                          className="h-16 w-16 rounded-full object-cover ring-2 ring-[#D88DF8]/50"
                         />
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-white/80">
@@ -318,7 +318,7 @@ export default function CreateShopPage() {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
-                        className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-dashed border-white/20 bg-white/5 px-4 py-8 text-sm text-white/50 transition-all hover:border-[#90C6FF]/50 hover:text-white/70 disabled:opacity-50"
+                        className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-dashed border-white/20 bg-white/5 px-4 py-8 text-sm text-white/50 transition-all hover:border-[#D88DF8]/50 hover:text-white/70 disabled:opacity-50"
                       >
                         {uploading ? (
                           <span>Uploading...</span>
@@ -349,7 +349,7 @@ export default function CreateShopPage() {
                       type="button"
                       onClick={handleSubmit}
                       disabled={loading || uploading}
-                      className="flex-1 rounded-xl bg-gradient-to-r from-[#90C6FF] to-[#38bdf8] py-3 text-sm font-bold transition-all hover:opacity-90 disabled:opacity-50"
+                      className="flex-1 rounded-xl bg-gradient-to-r from-[#D88DF8] to-[#38bdf8] py-3 text-sm font-bold transition-all hover:opacity-90 disabled:opacity-50"
                     >
                       {loading ? "Creating..." : "Create Shop"}
                     </button>
