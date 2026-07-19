@@ -17,9 +17,13 @@ export async function GET(req: NextRequest) {
     return errorRedirect(req, 'missing_params')
   }
 
-  const clientId = process.env.DISCORD_CLIENT_ID
-  const clientSecret = process.env.DISCORD_CLIENT_SECRET
-  const redirectUri = process.env.DISCORD_REDIRECT_URI
+  // .trim() guards against a stray trailing/leading space in the Vercel env
+  // var value -- Discord compares redirect_uri byte-for-byte between the
+  // authorize request and this token exchange, so even whitespace makes it
+  // reject with "Invalid redirect_uri in request".
+  const clientId = process.env.DISCORD_CLIENT_ID?.trim()
+  const clientSecret = process.env.DISCORD_CLIENT_SECRET?.trim()
+  const redirectUri = process.env.DISCORD_REDIRECT_URI?.trim()
   if (!clientId || !clientSecret || !redirectUri) {
     // Without this check, the fetch below would silently send the literal
     // string "undefined" for whichever var is missing -- Discord rejects

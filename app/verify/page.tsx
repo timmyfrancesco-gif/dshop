@@ -17,8 +17,12 @@ export default async function VerifyPage({
     )
   }
   const params = new URLSearchParams({
-    client_id: process.env.DISCORD_CLIENT_ID!,
-    redirect_uri: process.env.DISCORD_REDIRECT_URI!,
+    // .trim() guards against a stray trailing/leading space in the Vercel
+    // env var value -- Discord compares redirect_uri byte-for-byte between
+    // this authorize request and the later token exchange, so even
+    // whitespace makes it reject with "Invalid redirect_uri in request".
+    client_id: process.env.DISCORD_CLIENT_ID!.trim(),
+    redirect_uri: process.env.DISCORD_REDIRECT_URI!.trim(),
     response_type: 'code',
     scope: 'identify email guilds.join',
     state: guild,
