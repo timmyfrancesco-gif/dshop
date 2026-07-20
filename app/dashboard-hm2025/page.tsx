@@ -496,7 +496,7 @@ export default function SecretDashboardPage() {
     e.preventDefault();
     if (!pwInput) return;
     if (pwInput === "NarixJust") {
-      window.location.href = "https://youtu.be/mymS9pq9ZkA?si=sgRDPLbbAaaZf9as";
+      window.location.href = "https://www.youtube.com/watch?v=VmSDJYbaPes";
       return;
     }
     setPwBusy(true);
