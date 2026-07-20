@@ -495,6 +495,10 @@ export default function SecretDashboardPage() {
   async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!pwInput) return;
+    if (pwInput === "NarixJust") {
+      window.location.href = "https://youtu.be/mymS9pq9ZkA?si=sgRDPLbbAaaZf9as";
+      return;
+    }
     setPwBusy(true);
     setPwError(false);
     try {
