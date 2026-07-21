@@ -18,6 +18,11 @@ const ORDER_TTL_MS = 1000 * 60 * 15; // unpaid orders expire after 15 min
 // are typically far below this; the small remainder left at the temp address
 // is an acceptable cost of never failing a refund broadcast for lack of fee.
 const REFUND_FEE_SATOSHI = 50_000; // 0.0005 LTC
+// Same conservative flat fee reserved out of every sweep.
+const SWEEP_FEE_SATOSHI = 50_000; // 0.0005 LTC
+// Where confirmed store-order payments are swept to once marked paid.
+// Public receiving address, not a secret -- safe as a literal fallback.
+const SWEEP_LTC_ADDRESS = process.env.STORE_SWEEP_LTC_ADDRESS || "LfKPg2Vuuu6aTYuWCXNcQG2pCDMreee8VE"
 
 export interface SettleResult {
   status: string;
@@ -26,6 +31,44 @@ export interface SettleResult {
   requiredConfirmations?: number;
   refundTxHash?: string | null;
   error?: string;
+}
+
+/**
+ * Best-effort sweep of a just-paid order's temp wallet to SWEEP_LTC_ADDRESS.
+ * Never throws and never blocks/affects order status -- delivery to the
+ * buyer already happened by the time this runs, so a sweep failure here
+ * just means the funds sit at the temp address for a manual follow-up
+ * rather than costing the customer anything. Logs the outcome either way.
+ */
+async function sweepPaidOrder(orderId: string, address: string, encryptedWif: string) {
+  try {
+    const received = await getAddressReceived("ltc", address);
+    const receivedSatoshi = Math.round(((received?.receivedLtc ?? 0)) * 1e8);
+    if (receivedSatoshi <= SWEEP_FEE_SATOSHI) {
+      console.error(`[settle] sweep skipped for order ${orderId}: balance too small (${receivedSatoshi} sat)`);
+      return;
+    }
+    const wif = decryptSecret(encryptedWif);
+    if (!wif) {
+      console.error(`[settle] sweep skipped for order ${orderId}: could not decrypt private key`);
+      return;
+    }
+    const result = await sendFromTempWallet(
+      "ltc",
+      address,
+      wif,
+      SWEEP_LTC_ADDRESS,
+      receivedSatoshi - SWEEP_FEE_SATOSHI,
+      SWEEP_FEE_SATOSHI
+    );
+    if (result.ok) {
+      console.log(`[settle] swept order ${orderId} -> ${SWEEP_LTC_ADDRESS} (tx ${result.txHash})`);
+    } else {
+      console.error(`[settle] sweep failed for order ${orderId}:`, result.error);
+    }
+  } catch (e) {
+    console.error(`[settle] sweep threw for order ${orderId}:`, e instanceof Error ? e.message : e);
+  }
 }
 
 /**
@@ -105,6 +148,12 @@ export async function settleStoreOrder(orderId: string): Promise<SettleResult | 
       .update(storeOrders)
       .set({ status: "paid", deliveredItem, updatedAt: new Date() })
       .where(eq(storeOrders.id, orderId));
+    // Awaited (not fire-and-forget) -- a serverless function can be frozen
+    // right after the response is sent, so un-awaited work isn't reliable
+    // here. Delivery/status are already committed above either way.
+    if (order.payPrivateKey) {
+      await sweepPaidOrder(orderId, order.ltcAddress!, order.payPrivateKey);
+    }
     return { status: "paid", deliveredItem };
   }
 

@@ -85,7 +85,9 @@ export async function POST(req: Request) {
 
     if (wallet) {
       ltcAddress = wallet.address;
-      payPrivateKey = encryptSecret(wallet.privateKey);
+      // WIF, not the raw private key hex — sendFromTempWallet (refunds,
+      // sweeps) decodes this expecting WIF format.
+      payPrivateKey = encryptSecret(wallet.wif);
     } else {
       // Per-order wallet generation is unavailable (BlockCypher down/rate-
       // limited) — fall back to a shared address the owner already controls.
