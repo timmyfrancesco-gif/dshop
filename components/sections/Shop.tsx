@@ -9,9 +9,137 @@ import CartDrawer from "@/components/shop/CartDrawer";
 import { useCart } from "@/lib/hooks/useCart";
 import { useLocale } from "@/lib/hooks/useLocale";
 import { useHomepageData } from "@/lib/contexts/HomepageDataContext";
+import type { ShopItem } from "@/lib/types";
 import { useSiteConfig } from "@/lib/contexts/SiteConfigContext";
+import { useSpotlight } from "@/lib/hooks/useSpotlight";
 
 type SortOption = "default" | "price-asc" | "price-desc" | "name";
+
+function ProductCard({
+  item,
+  index,
+  isBestSeller,
+  t,
+  formatPrice,
+  isTenant,
+  tenantSlug,
+}: {
+  item: ShopItem;
+  index: number;
+  isBestSeller: boolean;
+  t: (k: string) => string;
+  formatPrice: (n: number) => string;
+  isTenant: boolean;
+  tenantSlug?: string;
+}) {
+  const { ref: spotlightRef, onMouseMove, onMouseLeave } = useSpotlight<HTMLDivElement>();
+
+  const isRange = (() => {
+    if (!item.variants || item.variants.length <= 1) return false;
+    const prices = item.variants.map((v) => v.price);
+    return Math.min(...prices) !== Math.max(...prices);
+  })();
+  const displayPrice = item.variants && item.variants.length > 1
+    ? (() => {
+        const prices = item.variants.map((v) => v.price);
+        const min = Math.min(...prices);
+        const max = Math.max(...prices);
+        return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`;
+      })()
+    : formatPrice(item.price);
+
+  const cardInner = (
+    <motion.div
+      ref={spotlightRef}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      initial={{ opacity: 0, y: 40, scale: 0.95 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.6, delay: (index % 4) * 0.08, ease: [0.22, 1, 0.36, 1] }}
+      className={`group shine-card spotlight relative flex flex-col overflow-hidden bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_40px_-12px_var(--accent)] ${
+        isBestSeller
+          ? "rounded-[calc(1rem-1px)] border-0"
+          : "rounded-2xl border border-border/60 hover:border-accent/30"
+      }`}
+    >
+      <span className="spotlight-glow" aria-hidden />
+      <span className="shine-sweep" aria-hidden />
+      <Link
+        href={isTenant ? `/s/${tenantSlug}/products/${item.id}` : `/products/${item.id}`}
+        className="relative aspect-[4/3] w-full overflow-hidden bg-background-elevated"
+      >
+        {item.image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.image}
+            alt={item.name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/10 to-background-elevated text-accent">
+            <ServiceIcon name={item.icon} className="h-16 w-16" />
+          </div>
+        )}
+
+        {/* Hover overlay with View Details */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 backdrop-blur-[2px] transition-all duration-300 group-hover:opacity-100">
+          <span className="rounded-xl bg-gradient-to-r from-casino-from to-casino-to px-8 py-3 text-sm font-bold text-white shadow-xl transition-transform duration-300 group-hover:scale-100 scale-90">
+            {t("shop.viewDetails")}
+          </span>
+        </div>
+      </Link>
+
+      <div className="relative z-[2] flex flex-1 flex-col p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-extrabold text-foreground">
+              {displayPrice}
+            </span>
+            {!isRange && item.comparePrice && item.comparePrice > item.price ? (
+              <span className="text-sm font-medium text-muted line-through">
+                {formatPrice(item.comparePrice)}
+              </span>
+            ) : null}
+          </div>
+          <span
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white ${
+              item.stock > 0
+                ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                : "bg-gradient-to-r from-rose-500 to-rose-400"
+            }`}
+          >
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+            </svg>
+            {item.stock > 0 ? `${item.stock} In Stock` : "Out of Stock"}
+          </span>
+        </div>
+        <h3 className="mt-2 text-base font-bold text-foreground">{item.name}</h3>
+      </div>
+
+      {/* Best seller badge */}
+      {isBestSeller && (
+        <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-accent to-casino-from px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg">
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+            <path d="M10 1.5l3 5.5h6l-4.5 4 1.5 6-5-3.5-5 3.5 1.5-6L3 7h6l1-5.5z" />
+          </svg>
+          Best Seller
+        </div>
+      )}
+    </motion.div>
+  );
+
+  // Wrap best-seller in a gradient border container (same effect as Pricing MOST VISIBILITY).
+  if (isBestSeller) {
+    return (
+      <div className="rounded-2xl bg-gradient-to-br from-accent via-casino-from to-casino-to p-[1px] shadow-[0_0_40px_-10px_var(--accent)] transition-shadow duration-300 hover:shadow-[0_0_60px_-10px_var(--accent)]">
+        {cardInner}
+      </div>
+    );
+  }
+  return cardInner;
+}
 
 export default function Shop() {
   const { shopItems: items, loaded, products: productsRes, feed } = useHomepageData();
@@ -205,114 +333,18 @@ export default function Shop() {
           </p>
         ) : (
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {visibleItems.map((item, i) => {
-              const isBestSeller = item.id === bestSellerId;
-              const isRange = (() => {
-                if (!item.variants || item.variants.length <= 1) return false;
-                const prices = item.variants.map((v) => v.price);
-                return Math.min(...prices) !== Math.max(...prices);
-              })();
-              const displayPrice = item.variants && item.variants.length > 1
-                ? (() => {
-                    const prices = item.variants.map((v) => v.price);
-                    const min = Math.min(...prices);
-                    const max = Math.max(...prices);
-                    return min === max ? formatPrice(min) : `${formatPrice(min)} – ${formatPrice(max)}`;
-                  })()
-                : formatPrice(item.price);
-
-              const cardInner = (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                  viewport={{ once: true, margin: "-60px" }}
-                  transition={{ duration: 0.6, delay: (i % 4) * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  className={`group shine-card relative flex flex-col overflow-hidden bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_40px_-12px_var(--accent)] ${
-                    isBestSeller
-                      ? "rounded-[calc(1rem-1px)] border-0"
-                      : "rounded-2xl border border-border/60 hover:border-accent/30"
-                  }`}
-                >
-                  <span className="shine-sweep" aria-hidden />
-                  <Link
-                    href={site.isTenant ? `/s/${site.tenantSlug}/products/${item.id}` : `/products/${item.id}`}
-                    className="relative aspect-[4/3] w-full overflow-hidden bg-background-elevated"
-                  >
-                    {item.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/10 to-background-elevated text-accent">
-                        <ServiceIcon name={item.icon} className="h-16 w-16" />
-                      </div>
-                    )}
-
-                    {/* Hover overlay with View Details */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 backdrop-blur-[2px] transition-all duration-300 group-hover:opacity-100">
-                      <span className="rounded-xl bg-gradient-to-r from-casino-from to-casino-to px-8 py-3 text-sm font-bold text-white shadow-xl transition-transform duration-300 group-hover:scale-100 scale-90">
-                        {t("shop.viewDetails")}
-                      </span>
-                    </div>
-                  </Link>
-
-                  <div className="flex flex-1 flex-col p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-extrabold text-foreground">
-                          {displayPrice}
-                        </span>
-                        {!isRange && item.comparePrice && item.comparePrice > item.price ? (
-                          <span className="text-sm font-medium text-muted line-through">
-                            {formatPrice(item.comparePrice)}
-                          </span>
-                        ) : null}
-                      </div>
-                      <span
-                        className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white ${
-                          item.stock > 0
-                            ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
-                            : "bg-gradient-to-r from-rose-500 to-rose-400"
-                        }`}
-                      >
-                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l3-7H6.4M7 13L5.4 5M7 13l-1.5 3h11M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
-                        </svg>
-                        {item.stock > 0 ? `${item.stock} In Stock` : "Out of Stock"}
-                      </span>
-                    </div>
-                    <h3 className="mt-2 text-base font-bold text-foreground">{item.name}</h3>
-                  </div>
-
-                  {/* Best seller badge */}
-                  {isBestSeller && (
-                    <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-gradient-to-r from-accent to-casino-from px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg">
-                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
-                        <path d="M10 1.5l3 5.5h6l-4.5 4 1.5 6-5-3.5-5 3.5 1.5-6L3 7h6l1-5.5z" />
-                      </svg>
-                      Best Seller
-                    </div>
-                  )}
-                </motion.div>
-              );
-
-              // Wrap best-seller in a gradient border container (same effect as Pricing MOST VISIBILITY).
-              if (isBestSeller) {
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl bg-gradient-to-br from-accent via-casino-from to-casino-to p-[1px] shadow-[0_0_40px_-10px_var(--accent)] transition-shadow duration-300 hover:shadow-[0_0_60px_-10px_var(--accent)]"
-                  >
-                    {cardInner}
-                  </div>
-                );
-              }
-              return cardInner;
-            })}
+            {visibleItems.map((item, i) => (
+              <ProductCard
+                key={item.id}
+                item={item}
+                index={i}
+                isBestSeller={item.id === bestSellerId}
+                t={t}
+                formatPrice={formatPrice}
+                isTenant={site.isTenant}
+                tenantSlug={site.tenantSlug}
+              />
+            ))}
           </div>
         )}
       </div>

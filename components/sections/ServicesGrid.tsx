@@ -1,10 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useRef, type MouseEvent } from "react";
 import SectionHeading from "@/components/ui/SectionHeading";
 import ServiceIcon from "@/components/ui/ServiceIcon";
 import { useLocale } from "@/lib/hooks/useLocale";
+import { useSpotlight } from "@/lib/hooks/useSpotlight";
 
 const SERVICE_KEYS = [
   { titleKey: "features.escrowTitle", descKey: "features.escrowDesc", feeKey: "features.escrowFee", icon: "shield" },
@@ -16,24 +16,7 @@ const SERVICE_KEYS = [
 ];
 
 function FeatureCard({ service, index, t }: { service: typeof SERVICE_KEYS[0]; index: number; t: (k: string) => string }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  function handleMouse(e: MouseEvent) {
-    const card = cardRef.current;
-    if (!card) return;
-    const r = card.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * 100;
-    const y = ((e.clientY - r.top) / r.height) * 100;
-    card.style.setProperty("--mx", `${x}%`);
-    card.style.setProperty("--my", `${y}%`);
-  }
-
-  function handleLeave() {
-    const card = cardRef.current;
-    if (!card) return;
-    card.style.removeProperty("--mx");
-    card.style.removeProperty("--my");
-  }
+  const { ref: cardRef, onMouseMove, onMouseLeave } = useSpotlight<HTMLDivElement>();
 
   return (
     <motion.div
@@ -44,8 +27,8 @@ function FeatureCard({ service, index, t }: { service: typeof SERVICE_KEYS[0]; i
     >
       <div
         ref={cardRef}
-        onMouseMove={handleMouse}
-        onMouseLeave={handleLeave}
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
         className="feature-card group"
       >
         {/* Icon */}

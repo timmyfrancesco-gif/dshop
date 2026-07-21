@@ -397,6 +397,25 @@ body {
   100% { transform: translateX(280%); }
 }
 
+/* ── Cursor-follow spotlight overlay (reusable; pair with useSpotlight hook) ── */
+.spotlight {
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+}
+.spotlight-glow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  background: radial-gradient(280px 220px at var(--mx) var(--my), rgba(216, 141, 248, 0.14), transparent 62%);
+  transition: opacity 0.3s ease;
+}
+.spotlight:hover .spotlight-glow {
+  opacity: 1;
+}
+
 /* ── Card shine sweep on hover (reusable, mirrors .feature-card shine) ── */
 .shine-card {
   position: relative;
