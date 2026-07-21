@@ -22,6 +22,7 @@ interface QueueItem {
 }
 
 interface FinishedData {
+  key: string;
   productId: string;
   productName: string;
   productIcon?: string;
@@ -35,8 +36,12 @@ interface FinishedData {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ORDER_STORAGE_KEY = "checkout_order_v1";
-const FINISHED_STORAGE_KEY = "checkout_finished_v1";
+// v2: keyed by the full cart/variant/quantity signature, not just productId --
+// v1 let switching variant or quantity on the same product silently reuse a
+// stale order (old price, old LTC address), and let cart checkouts (which have
+// no productId) restore an unrelated "already paid" screen. See checkoutKey.
+const ORDER_STORAGE_KEY = "checkout_order_v2";
+const FINISHED_STORAGE_KEY = "checkout_finished_v2";
 
 const PAYMENT_METHODS_ICONS = {
   ltc: (
@@ -178,6 +183,20 @@ function CheckoutContent() {
   const [deliveredItems, setDeliveredItems] = useState<(string | null | undefined)[]>([]);
   const [restoredFinished, setRestoredFinished] = useState<FinishedData | null>(null);
 
+  // Identifies exactly what's being bought right now (product+variant+qty, or
+  // the full cart contents) so a restored session can never be handed to the
+  // wrong purchase -- see ORDER_STORAGE_KEY/FINISHED_STORAGE_KEY comment above.
+  const checkoutKey = useMemo(() => {
+    if (buyNowProduct) {
+      return `buy:${buyNowProduct.id}:${buyNowVariant?.id ?? ""}:${qty}`;
+    }
+    const signature = cart.lines
+      .map((l) => `${l.item.id}:${l.variantId ?? ""}:${l.quantity}`)
+      .sort()
+      .join("|");
+    return `cart:${signature}`;
+  }, [buyNowProduct, buyNowVariant, qty, cart.lines]);
+
   const queueTotal = useMemo(() => {
     if (buyNowProduct) {
       const unitPrice = buyNowVariant?.price ?? buyNowProduct.price;
@@ -189,32 +208,29 @@ function CheckoutContent() {
     }, 0);
   }, [buyNowProduct, buyNowVariant, qty, cart.lines]);
 
-  // Restore order or finished state from sessionStorage on mount
+  // Restore order or finished state from sessionStorage on mount -- ONLY if
+  // it matches exactly what's currently being bought (same checkoutKey).
+  // Never fall back to "no key to compare" reuse; that's what let an old
+  // order/price/address leak into an unrelated purchase.
   useEffect(() => {
     if (!loaded) return;
     try {
-      // Check if there's a completed order (works even without productId in URL)
       const finishedRaw = sessionStorage.getItem(FINISHED_STORAGE_KEY);
       if (finishedRaw) {
-        const finishedData = JSON.parse(finishedRaw) as FinishedData;
-        if (Date.now() - finishedData.ts < 3_600_000) {
-          if (!productId || finishedData.productId === productId) {
-            setDeliveredItems(finishedData.deliveredItems);
-            setEmail(finishedData.email);
-            setRestoredFinished(finishedData);
-            setFinished(true);
-            return;
-          }
-        } else {
-          sessionStorage.removeItem(FINISHED_STORAGE_KEY);
+        const finishedData = JSON.parse(finishedRaw) as FinishedData & { key?: string };
+        if (finishedData.key === checkoutKey && Date.now() - finishedData.ts < 3_600_000) {
+          setDeliveredItems(finishedData.deliveredItems);
+          setEmail(finishedData.email);
+          setRestoredFinished(finishedData);
+          setFinished(true);
+          return;
         }
+        sessionStorage.removeItem(FINISHED_STORAGE_KEY);
       }
-      // Check for in-progress order (requires productId)
-      if (!productId) return;
       const raw = sessionStorage.getItem(ORDER_STORAGE_KEY);
       if (!raw) return;
-      const stored = JSON.parse(raw) as { order: ProductOrderResponse; orderSource?: "bot" | "platform"; isFallback?: boolean; productId: string; email: string; ts: number };
-      if (stored.productId === productId && Date.now() - stored.ts < 3_600_000) {
+      const stored = JSON.parse(raw) as { order: ProductOrderResponse; orderSource?: "bot" | "platform"; isFallback?: boolean; key?: string; email: string; ts: number };
+      if (stored.key === checkoutKey && Date.now() - stored.ts < 3_600_000) {
         setEmail(stored.email);
         setOrder(stored.order);
         setOrderSource(stored.orderSource ?? "bot");
@@ -226,8 +242,7 @@ function CheckoutContent() {
       sessionStorage.removeItem(ORDER_STORAGE_KEY);
       sessionStorage.removeItem(FINISHED_STORAGE_KEY);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [loaded, checkoutKey]);
 
   if (!loaded) {
     return <p className="mt-10 text-sm text-muted">{t("checkout.loading")}</p>;
@@ -371,7 +386,7 @@ function CheckoutContent() {
         order: res,
         orderSource: isPlatform ? "platform" : "bot",
         isFallback: fallback,
-        productId: currentItem.id,
+        key: checkoutKey,
         email: email.trim(),
         ts: Date.now(),
       }));
@@ -388,6 +403,7 @@ function CheckoutContent() {
       if (!buyNowProduct) cart.clear();
       try {
         const finData: FinishedData = {
+          key: checkoutKey,
           productId: currentItem?.id ?? "",
           productName: currentItem?.name ?? "",
           productIcon: currentItem?.icon,
