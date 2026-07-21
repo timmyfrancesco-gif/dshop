@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hasAdminSession } from "@/lib/adminSession";
+import { bcFetch } from "@/lib/crypto/blockcypher";
 
 /**
  * Live balance of the platform fee wallet (PLATFORM_LTC_ADDRESS) via
@@ -17,9 +18,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const token = process.env.BLOCKCYPHER_TOKEN;
-    const res = await fetch(
-      `https://api.blockcypher.com/v1/ltc/main/addrs/${address}/balance${token ? `?token=${token}` : ""}`,
+    const res = await bcFetch(
+      `https://api.blockcypher.com/v1/ltc/main/addrs/${address}/balance`,
       { cache: "no-store" }
     );
     if (!res.ok) {

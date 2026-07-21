@@ -6,6 +6,7 @@ import { generateWalletVerbose, getLtcPriceEur, getAddressReceived, FALLBACK_LTC
 import { encryptSecret } from "@/lib/crypto/secrets";
 import { availableCount } from "@/lib/store/inventory";
 import { serverError } from "@/lib/http";
+import { bcFetch, hasBlockCypherToken } from "@/lib/crypto/blockcypher";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -20,13 +21,12 @@ function baseUrl(): string {
 }
 
 async function registerOrderWebhook(address: string, orderId: string) {
-  const token = process.env.BLOCKCYPHER_TOKEN;
   const base = baseUrl();
   const secret = webhookSecret();
-  if (!token || !base || !secret) return;
+  if (!hasBlockCypherToken() || !base || !secret) return;
   try {
     const cb = `${base}/api/store/orders/webhook?s=${encodeURIComponent(secret)}&order=${encodeURIComponent(orderId)}`;
-    await fetch(`https://api.blockcypher.com/v1/ltc/main/hooks?token=${token}`, {
+    await bcFetch(`https://api.blockcypher.com/v1/ltc/main/hooks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ event: "tx-confirmation", address, url: cb, confirmations: 1 }),

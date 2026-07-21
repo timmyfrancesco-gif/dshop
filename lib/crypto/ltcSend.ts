@@ -1,4 +1,5 @@
 import { signHashes } from "./ltcSign";
+import { bcFetch, hasBlockCypherToken } from "./blockcypher";
 
 /**
  * Constructs, signs and broadcasts an outgoing LTC transaction via
@@ -9,10 +10,6 @@ import { signHashes } from "./ltcSign";
  */
 
 const HOST = "https://api.blockcypher.com/v1";
-
-function token(): string {
-  return process.env.BLOCKCYPHER_TOKEN ?? "";
-}
 
 export interface RefundResult {
   ok: boolean;
@@ -26,10 +23,9 @@ export interface RefundResult {
  * determined (e.g. a coinbase-like input with no address, or lookup failure).
  */
 export async function getPayerAddress(chain: "ltc" | "btc", address: string): Promise<string | null> {
-  const t = token();
-  if (!t) return null;
+  if (!hasBlockCypherToken()) return null;
   try {
-    const addrRes = await fetch(`${HOST}/${chain}/main/addrs/${address}?token=${t}`, { cache: "no-store" });
+    const addrRes = await bcFetch(`${HOST}/${chain}/main/addrs/${address}`, { cache: "no-store" });
     if (!addrRes.ok) return null;
     const addrData = await addrRes.json();
     const refs = Array.isArray(addrData?.txrefs) ? addrData.txrefs : [];
@@ -37,7 +33,7 @@ export async function getPayerAddress(chain: "ltc" | "btc", address: string): Pr
     const incoming = refs.find((r: { tx_input_n?: number; tx_hash?: string }) => r.tx_input_n === -1 && r.tx_hash);
     if (!incoming?.tx_hash) return null;
 
-    const txRes = await fetch(`${HOST}/${chain}/main/txs/${incoming.tx_hash}?token=${t}`, { cache: "no-store" });
+    const txRes = await bcFetch(`${HOST}/${chain}/main/txs/${incoming.tx_hash}`, { cache: "no-store" });
     if (!txRes.ok) return null;
     const txData = await txRes.json();
     const firstInput = txData?.inputs?.[0];
@@ -62,14 +58,13 @@ export async function sendFromTempWallet(
   valueSatoshi: number,
   feeSatoshi: number
 ): Promise<RefundResult> {
-  const t = token();
-  if (!t) return { ok: false, error: "BLOCKCYPHER_TOKEN not configured" };
+  if (!hasBlockCypherToken()) return { ok: false, error: "BLOCKCYPHER_TOKEN not configured" };
   if (!Number.isFinite(valueSatoshi) || valueSatoshi <= 0) {
     return { ok: false, error: "invalid refund amount" };
   }
 
   try {
-    const newTxRes = await fetch(`${HOST}/${chain}/main/txs/new?token=${t}`, {
+    const newTxRes = await bcFetch(`${HOST}/${chain}/main/txs/new`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -85,7 +80,7 @@ export async function sendFromTempWallet(
 
     const { signatures, pubkeys } = signHashes(wif, skeleton.tosign as string[]);
 
-    const sendRes = await fetch(`${HOST}/${chain}/main/txs/send?token=${t}`, {
+    const sendRes = await bcFetch(`${HOST}/${chain}/main/txs/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...skeleton, signatures, pubkeys }),

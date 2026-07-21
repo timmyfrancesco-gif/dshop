@@ -5,6 +5,8 @@
  * bot's sweep logic.
  */
 
+import { bcFetch, hasBlockCypherToken } from "./blockcypher";
+
 export interface GeneratedWallet {
   address: string;
   privateKey: string;
@@ -23,12 +25,11 @@ export interface GenerateWalletResult {
  * "could not create payment wallet".
  */
 export async function generateWalletVerbose(chain: "ltc" | "btc"): Promise<GenerateWalletResult> {
-  const token = process.env.BLOCKCYPHER_TOKEN;
-  if (!token) return { wallet: null, error: "BLOCKCYPHER_TOKEN is not configured on the server" };
+  if (!hasBlockCypherToken()) return { wallet: null, error: "BLOCKCYPHER_TOKEN is not configured on the server" };
 
   try {
-    const res = await fetch(
-      `https://api.blockcypher.com/v1/${chain}/main/addrs?token=${token}`,
+    const res = await bcFetch(
+      `https://api.blockcypher.com/v1/${chain}/main/addrs`,
       { method: "POST" }
     );
     if (!res.ok) {
@@ -83,11 +84,10 @@ export interface TxDetails {
  * address can't disambiguate between orders but a specific tx's outputs can.
  */
 export async function getTxDetails(chain: "ltc" | "btc", txid: string): Promise<TxDetails | null> {
-  const token = process.env.BLOCKCYPHER_TOKEN;
-  if (!token) return null;
+  if (!hasBlockCypherToken()) return null;
   try {
-    const res = await fetch(
-      `https://api.blockcypher.com/v1/${chain}/main/txs/${encodeURIComponent(txid)}?token=${token}`,
+    const res = await bcFetch(
+      `https://api.blockcypher.com/v1/${chain}/main/txs/${encodeURIComponent(txid)}`,
       { cache: "no-store" }
     );
     if (!res.ok) return null;
@@ -193,15 +193,14 @@ export async function getAddressReceived(
   const cached = receivedCache.get(cacheKey);
   if (cached && cached.exp > Date.now()) return cached.value;
 
-  const token = process.env.BLOCKCYPHER_TOKEN;
-  if (!token) return null;
+  if (!hasBlockCypherToken()) return null;
   try {
-    const res = await fetch(
-      `https://api.blockcypher.com/v1/${chain}/main/addrs/${address}?token=${token}`,
+    const res = await bcFetch(
+      `https://api.blockcypher.com/v1/${chain}/main/addrs/${address}`,
       { cache: "no-store" }
     );
     if (!res.ok) {
-      if (res.status === 429) console.error("[getAddressReceived] BlockCypher rate limited");
+      if (res.status === 429) console.error("[getAddressReceived] BlockCypher rate limited (both tokens)");
       return null;
     }
     const data = await res.json();
