@@ -49,8 +49,8 @@ function FeatureCard({ service, index, t }: { service: typeof SERVICE_KEYS[0]; i
         className="feature-card group"
       >
         {/* Icon */}
-        <div className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl border border-white/[0.14] bg-gradient-to-b from-white/[0.06] to-white/[0.02] text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-all duration-300 group-hover:-translate-y-0.5 group-hover:scale-105 group-hover:border-accent/30 group-hover:shadow-[0_8px_26px_rgba(144,198,255,0.22),inset_0_1px_0_rgba(255,255,255,0.22)]">
-          <ServiceIcon name={service.icon} className="h-7 w-7 transition-all duration-300 group-hover:drop-shadow-[0_0_16px_rgba(144,198,255,0.6)]" />
+        <div className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl border border-white/[0.14] bg-gradient-to-b from-white/[0.06] to-white/[0.02] text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-all duration-300 group-hover:-translate-y-0.5 group-hover:scale-105 group-hover:border-accent/30 group-hover:shadow-[0_8px_26px_rgba(216,141,248,0.22),inset_0_1px_0_rgba(255,255,255,0.22)]">
+          <ServiceIcon name={service.icon} className="h-7 w-7 transition-all duration-300 group-hover:drop-shadow-[0_0_16px_rgba(216,141,248,0.6)]" />
         </div>
 
         {/* Text */}
@@ -65,7 +65,7 @@ function FeatureCard({ service, index, t }: { service: typeof SERVICE_KEYS[0]; i
         </div>
 
         {/* Glow halos */}
-        <span className="pointer-events-none absolute -bottom-[110px] -left-[90px] h-[260px] w-[260px] rounded-full bg-[radial-gradient(circle,rgba(144,198,255,0.15),transparent_60%)] blur-[44px] opacity-30 transition-transform duration-300 group-hover:-translate-y-1" />
+        <span className="pointer-events-none absolute -bottom-[110px] -left-[90px] h-[260px] w-[260px] rounded-full bg-[radial-gradient(circle,rgba(216,141,248,0.15),transparent_60%)] blur-[44px] opacity-30 transition-transform duration-300 group-hover:-translate-y-1" />
         <span className="pointer-events-none absolute -right-[60px] -top-[80px] h-[200px] w-[200px] rounded-full bg-[radial-gradient(circle,rgba(96,170,255,0.12),transparent_60%)] blur-[44px] opacity-30 transition-transform duration-300 group-hover:translate-y-1" />
 
         {/* Shine sweep */}

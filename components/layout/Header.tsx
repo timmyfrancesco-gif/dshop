@@ -148,7 +148,7 @@ export default function Header() {
         </div>
       ) : null}
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
-        <Link href={site.isTenant ? `/s/${site.tenantSlug}` : "/#top"} className="flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight whitespace-nowrap">
+        <Link href={site.isTenant ? `/s/${site.tenantSlug}` : "/#top"} className="nb-brand flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight whitespace-nowrap">
           {site.tenantLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={site.tenantLogo} alt="" className="h-8 w-8 rounded-full" />
@@ -158,7 +158,7 @@ export default function Header() {
           <span>{site.name}</span>
         </Link>
 
-        <nav className="hidden items-center gap-6 lg:flex">
+        <nav className="nb-links hidden items-center gap-6 lg:flex">
           {NAV_KEYS.filter((l) => !site.isTenant || l.tenantVisible).map((link) => {
             const href = site.isTenant && link.href.startsWith("/#")
               ? `/s/${site.tenantSlug}${link.href}`
@@ -167,7 +167,7 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={href}
-                className="text-sm font-medium text-muted transition-colors hover:text-foreground"
+                className="relative text-sm font-medium text-muted transition-colors hover:text-foreground"
               >
                 {t(link.key)}
               </Link>
@@ -175,7 +175,7 @@ export default function Header() {
           })}
         </nav>
 
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="nb-actions hidden items-center gap-3 lg:flex">
           <LocaleSelector />
           <UserMenu />
           <a
