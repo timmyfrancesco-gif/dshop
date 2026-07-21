@@ -21,15 +21,44 @@ const STAT_ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
+/** Splits text into <span> words, each staggered by CSS animation-delay. */
+function RevealWords({
+  text,
+  startDelay = 0,
+  step = 0.045,
+}: {
+  text: string;
+  startDelay?: number;
+  step?: number;
+}) {
+  const words = text.split(" ");
+  return (
+    <>
+      {words.map((word, i) => (
+        <span
+          key={i}
+          className="word-reveal"
+          style={{ animationDelay: `${startDelay + i * step}s` }}
+        >
+          {word}
+          {i < words.length - 1 ? " " : ""}
+        </span>
+      ))}
+    </>
+  );
+}
+
 export default function Hero() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
   const { t } = useLocale();
   const site = useSiteConfig();
 
-  const blobY = useTransform(scrollYProgress, [0, 1], [0, 160]);
   const contentOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const contentY = useTransform(scrollYProgress, [0, 1], [0, 80]);
+
+  const title = site.isTenant ? site.name : t("hero.title");
+  const subtitle = site.isTenant && site.tagline ? site.tagline : t("hero.description");
 
   const STATS = [
     { label: t("hero.statRating"), value: "4.9", icon: "star" },
@@ -42,48 +71,44 @@ export default function Hero() {
     <section
       ref={ref}
       id="top"
-      className="relative flex min-h-[95vh] flex-col items-center justify-center overflow-hidden px-4 pt-24 pb-16 text-center sm:px-6 lg:px-8"
+      className="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden px-4 pt-28 pb-16 text-center sm:px-6 lg:px-8"
     >
-      <motion.div
-        style={{ y: blobY }}
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
-        <div className="absolute left-1/2 top-1/4 h-[36rem] w-[36rem] -translate-x-1/2 rounded-full bg-accent/15 blur-[160px]" />
-      </motion.div>
+      <div className="aurora-container" aria-hidden>
+        <div className="aurora-bg" />
+      </div>
+      <div className="hero-overlay pointer-events-none absolute inset-0 z-[1]" aria-hidden />
 
-      <motion.div style={{ opacity: contentOpacity, y: contentY }} className="flex flex-col items-center">
+      <motion.div style={{ opacity: contentOpacity, y: contentY }} className="relative z-10 flex flex-col items-center">
         <motion.span
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent-soft px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.3em] text-accent"
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium tracking-wide text-foreground/70 backdrop-blur-xl"
         >
+          <svg viewBox="0 0 13 15" className="h-3.5 w-3.5 text-accent" fill="none" aria-hidden>
+            <path d="M6.5 0.5L0.5 3V7.5C0.5 10.985 3.089 14.244 6.5 14.5C9.911 14.244 12.5 10.985 12.5 7.5V3L6.5 0.5Z" fill="currentColor" fillOpacity="0.15" stroke="currentColor" strokeWidth="0.9" strokeLinejoin="round" />
+            <path d="M4 7.5L5.8 9.3L9 6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
           {site.isTenant ? "Digital Shop" : t("hero.badge")}
         </motion.span>
 
         <motion.h1
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-balance text-6xl font-black uppercase tracking-tight sm:text-8xl lg:text-9xl"
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-balance text-5xl font-black uppercase tracking-tight sm:text-7xl lg:text-8xl"
         >
-          <span className="text-gradient-accent">{site.isTenant ? site.name : t("hero.title")}</span>
+          <span className="text-gradient-accent">{title}</span>
         </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="mt-6 max-w-2xl text-balance text-lg text-muted sm:text-xl"
-        >
-          {site.isTenant && site.tagline ? site.tagline : t("hero.description")}
-        </motion.p>
+        <p className="mt-6 max-w-2xl text-balance text-lg text-muted sm:text-xl">
+          <RevealWords text={subtitle} startDelay={0.55} step={0.025} />
+        </p>
 
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
+          transition={{ duration: 0.5, delay: 0.9 }}
           className="mt-10 flex flex-col items-center gap-4 sm:flex-row"
         >
           <Link
@@ -93,7 +118,7 @@ export default function Hero() {
             {t("hero.cta1")}
           </Link>
           {!site.isTenant && (
-            <div className="flex items-center gap-2 rounded-full border border-border bg-background-elevated/60 px-5 py-3 text-sm font-medium text-foreground">
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-medium text-foreground backdrop-blur-xl">
               <span className="flex gap-0.5 text-accent" aria-hidden>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <svg key={i} viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
@@ -110,7 +135,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
+            transition={{ duration: 1, delay: 1.1 }}
             className="mt-16 grid w-full max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4"
           >
             {STATS.map((stat, i) => (
@@ -118,9 +143,9 @@ export default function Hero() {
                 key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 + i * 0.1 }}
+                transition={{ duration: 0.5, delay: 1.15 + i * 0.08 }}
                 whileHover={{ y: -4 }}
-                className="glass-panel rounded-2xl px-4 py-5 text-center transition-colors hover:border-accent/50"
+                className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-5 text-center backdrop-blur-xl transition-colors hover:border-accent/50"
               >
                 <svg
                   viewBox="0 0 24 24"

@@ -70,6 +70,97 @@
   50% { background-position: 100% 50%; }
 }
 
+/* ── Hero aurora background ── */
+.aurora-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  background-color: var(--background);
+  mask-image: radial-gradient(ellipse 140% 100% at 50% 0%, black 0%, black 18%, rgba(0,0,0,0.7) 38%, rgba(0,0,0,0.3) 56%, rgba(0,0,0,0.1) 70%, transparent 82%);
+  -webkit-mask-image: radial-gradient(ellipse 140% 100% at 50% 0%, black 0%, black 18%, rgba(0,0,0,0.7) 38%, rgba(0,0,0,0.3) 56%, rgba(0,0,0,0.1) 70%, transparent 82%);
+  animation: aurora-container-in 2.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.aurora-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  will-change: background-position;
+  transform: translateZ(0);
+  filter: blur(14px);
+  background-image:
+    repeating-linear-gradient(100deg, var(--background) 0%, var(--background) 7%, transparent 10%, transparent 12%, var(--background) 16%),
+    repeating-linear-gradient(100deg, var(--accent) 10%, #c9a3fb 15%, #a8a8b8 20%, var(--casino-from) 25%, #b0bfd0 30%, var(--accent) 36%, #c5d0dc 42%);
+  background-size: 200% 100%, 100% 100%;
+  animation: aurora 28s linear infinite, aurora-fade-in 2s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.aurora-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: inherit;
+  background-size: 100% 100%, 50% 100%;
+  mix-blend-mode: difference;
+  animation: aurora-after 28s linear infinite;
+  will-change: background-position;
+}
+
+.hero-overlay {
+  background:
+    linear-gradient(to right, var(--background) 0%, var(--background) 15%, color-mix(in srgb, var(--background) 85%, transparent) 25%, color-mix(in srgb, var(--background) 50%, transparent) 40%, transparent 55%, color-mix(in srgb, var(--background) 40%, transparent) 65%, color-mix(in srgb, var(--background) 80%, transparent) 80%, var(--background) 90%, var(--background) 100%),
+    linear-gradient(to top, var(--background) 0%, color-mix(in srgb, var(--background) 60%, transparent) 30%, transparent 60%);
+}
+
+@keyframes aurora-container-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes aurora {
+  from { background-position: 0% 0%, 0% 0%; }
+  to { background-position: -100% 0%, -50% 0%; }
+}
+
+@keyframes aurora-after {
+  from { background-position: 0% 0%, 0% 0%; }
+  to { background-position: -50% 0%, -25% 0%; }
+}
+
+@keyframes aurora-fade-in {
+  from { opacity: 0; filter: blur(32px); }
+  to { opacity: 0.5; filter: blur(14px); }
+}
+
+.word-reveal {
+  /* inline, not inline-block -- inline-block breaks background-clip: text
+     (used for the gradient title), causing the text to render invisible. */
+  display: inline;
+  opacity: 0;
+  filter: blur(12px);
+  animation: word-reveal-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes word-reveal-in {
+  to { opacity: 1; filter: blur(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-bg,
+  .aurora-bg::after,
+  .aurora-container {
+    animation: none;
+    opacity: 0.5;
+  }
+  .word-reveal {
+    animation: none;
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
 @keyframes pulse-ring {
   0% { transform: scale(1); opacity: 0.5; }
   50% { transform: scale(1.05); opacity: 0.8; }
