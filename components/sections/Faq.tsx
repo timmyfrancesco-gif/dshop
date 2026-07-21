@@ -36,10 +36,10 @@ export default function Faq() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.5, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                className={`overflow-hidden rounded-2xl border transition-all duration-300 ${
+                className={`group overflow-hidden rounded-2xl border transition-all duration-300 ${
                   isOpen
                     ? "border-accent/30 bg-[color-mix(in_srgb,var(--background-elevated)_90%,transparent)] shadow-[0_0_30px_-10px_var(--accent)]"
-                    : "border-border bg-[color-mix(in_srgb,var(--background-elevated)_60%,transparent)] hover:border-accent/20"
+                    : "border-border bg-[color-mix(in_srgb,var(--background-elevated)_60%,transparent)] hover:-translate-y-0.5 hover:border-accent/20 hover:shadow-[0_8px_28px_-16px_var(--accent)]"
                 }`}
               >
                 <button
@@ -49,8 +49,8 @@ export default function Faq() {
                   className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
                 >
                   <span className="flex items-center gap-3">
-                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-colors ${
-                      isOpen ? "bg-accent text-background" : "bg-accent/10 text-accent"
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold transition-all duration-300 ${
+                      isOpen ? "bg-accent text-background shadow-[0_0_16px_-2px_var(--accent)]" : "bg-accent/10 text-accent group-hover:bg-accent/20"
                     }`}>
                       {i + 1}
                     </span>

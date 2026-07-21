@@ -359,6 +359,75 @@ body {
   to { transform: translateX(120%) rotate(18deg); }
 }
 
+/* ── Ticker pill (chromashop cf-payment-pill style) ── */
+.ticker-pill {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  transition: border-color 0.25s ease, background-color 0.25s ease, transform 0.25s ease;
+}
+.ticker-pill:hover {
+  border-color: rgba(216, 141, 248, 0.28);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+.marquee-pausable:hover {
+  animation-play-state: paused;
+}
+
+/* ── Footer top glow line (shimmer) ── */
+.footer-glow-line {
+  position: relative;
+  height: 1px;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+.footer-glow-line::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: footer-glow-sweep 6s ease-in-out infinite;
+  opacity: 0.7;
+}
+@keyframes footer-glow-sweep {
+  0% { transform: translateX(-120%); }
+  50% { transform: translateX(280%); }
+  100% { transform: translateX(280%); }
+}
+
+/* ── Card shine sweep on hover (reusable, mirrors .feature-card shine) ── */
+.shine-card {
+  position: relative;
+  overflow: hidden;
+}
+.shine-card .shine-sweep {
+  pointer-events: none;
+  position: absolute;
+  inset: -20%;
+  transform: translateX(-120%) rotate(18deg);
+  background: linear-gradient(90deg, transparent 0 38%, rgba(255, 255, 255, 0.12) 52%, transparent 70%);
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+.shine-card:hover .shine-sweep {
+  animation: shine-move 2.2s cubic-bezier(0.22, 1, 0.24, 1);
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-glow-line::before {
+    animation: none;
+    opacity: 0.35;
+    transform: none;
+  }
+  .shine-card .shine-sweep {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
+
 .footer-link {
   position: relative;
   transition: color 0.25s ease;

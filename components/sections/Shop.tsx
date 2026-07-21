@@ -111,10 +111,12 @@ export default function Shop() {
             description={t("shop.description")}
           />
 
-          <button
+          <motion.button
             type="button"
             onClick={() => setCartOpen(true)}
-            className="relative flex shrink-0 items-center gap-2 self-start rounded-full border border-border bg-background/60 px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-accent hover:text-accent sm:self-auto"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="relative flex shrink-0 items-center gap-2 self-start rounded-full border border-border bg-background/60 px-4 py-2.5 text-sm font-semibold text-foreground transition-all duration-300 hover:border-accent hover:text-accent hover:shadow-[0_0_24px_-8px_var(--accent)] sm:self-auto"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
               <path
@@ -129,20 +131,26 @@ export default function Shop() {
                 {cart.count}
               </span>
             ) : null}
-          </button>
+          </motion.button>
         </div>
 
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
           <div className="flex flex-wrap gap-2">
             {categories.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setCategory(c)}
-                className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors ${
+                className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition-all duration-300 ${
                   category === c
-                    ? "border-accent bg-accent text-background"
-                    : "border-border bg-background/60 text-muted hover:border-accent/50 hover:text-foreground"
+                    ? "border-accent bg-accent text-background shadow-[0_0_20px_-6px_var(--accent)]"
+                    : "border-border bg-background/60 text-muted hover:border-accent/50 hover:text-foreground hover:shadow-[0_0_16px_-8px_var(--accent)]"
                 }`}
               >
                 {c}
@@ -183,7 +191,7 @@ export default function Shop() {
               ))}
             </select>
           </div>
-        </div>
+        </motion.div>
 
         {!loaded ? (
           <p className="mt-14 text-center text-sm text-muted">{t("shop.loadingProducts")}</p>
@@ -220,12 +228,13 @@ export default function Shop() {
                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
                   viewport={{ once: true, margin: "-60px" }}
                   transition={{ duration: 0.6, delay: (i % 4) * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                  className={`group relative flex flex-col overflow-hidden bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] transition-all duration-300 hover:shadow-[0_8px_40px_-12px_var(--accent)] ${
+                  className={`group shine-card relative flex flex-col overflow-hidden bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_40px_-12px_var(--accent)] ${
                     isBestSeller
                       ? "rounded-[calc(1rem-1px)] border-0"
                       : "rounded-2xl border border-border/60 hover:border-accent/30"
                   }`}
                 >
+                  <span className="shine-sweep" aria-hidden />
                   <Link
                     href={site.isTenant ? `/s/${site.tenantSlug}/products/${item.id}` : `/products/${item.id}`}
                     className="relative aspect-[4/3] w-full overflow-hidden bg-background-elevated"

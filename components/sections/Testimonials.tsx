@@ -36,9 +36,18 @@ export default function Testimonials() {
               whileInView={{ opacity: 1, y: 0, scale: 1 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: (i % 4) * 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="mb-6 break-inside-avoid group gradient-border overflow-hidden rounded-2xl bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] p-6 transition-all duration-300"
+              className="mb-6 break-inside-avoid group shine-card gradient-border relative overflow-hidden rounded-2xl bg-[color-mix(in_srgb,var(--background-elevated)_80%,transparent)] p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_40px_-16px_var(--accent)]"
             >
-              <div className="mb-3 flex gap-1" aria-hidden>
+              <span className="shine-sweep" aria-hidden />
+              <svg
+                viewBox="0 0 24 24"
+                className="pointer-events-none absolute -right-2 -top-2 h-16 w-16 text-accent/[0.06]"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path d="M7.17 6C4.87 8.06 3.5 10.6 3.5 13.4c0 3.35 2.31 5.6 5.05 5.6a4.1 4.1 0 004.2-4.12c0-2.26-1.6-3.9-3.7-3.9-.4 0-.77.05-.9.1.35-2.14 2.16-4.28 4.26-5.55L7.17 6zm10 0c-2.3 2.06-3.67 4.6-3.67 7.4 0 3.35 2.31 5.6 5.05 5.6a4.1 4.1 0 004.2-4.12c0-2.26-1.6-3.9-3.7-3.9-.4 0-.77.05-.9.1.35-2.14 2.16-4.28 4.26-5.55L17.17 6z" />
+              </svg>
+              <div className="relative mb-3 flex gap-1" aria-hidden>
                 {Array.from({ length: 5 }).map((_, starIndex) => (
                   <motion.svg
                     key={starIndex}

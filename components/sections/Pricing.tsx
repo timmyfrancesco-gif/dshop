@@ -48,16 +48,17 @@ export default function Pricing() {
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ duration: 0.6, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
-                className={`group relative flex flex-col overflow-hidden rounded-2xl p-[1px] transition-all duration-300 ${
+                className={`group shine-card relative flex flex-col overflow-hidden rounded-2xl p-[1px] transition-all duration-300 hover:-translate-y-1 ${
                   isFeatured
-                    ? "bg-gradient-to-br from-accent via-casino-from to-casino-to shadow-[0_0_40px_-10px_var(--accent)]"
+                    ? "bg-gradient-to-br from-accent via-casino-from to-casino-to shadow-[0_0_40px_-10px_var(--accent)] hover:shadow-[0_0_56px_-10px_var(--accent)]"
                     : "bg-border hover:bg-gradient-to-br hover:from-accent/50 hover:via-casino-from/50 hover:to-accent/50"
                 }`}
               >
+                <span className="shine-sweep" aria-hidden />
                 <div className="flex flex-1 flex-col rounded-[calc(1rem-1px)] bg-background p-7">
                   {isFeatured ? (
                     <span className="mb-4 inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-accent to-casino-from px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg">
-                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3 animate-glow-pulse">
                         <path d="M10 1.5l3 5.5h6l-4.5 4 1.5 6-5-3.5-5 3.5 1.5-6L3 7h6l1-5.5z" />
                       </svg>
                       {t("pricing.mostVisibility")}

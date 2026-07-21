@@ -57,15 +57,17 @@ export default function CtaSection() {
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="group relative rounded-full bg-accent px-10 py-3.5 text-base font-bold text-background shadow-[0_0_40px_-8px_var(--accent)] transition-shadow hover:shadow-[0_0_60px_-8px_var(--accent)]"
+                  className="shine-card group relative overflow-hidden rounded-full bg-accent px-10 py-3.5 text-base font-bold text-background shadow-[0_0_40px_-8px_var(--accent)] transition-shadow hover:shadow-[0_0_60px_-8px_var(--accent)]"
                 >
+                  <span className="shine-sweep" aria-hidden />
                   <span className="relative z-10">{t("cta.joinDiscord")}</span>
                 </motion.a>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     href="/#shop"
-                    className="inline-block rounded-full border border-border bg-background-elevated/60 px-10 py-3.5 text-base font-bold text-foreground transition-all hover:border-accent hover:text-accent hover:shadow-[0_0_30px_-10px_var(--accent)]"
+                    className="shine-card group relative inline-block overflow-hidden rounded-full border border-border bg-background-elevated/60 px-10 py-3.5 text-base font-bold text-foreground transition-all hover:border-accent hover:text-accent hover:shadow-[0_0_30px_-10px_var(--accent)]"
                   >
+                    <span className="shine-sweep" aria-hidden />
                     {t("cta.visitShop")}
                   </Link>
                 </motion.div>

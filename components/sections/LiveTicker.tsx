@@ -8,7 +8,7 @@ function TickerItem({ coin }: { coin: CoinPrice }) {
   const isUp = (coin.changePct ?? 0) >= 0;
 
   return (
-    <div className="flex shrink-0 items-center gap-3 px-6 py-3">
+    <div className="ticker-pill flex shrink-0 items-center gap-3 rounded-full px-5 py-2">
       <span className="text-sm font-bold tracking-wide text-foreground">
         {coin.symbol}
       </span>
@@ -36,10 +36,10 @@ export default function LiveTicker() {
   const loop = [...prices, ...prices];
 
   return (
-    <div className="relative w-full overflow-hidden border-y border-border/60 bg-background-elevated/40 py-1">
+    <div className="relative w-full overflow-hidden border-y border-border/60 bg-background-elevated/40 py-2.5">
       <div className="absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent" />
       <div className="absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent" />
-      <div className="flex w-max animate-marquee divide-x divide-border/60">
+      <div className="flex w-max animate-marquee marquee-pausable gap-3 px-3">
         {loop.map((coin, i) => (
           <TickerItem key={`${coin.symbol}-${i}`} coin={coin} />
         ))}
