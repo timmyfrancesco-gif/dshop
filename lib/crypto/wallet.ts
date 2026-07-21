@@ -177,7 +177,7 @@ export async function getLtcPriceEur(): Promise<number | null> {
 // same address) don't each burn a separate BlockCypher call — this is the
 // single biggest source of avoidable rate-limit pressure under load.
 const receivedCache = new Map<string, { value: { receivedLtc: number; confirmations: number; unconfirmedLtc: number }; exp: number }>();
-const RECEIVED_CACHE_MS = 8000;
+const RECEIVED_CACHE_MS = 15000;
 
 /**
  * Total amount (in LTC) ever received by an address, the highest

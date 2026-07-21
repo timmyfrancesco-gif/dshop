@@ -7,7 +7,10 @@ import { useLocale } from "@/lib/hooks/useLocale";
 import { useQrCode } from "@/lib/hooks/useQrCode";
 import type { ProductOrderResponse, ProductOrderStatusResponse } from "@/lib/types";
 
-const POLL_INTERVAL_MS = 5000;
+// 10s, not 5s -- this polls for as long as the checkout tab stays open (no
+// backoff, no max attempts), and each poll can cost a real BlockCypher call
+// on a cache miss. Halving the frequency directly halves that pressure.
+const POLL_INTERVAL_MS = 10000;
 
 interface LtcPaymentProps {
   order: ProductOrderResponse;
