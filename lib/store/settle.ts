@@ -115,16 +115,28 @@ export async function settleStoreOrder(orderId: string): Promise<SettleResult | 
   }
 
   const received = await getAddressReceived("ltc", order.ltcAddress);
-  if (!received) return { status: "pending" };
-
-  const requiredConfirmations = requiredConfirmationsForAmount(order.amountEur);
-  const effectiveReceivedLtc = received.receivedLtc;
-  const required = order.amountLtc * (1 - AMOUNT_TOLERANCE);
-  if (effectiveReceivedLtc < required || received.confirmations < requiredConfirmations) {
-    return { status: "pending", confirmations: received.confirmations, requiredConfirmations };
+  if (!received) {
+    console.error(`[settle] getAddressReceived returned null for order ${orderId} (address lookup failed)`);
+    return { status: "pending" };
   }
 
-  // Payment confirmed (or seen, for 0-conf orders). Exclusively claim this
+  const requiredConfirmations = requiredConfirmationsForAmount(order.amountEur);
+  const required = order.amountLtc * (1 - AMOUNT_TOLERANCE);
+  const confirmedEnough = received.receivedLtc >= required && received.confirmations >= requiredConfirmations;
+  if (!confirmedEnough) {
+    // Still needs to settle -- but if we can already see the payment on-chain
+    // (mempool or under-confirmed), tell the client so it can show "detected,
+    // waiting for confirmation" instead of the plain "waiting for payment"
+    // screen, rather than looking like nothing happened until full settlement.
+    const detected = received.receivedLtc + received.unconfirmedLtc >= required;
+    return {
+      status: detected ? "confirming" : "pending",
+      confirmations: received.confirmations,
+      requiredConfirmations,
+    };
+  }
+
+  // Payment fully confirmed. Exclusively claim this
   // order before touching stock — stops a concurrent webhook+poll pair from
   // both consuming a stock item for the same single payment.
   const claimed = await db

@@ -201,6 +201,7 @@ export async function getAddressReceived(
     );
     if (!res.ok) {
       if (res.status === 429) console.error("[getAddressReceived] BlockCypher rate limited (both tokens)");
+      else console.error(`[getAddressReceived] BlockCypher returned ${res.status} for ${address}`);
       return null;
     }
     const data = await res.json();
@@ -222,7 +223,8 @@ export async function getAddressReceived(
     receivedCache.set(cacheKey, { value, exp: Date.now() + RECEIVED_CACHE_MS });
     if (receivedCache.size > 2000) receivedCache.clear();
     return value;
-  } catch {
+  } catch (e) {
+    console.error(`[getAddressReceived] lookup threw for ${address}:`, e instanceof Error ? e.message : e);
     return null;
   }
 }
