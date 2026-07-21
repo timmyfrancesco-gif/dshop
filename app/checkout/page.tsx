@@ -35,6 +35,17 @@ interface FinishedData {
   ts: number;
 }
 
+/** True only for an actual reload of this document (F5/refresh) -- false for
+ * link navigation, back/forward, or a fresh tab, which is exactly the
+ * distinction an in-progress checkout should be resumable across. */
+function isReloadNavigation(): boolean {
+  try {
+    const [nav] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+    if (nav) return nav.type === "reload";
+  } catch {}
+  return false;
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // v2: keyed by the full cart/variant/quantity signature, not just productId --
 // v1 let switching variant or quantity on the same product silently reuse a
@@ -209,11 +220,18 @@ function CheckoutContent() {
   }, [buyNowProduct, buyNowVariant, qty, cart.lines]);
 
   // Restore order or finished state from sessionStorage on mount -- ONLY if
-  // it matches exactly what's currently being bought (same checkoutKey).
-  // Never fall back to "no key to compare" reuse; that's what let an old
-  // order/price/address leak into an unrelated purchase.
+  // it matches exactly what's currently being bought (same checkoutKey) AND
+  // this page load is an actual reload of the checkout page. Navigating away
+  // and back (a new link click, back/forward, a new tab, closing the site)
+  // must always start a brand-new order -- only pressing reload/refresh on
+  // this exact page is allowed to resume the one already in progress.
   useEffect(() => {
     if (!loaded) return;
+    if (!isReloadNavigation()) {
+      sessionStorage.removeItem(ORDER_STORAGE_KEY);
+      sessionStorage.removeItem(FINISHED_STORAGE_KEY);
+      return;
+    }
     try {
       const finishedRaw = sessionStorage.getItem(FINISHED_STORAGE_KEY);
       if (finishedRaw) {
