@@ -175,6 +175,18 @@ export async function runMigrations() {
     await client.query(`
       CREATE INDEX IF NOT EXISTS store_orders_status_idx ON store_orders (status, created_at)
     `);
+    // One on-chain payment can only ever settle one order. Fallback-address
+    // orders are attributed by a buyer-submitted txid through an endpoint that
+    // is necessarily unauthenticated, so the application-level duplicate check
+    // alone loses the race when the same txid is submitted for two orders at
+    // once: neither is 'paid' yet, both pass, both claim stock. This index is
+    // what actually makes that impossible.
+    // Partial (WHERE tx_hash IS NOT NULL) so the many unpaid orders with a
+    // NULL tx_hash don't collide with each other.
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS store_orders_tx_hash_idx
+        ON store_orders (tx_hash) WHERE tx_hash IS NOT NULL
+    `);
     try { await client.query(`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS refund_address TEXT`); } catch {}
     try { await client.query(`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS refund_tx_hash TEXT`); } catch {}
     try { await client.query(`ALTER TABLE store_orders ADD COLUMN IF NOT EXISTS fallback_baseline_ltc REAL`); } catch {}

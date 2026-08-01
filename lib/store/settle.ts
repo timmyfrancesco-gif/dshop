@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { storeOrders } from "@/lib/db/schema";
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, lt, ne } from "drizzle-orm";
 import { getAddressReceived, getTxDetails, FALLBACK_LTC_ADDRESS } from "@/lib/crypto/wallet";
 import { decryptSecret } from "@/lib/crypto/secrets";
 import { getPayerAddress, sendFromTempWallet } from "@/lib/crypto/ltcSend";
@@ -25,6 +25,14 @@ const SWEEP_FEE_SATOSHI = 50_000; // 0.0005 LTC
 // Where confirmed store-order payments are swept to once marked paid.
 // Public receiving address, not a secret -- safe as a literal fallback.
 const SWEEP_LTC_ADDRESS = process.env.STORE_SWEEP_LTC_ADDRESS || "LfKPg2Vuuu6aTYuWCXNcQG2pCDMreee8VE"
+
+/**
+ * True for a Postgres unique-constraint violation (SQLSTATE 23505), which is
+ * how the DB reports "this txid is already attached to another order".
+ */
+function isUniqueViolation(e: unknown): boolean {
+  return typeof e === "object" && e !== null && (e as { code?: string }).code === "23505";
+}
 
 export interface SettleResult {
   status: string;
@@ -222,10 +230,14 @@ export async function confirmFallbackPayment(orderId: string, txHash: string): P
 
   // A given txid can only ever settle one order — stops the same payment
   // being submitted for multiple orders sharing the fallback address.
+  // Matches on ANY order that has already taken this txid, not just 'paid'
+  // ones: an order sitting in 'settling' (or parked in oversold_manual_refund)
+  // has already consumed that payment, and only comparing against 'paid' left
+  // a window where the same txid could be claimed a second time.
   const [dupe] = await db
     .select({ id: storeOrders.id })
     .from(storeOrders)
-    .where(and(eq(storeOrders.txHash, trimmedHash), eq(storeOrders.status, "paid")))
+    .where(and(eq(storeOrders.txHash, trimmedHash), ne(storeOrders.id, orderId)))
     .limit(1);
   if (dupe) return { status: "pending", error: "This transaction ID was already used for a different order" };
 
@@ -253,12 +265,25 @@ export async function confirmFallbackPayment(orderId: string, txHash: string): P
   }
 
   // Exclusively claim this order before touching stock, same as the
-  // per-order-wallet path.
-  const claimed = await db
-    .update(storeOrders)
-    .set({ status: "settling", confirmations: tx.confirmations, txHash: trimmedHash, updatedAt: new Date() })
-    .where(and(eq(storeOrders.id, orderId), eq(storeOrders.status, "pending")))
-    .returning({ id: storeOrders.id });
+  // per-order-wallet path. Writing txHash here is also what enforces
+  // "one payment settles one order": store_orders_tx_hash_idx is a partial
+  // UNIQUE index, so if a concurrent request for a DIFFERENT order already
+  // claimed this same txid, this UPDATE fails with a unique violation instead
+  // of both orders going on to consume a stock item for a single payment.
+  // The read-then-check above cannot cover that race on its own.
+  let claimed: { id: string }[];
+  try {
+    claimed = await db
+      .update(storeOrders)
+      .set({ status: "settling", confirmations: tx.confirmations, txHash: trimmedHash, updatedAt: new Date() })
+      .where(and(eq(storeOrders.id, orderId), eq(storeOrders.status, "pending")))
+      .returning({ id: storeOrders.id });
+  } catch (e) {
+    if (isUniqueViolation(e)) {
+      return { status: "pending", error: "This transaction ID was already used for a different order" };
+    }
+    throw e;
+  }
 
   if (claimed.length === 0) {
     const [fresh] = await db.select().from(storeOrders).where(eq(storeOrders.id, orderId)).limit(1);

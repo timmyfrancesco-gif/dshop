@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   pgTable,
   text,
@@ -165,33 +166,48 @@ export const storeStockItems = pgTable(
 // for a low-stock product concurrently. Whichever payments are CONFIRMED
 // first atomically claim a real stock item (see consumeOne); anyone whose
 // payment clears after the stock is gone gets auto-refunded on-chain.
-export const storeOrders = pgTable("store_orders", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  productId: uuid("product_id")
-    .notNull()
-    .references(() => storeProducts.id),
-  buyerEmail: text("buyer_email").notNull(),
-  amountEur: real("amount_eur").notNull(),
-  amountLtc: real("amount_ltc"),
-  ltcAddress: text("ltc_address"),
-  payPrivateKey: text("pay_private_key"), // AES-256-GCM encrypted, null for fallback-address orders
-  // pending | paid | expired | oversold_refunding | refunded | refund_failed
-  // | oversold_manual_refund (fallback-address orders — no key to auto-refund)
-  status: text("status").default("pending").notNull(),
-  deliveredItem: text("delivered_item"),
-  txHash: text("tx_hash"),
-  confirmations: integer("confirmations").default(0),
-  // Snapshot of the shared fallback address's total+unconfirmed received LTC
-  // at order creation time, used to detect new activity before asking the
-  // buyer to confirm which payment (via txid) was theirs. Null for orders
-  // with their own generated wallet.
-  fallbackBaselineLtc: real("fallback_baseline_ltc"),
-  // Populated only when the order is oversold and must be refunded.
-  refundAddress: text("refund_address"),
-  refundTxHash: text("refund_tx_hash"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const storeOrders = pgTable(
+  "store_orders",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => storeProducts.id),
+    buyerEmail: text("buyer_email").notNull(),
+    amountEur: real("amount_eur").notNull(),
+    amountLtc: real("amount_ltc"),
+    ltcAddress: text("ltc_address"),
+    payPrivateKey: text("pay_private_key"), // AES-256-GCM encrypted, null for fallback-address orders
+    // pending | paid | expired | oversold_refunding | refunded | refund_failed
+    // | oversold_manual_refund (fallback-address orders — no key to auto-refund)
+    status: text("status").default("pending").notNull(),
+    deliveredItem: text("delivered_item"),
+    txHash: text("tx_hash"),
+    confirmations: integer("confirmations").default(0),
+    // Snapshot of the shared fallback address's total+unconfirmed received LTC
+    // at order creation time, used to detect new activity before asking the
+    // buyer to confirm which payment (via txid) was theirs. Null for orders
+    // with their own generated wallet.
+    fallbackBaselineLtc: real("fallback_baseline_ltc"),
+    // Populated only when the order is oversold and must be refunded.
+    refundAddress: text("refund_address"),
+    refundTxHash: text("refund_tx_hash"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  // One on-chain payment can only ever settle one order. Orders on the shared
+  // fallback address are attributed by a buyer-submitted txid, and that
+  // endpoint is necessarily unauthenticated — without this constraint two
+  // concurrent submissions of the SAME txid for two different orders both
+  // pass the application-level duplicate check (neither is 'paid' yet) and
+  // both claim stock, delivering N items for a single payment.
+  // Partial, so the many unpaid orders with a NULL tx_hash don't collide.
+  (t) => [
+    uniqueIndex("store_orders_tx_hash_idx")
+      .on(t.txHash)
+      .where(sql`${t.txHash} IS NOT NULL`),
+  ]
+);
 
 // ── Main site storefront config (single row) ───────────────────────
 export const siteConfig = pgTable("site_config", {

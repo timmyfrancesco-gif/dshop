@@ -5,14 +5,11 @@ import { eq } from "drizzle-orm";
 import { generateWalletVerbose, getLtcPriceEur, getAddressReceived, FALLBACK_LTC_ADDRESS } from "@/lib/crypto/wallet";
 import { encryptSecret } from "@/lib/crypto/secrets";
 import { availableCount } from "@/lib/store/inventory";
+import { orderWebhookToken } from "@/lib/store/webhookToken";
 import { serverError } from "@/lib/http";
 import { bcFetch, hasBlockCypherToken } from "@/lib/crypto/blockcypher";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function webhookSecret(): string {
-  return process.env.STORE_WEBHOOK_SECRET || process.env.BOT_API_SECRET || process.env.PLATFORM_SECRET || "";
-}
 
 function baseUrl(): string {
   const d = process.env.NEXT_PUBLIC_BASE_DOMAIN ?? "";
@@ -22,10 +19,13 @@ function baseUrl(): string {
 
 async function registerOrderWebhook(address: string, orderId: string) {
   const base = baseUrl();
-  const secret = webhookSecret();
-  if (!hasBlockCypherToken() || !base || !secret) return;
+  // Per-order HMAC, never the raw shared secret: this URL is handed to
+  // BlockCypher and persists in their systems and logs, and the shared secret
+  // also unlocks /api/platform/pending-orders (decrypted private keys).
+  const token = orderWebhookToken(orderId);
+  if (!hasBlockCypherToken() || !base || !token) return;
   try {
-    const cb = `${base}/api/store/orders/webhook?s=${encodeURIComponent(secret)}&order=${encodeURIComponent(orderId)}`;
+    const cb = `${base}/api/store/orders/webhook?s=${encodeURIComponent(token)}&order=${encodeURIComponent(orderId)}`;
     await bcFetch(`https://api.blockcypher.com/v1/ltc/main/hooks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
