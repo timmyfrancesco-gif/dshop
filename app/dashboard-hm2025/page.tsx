@@ -4162,6 +4162,15 @@ function VerifyView() {
   const [addStatus, setAddStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [addError, setAddError] = useState("");
 
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkGuild, setBulkGuild] = useState("");
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ processed: 0, total: 0, ok: 0, failed: 0 });
+  const [bulkFailures, setBulkFailures] = useState<{ discordUserId: string; error?: string }[]>([]);
+  const [bulkDone, setBulkDone] = useState(false);
+  const bulkCancelRef = useRef(false);
+
   const usersUrl = useCallback(
     (offset: number) =>
       `/api/admin/verify/users?limit=${VERIFY_PAGE_SIZE}&offset=${offset}${guildFilter ? `&guild=${guildFilter}` : ""}${search ? `&search=${encodeURIComponent(search)}` : ""}`,
@@ -4234,6 +4243,51 @@ function VerifyView() {
     setAddError("");
   }
 
+  async function runBulkAddToGuild() {
+    if (!bulkGuild.trim()) return;
+    bulkCancelRef.current = false;
+    setBulkRunning(true);
+    setBulkDone(false);
+    setBulkProgress({ processed: 0, total: 0, ok: 0, failed: 0 });
+    setBulkFailures([]);
+
+    let offset = 0;
+    let done = false;
+    try {
+      while (!done && !bulkCancelRef.current) {
+        const res = await fetch("/api/admin/verify/bulk-add-to-guild", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ guildId: bulkGuild.trim(), offset }),
+        });
+        if (!res.ok) break;
+        const data = await res.json();
+        offset = data.nextOffset;
+        done = data.done;
+        const results = (data.results ?? []) as { discordUserId: string; ok: boolean; error?: string }[];
+        setBulkProgress((prev) => ({
+          processed: data.processed,
+          total: data.total,
+          ok: prev.ok + results.filter((r) => r.ok).length,
+          failed: prev.failed + results.filter((r) => !r.ok).length,
+        }));
+        setBulkFailures((prev) => [...prev, ...results.filter((r) => !r.ok)]);
+      }
+    } finally {
+      setBulkRunning(false);
+      setBulkDone(true);
+    }
+  }
+
+  function closeBulk() {
+    if (bulkRunning) bulkCancelRef.current = true;
+    setBulkOpen(false);
+    setBulkGuild("");
+    setBulkConfirm(false);
+    setBulkDone(false);
+    setBulkFailures([]);
+  }
+
   return (
     <div className="space-y-5">
       <ViewHeader
@@ -4268,6 +4322,40 @@ function VerifyView() {
               <div className="mt-1 text-xs text-zinc-500">{s.label}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Servers the bot has been used in (every distinct guild a verification
+          happened in — the bot doesn't expose a live "guilds I'm in" list to
+          the site, so this is the closest available signal), plus a tool to
+          re-add every previously-verified member to one of them. */}
+      {stats && stats.guilds.length > 0 && (
+        <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold text-white">Servers seen ({stats.guilds.length})</h4>
+              <p className="mt-0.5 text-xs text-zinc-500">
+                Every server a verification has happened in — the closest thing to a "where is the bot" list available here.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setBulkOpen(true)}
+              className="rounded-lg bg-[#D88DF8] px-4 py-2 text-xs font-semibold text-black"
+            >
+              ↺ Bulk re-add members to a server
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {stats.guilds.map((g) => (
+              <span
+                key={g.guildId}
+                className="rounded-md border border-white/10 px-2.5 py-1.5 font-mono text-xs text-zinc-300"
+              >
+                {g.guildId} <span className="text-zinc-500">· {g.count} verified</span>
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
@@ -4427,6 +4515,160 @@ function VerifyView() {
                   >
                     {addStatus === "loading" ? "Adding…" : "Add"}
                   </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {bulkOpen && (
+        <div
+          onClick={() => !bulkRunning && closeBulk()}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-2xl border border-white/10 p-8"
+            style={{ backgroundColor: "#111" }}
+          >
+            {!bulkConfirm && !bulkRunning && !bulkDone && (
+              <>
+                <h2 className="mb-1.5 text-base font-bold text-white">Bulk re-add members</h2>
+                <p className="mb-4 text-xs text-zinc-500">
+                  Re-adds every previously-verified member ({stats?.uniqueUsers ?? 0} people) to the server below,
+                  using each person&apos;s stored verification. This calls Discord for every single one of them —
+                  it can take a while and it will re-invite everyone at once, so double-check the Guild ID.
+                </p>
+                <input
+                  value={bulkGuild}
+                  onChange={(e) => setBulkGuild(e.target.value)}
+                  placeholder="Target Guild ID (e.g. 123456789012345678)"
+                  className="w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white outline-none"
+                  style={{ backgroundColor: "#0a0a0a" }}
+                />
+                {stats && stats.guilds.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {stats.guilds.map((g) => (
+                      <button
+                        key={g.guildId}
+                        type="button"
+                        onClick={() => setBulkGuild(g.guildId)}
+                        className="rounded-md border border-white/10 px-2 py-1 font-mono text-[11px] text-zinc-400 hover:border-[#D88DF8]/40 hover:text-white"
+                      >
+                        {g.guildId}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-5 flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={closeBulk}
+                    className="flex-1 rounded-lg border border-white/10 py-2.5 text-sm text-zinc-400"
+                    style={{ backgroundColor: "#1a1a1a" }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBulkConfirm(true)}
+                    disabled={!bulkGuild.trim()}
+                    className="flex-1 rounded-lg bg-[#5865F2] py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </>
+            )}
+
+            {bulkConfirm && !bulkRunning && !bulkDone && (
+              <>
+                <div className="mb-4 text-4xl">⚠️</div>
+                <h2 className="mb-2 text-base font-bold text-white">Are you sure?</h2>
+                <p className="mb-5 text-sm text-zinc-400">
+                  This will attempt to add all {stats?.uniqueUsers ?? 0} verified members to server{" "}
+                  <span className="font-mono text-white">{bulkGuild.trim()}</span>. This action cannot be undone —
+                  members who don&apos;t want to be there will need to leave manually.
+                </p>
+                <div className="flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setBulkConfirm(false)}
+                    className="flex-1 rounded-lg border border-white/10 py-2.5 text-sm text-zinc-400"
+                    style={{ backgroundColor: "#1a1a1a" }}
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={runBulkAddToGuild}
+                    className="flex-1 rounded-lg bg-rose-600 py-2.5 text-sm font-bold text-white"
+                  >
+                    Yes, add everyone
+                  </button>
+                </div>
+              </>
+            )}
+
+            {(bulkRunning || bulkDone) && (
+              <>
+                <h2 className="mb-1.5 text-base font-bold text-white">
+                  {bulkRunning ? "Adding members…" : "Done"}
+                </h2>
+                <p className="mb-4 text-xs text-zinc-500">
+                  {bulkProgress.processed} / {bulkProgress.total || "?"} processed
+                </p>
+                <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
+                  <div
+                    className="h-full bg-[#D88DF8] transition-all"
+                    style={{
+                      width: bulkProgress.total
+                        ? `${Math.min(100, (bulkProgress.processed / bulkProgress.total) * 100)}%`
+                        : "0%",
+                    }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-center">
+                    <div className="text-xl font-bold text-emerald-400">{bulkProgress.ok}</div>
+                    <div className="text-[11px] text-zinc-500">added</div>
+                  </div>
+                  <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-3 text-center">
+                    <div className="text-xl font-bold text-rose-400">{bulkProgress.failed}</div>
+                    <div className="text-[11px] text-zinc-500">failed</div>
+                  </div>
+                </div>
+                {bulkFailures.length > 0 && (
+                  <div className="mt-4 max-h-40 overflow-y-auto rounded-lg border border-white/5 p-2">
+                    {bulkFailures.map((f, i) => (
+                      <div key={`${f.discordUserId}-${i}`} className="flex justify-between gap-2 py-1 text-[11px]">
+                        <span className="font-mono text-zinc-400">{f.discordUserId}</span>
+                        <span className="text-right text-rose-400">{f.error ?? "failed"}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-5 flex gap-2.5">
+                  {bulkRunning && (
+                    <button
+                      type="button"
+                      onClick={() => { bulkCancelRef.current = true; }}
+                      className="flex-1 rounded-lg border border-white/10 py-2.5 text-sm text-zinc-400"
+                      style={{ backgroundColor: "#1a1a1a" }}
+                    >
+                      Stop
+                    </button>
+                  )}
+                  {bulkDone && (
+                    <button
+                      type="button"
+                      onClick={closeBulk}
+                      className="flex-1 rounded-lg bg-[#5865F2] py-2.5 text-sm font-bold text-white"
+                    >
+                      Close
+                    </button>
+                  )}
                 </div>
               </>
             )}
