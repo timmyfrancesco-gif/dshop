@@ -4138,6 +4138,21 @@ interface VerifyStats {
   uniqueGuilds: number;
   guilds: { guildId: string; count: number }[];
 }
+interface RecoveryReport {
+  encryptionEnabled: boolean;
+  uniqueUsers: number;
+  recoverable: number;
+  atRisk: number;
+  breakdown: {
+    refreshable: number;
+    accessOnlyValid: number;
+    accessOnlyExpired: number;
+    undecryptable: number;
+    noToken: number;
+  };
+  oldestVerification: string | null;
+  newestVerification: string | null;
+}
 
 function verifyAvatarUrl(userId: string, avatar: string | null) {
   if (!avatar) return `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(userId) >> BigInt(22)) % 6}.png`;
@@ -4170,6 +4185,19 @@ function VerifyView() {
   const [bulkFailures, setBulkFailures] = useState<{ discordUserId: string; error?: string }[]>([]);
   const [bulkDone, setBulkDone] = useState(false);
   const bulkCancelRef = useRef(false);
+
+  const [recovery, setRecovery] = useState<RecoveryReport | null>(null);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+
+  async function loadRecoveryReport() {
+    setRecoveryLoading(true);
+    try {
+      const res = await fetch("/api/admin/verify/recovery-report");
+      if (res.ok) setRecovery(await res.json());
+    } finally {
+      setRecoveryLoading(false);
+    }
+  }
 
   const usersUrl = useCallback(
     (offset: number) =>
@@ -4324,6 +4352,81 @@ function VerifyView() {
           ))}
         </div>
       )}
+
+      {/* Readiness check to run before anything irreversible (deleting the
+          Discord server, moving the database, rotating WALLET_ENC_KEY). The
+          stored OAuth grants — not the server itself — are what make these
+          members re-addable later. */}
+      <div className="rounded-xl border border-white/5 p-5" style={{ backgroundColor: "#121214" }}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h4 className="text-sm font-semibold text-white">Recovery readiness</h4>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              Can these members still be re-added to a new server? Checks stored grants only — makes no Discord calls.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <a
+              href="/api/admin/verify/export"
+              className="rounded-lg border border-white/10 px-4 py-2 text-xs text-zinc-300 hover:border-[#D88DF8]/40"
+            >
+              ⭳ Download backup
+            </a>
+            <button
+              type="button"
+              onClick={loadRecoveryReport}
+              disabled={recoveryLoading}
+              className="rounded-lg bg-[#D88DF8] px-4 py-2 text-xs font-semibold text-black disabled:opacity-60"
+            >
+              {recoveryLoading ? "Checking…" : "Run check"}
+            </button>
+          </div>
+        </div>
+
+        {recovery && (
+          <div className="mt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                <div className="text-xl font-bold text-emerald-400">{recovery.recoverable}</div>
+                <div className="text-[11px] text-zinc-500">re-addable</div>
+              </div>
+              <div className="rounded-lg border border-white/10 p-3">
+                <div className="text-xl font-bold text-white">{recovery.breakdown.refreshable}</div>
+                <div className="text-[11px] text-zinc-500">with refresh token (no expiry)</div>
+              </div>
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                <div className="text-xl font-bold text-amber-400">{recovery.breakdown.accessOnlyValid}</div>
+                <div className="text-[11px] text-zinc-500">valid but expiring (no refresh)</div>
+              </div>
+              <div className="rounded-lg border border-rose-500/20 bg-rose-500/5 p-3">
+                <div className="text-xl font-bold text-rose-400">{recovery.atRisk}</div>
+                <div className="text-[11px] text-zinc-500">not re-addable</div>
+              </div>
+            </div>
+
+            {recovery.breakdown.undecryptable > 0 && (
+              <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-200">
+                <strong>{recovery.breakdown.undecryptable} grants cannot be decrypted.</strong> The stored tokens were
+                encrypted with a different WALLET_ENC_KEY than the one currently set. Restore the original key —
+                these members cannot be re-added without it.
+              </div>
+            )}
+
+            {!recovery.encryptionEnabled && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
+                WALLET_ENC_KEY is not set, so these OAuth grants are stored as plaintext. They still work, but anyone
+                with database access can use them to add these users to any server.
+              </div>
+            )}
+
+            <div className="text-[11px] text-zinc-500">
+              Breakdown of the {recovery.atRisk} not re-addable: {recovery.breakdown.accessOnlyExpired} expired with no
+              refresh token, {recovery.breakdown.undecryptable} undecryptable, {recovery.breakdown.noToken} never stored
+              a token. These people would have to verify again.
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Servers the bot has been used in (every distinct guild a verification
           happened in — the bot doesn't expose a live "guilds I'm in" list to
