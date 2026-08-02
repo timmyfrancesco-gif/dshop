@@ -5,12 +5,17 @@ import { discordVerifications } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
 import { addVerifiedUserToGuild, type AddToGuildResult } from "@/lib/verify/addToGuild";
 
-const BATCH_SIZE = 20;
-// Small gap between users so a bulk re-add of many people doesn't hammer the
-// bot/Discord's rate limits all at once. The caller does its own batching
-// (see below) so a single request never runs long enough to hit a serverless
-// function timeout.
-const DELAY_MS = 350;
+// Kept deliberately small. Each user can involve a token refresh plus a call
+// to the bot, and a request that gets killed by a function timeout mid-way
+// can strand a just-rotated refresh token — so the batch is sized to finish
+// well inside the limit rather than to be fast.
+export const maxDuration = 60;
+
+const BATCH_SIZE = 8;
+// Small gap between users so a bulk re-add doesn't hit Discord's rate limits
+// all at once. The caller does its own batching (see below) so a single
+// request never runs long enough to be killed.
+const DELAY_MS = 250;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -57,7 +62,19 @@ export async function POST(req: NextRequest) {
 
   const results: AddToGuildResult[] = [];
   for (let i = 0; i < batch.length; i++) {
-    results.push(await addVerifiedUserToGuild(batch[i], targetGuildId));
+    // Contained per user: an unexpected throw on one person must not abort
+    // the batch, because the caller restarts from offset 0 and everyone
+    // after them would simply never be processed.
+    try {
+      results.push(await addVerifiedUserToGuild(batch[i], targetGuildId));
+    } catch (e) {
+      console.error("[verify] bulk add threw for user", batch[i].discordUserId, e);
+      results.push({
+        discordUserId: batch[i].discordUserId,
+        ok: false,
+        error: e instanceof Error ? e.message : "Unexpected error.",
+      });
+    }
     if (i < batch.length - 1) await sleep(DELAY_MS);
   }
 
